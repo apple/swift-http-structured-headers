@@ -1,0 +1,745 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftNIO open source project
+//
+// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of SwiftNIO project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
+fileprivate let asciiSpace = UInt8(ascii: " ")
+fileprivate let asciiTab = UInt8(ascii: "\t")
+fileprivate let asciiOpenParenthesis = UInt8(ascii: "(")
+fileprivate let asciiCloseParenthesis = UInt8(ascii: ")")
+fileprivate let asciiDash = UInt8(ascii: "-")
+fileprivate let asciiUnderscore = UInt8(ascii: "_")
+fileprivate let asciiZero = UInt8(ascii: "0")
+fileprivate let asciiOne = UInt8(ascii: "1")
+fileprivate let asciiNine = UInt8(ascii: "9")
+fileprivate let asciiDigits = asciiZero...asciiNine
+fileprivate let asciiDquote = UInt8(ascii: "\"")
+fileprivate let asciiColon = UInt8(ascii: ":")
+fileprivate let asciiSemicolon = UInt8(ascii: ";")
+fileprivate let asciiBackslash = UInt8(ascii: "\\")
+fileprivate let asciiQuestionMark = UInt8(ascii: "?")
+fileprivate let asciiExclamationMark = UInt8(ascii: "!")
+fileprivate let asciiOctothorpe = UInt8(ascii: "#")
+fileprivate let asciiDollar = UInt8(ascii: "$")
+fileprivate let asciiPercent = UInt8(ascii: "%")
+fileprivate let asciiAmpersand = UInt8(ascii: "&")
+fileprivate let asciiSquote = UInt8(ascii: "'")
+fileprivate let asciiCaret = UInt8(ascii: "^")
+fileprivate let asciiBacktick = UInt8(ascii: "`")
+fileprivate let asciiPipe = UInt8(ascii: "|")
+fileprivate let asciiTilde = UInt8(ascii: "~")
+fileprivate let asciiAsterisk = UInt8(ascii: "*")
+fileprivate let asciiEqual = UInt8(ascii: "=")
+fileprivate let asciiPlus = UInt8(ascii: "+")
+fileprivate let asciiSlash = UInt8(ascii: "/")
+fileprivate let asciiPeriod = UInt8(ascii: ".")
+fileprivate let asciiComma = UInt8(ascii: ",")
+fileprivate let asciiCapitalA = UInt8(ascii: "A")
+fileprivate let asciiCapitalZ = UInt8(ascii: "Z")
+fileprivate let asciiLowerA = UInt8(ascii: "a")
+fileprivate let asciiLowerZ = UInt8(ascii: "z")
+fileprivate let asciiCapitals = asciiCapitalA...asciiCapitalZ
+fileprivate let asciiLowercases = asciiLowerA...asciiLowerZ
+
+/// A FieldParser is the basic parsing object for structured header fields represented as lists.
+struct StructuredFieldParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    // Right now I'm on the fence about whether this should be generic. It's convenient,
+    // and makes it really easy for us to express the parsing over a wide range of data types.
+    // But it risks code size in a really nasty way! We should validate that we don't pay too
+    // much for this flexibility.
+    private var underlyingData: BaseData.SubSequence
+
+    init(_ data: BaseData) {
+        self.underlyingData = data[...]
+    }
+}
+
+extension StructuredFieldParser {
+    // Helper typealiases to avoid the explosion of generic parameters
+    typealias BareItem = StructuredHeaders.BareItem<BaseData.SubSequence>
+    typealias Item = StructuredHeaders.Item<BaseData.SubSequence>
+    typealias BareInnerList = StructuredHeaders.BareInnerList<BaseData.SubSequence>
+    typealias InnerList = StructuredHeaders.InnerList<BaseData.SubSequence>
+    typealias ItemOrInnerList = StructuredHeaders.ItemOrInnerList<BaseData.SubSequence>
+    typealias Key = BaseData.SubSequence
+
+    /// Parse the HTTP structured field as a list.
+    ///
+    /// This is a straightforward implementation of the parser in the draft spec.
+    mutating func parseListField() throws -> [ItemOrInnerList] {
+        // Step one, strip leading spaces.
+        self.underlyingData.stripLeadingSpaces()
+
+        // Step 2, enter the core list parsing loop.
+        let members = try self._parseAList()
+
+        // Final step, strip trailing spaces (which are now leading spaces, natch).
+        self.underlyingData.stripLeadingSpaces()
+
+        // The data is _required_ to be empty now, if it isn't we fail.
+        guard self.underlyingData.count == 0 else {
+            throw StructuredHeaderParsingError.invalidTrailingBytes
+        }
+
+        return members
+    }
+
+    /// Parse the HTTP structured header field as a dictionary.
+    mutating func parseDictionaryField() throws -> OrderedMap<Key, ItemOrInnerList> {
+        // Step one, strip leading spaces.
+        self.underlyingData.stripLeadingSpaces()
+
+        // Step 2, enter the core dictionary parsing loop.
+        let map = try self._parseADictionary()
+
+        // Final step, strip trailing spaces (which are now leading spaces, natch).
+        self.underlyingData.stripLeadingSpaces()
+
+        // The data is _required_ to be empty now, if it isn't we fail.
+        guard self.underlyingData.count == 0 else {
+            throw StructuredHeaderParsingError.invalidTrailingBytes
+        }
+
+        return map
+    }
+
+    /// Parse the HTTP structured header field as an item.
+    mutating func parseItemField() throws -> Item {
+        // Step one, strip leading spaces.
+        self.underlyingData.stripLeadingSpaces()
+
+        // Step 2, do the core parse.
+        let item = try self._parseAnItem()
+
+        // Final step, strip trailing spaces (which are now leading spaces, natch).
+        self.underlyingData.stripLeadingSpaces()
+
+        // The data is _required_ to be empty now, if it isn't we fail.
+        guard self.underlyingData.count == 0 else {
+            throw StructuredHeaderParsingError.invalidTrailingBytes
+        }
+
+        return item
+    }
+
+    private mutating func _parseAList() throws -> [ItemOrInnerList] {
+        var results: [ItemOrInnerList] = []
+
+        loop: while self.underlyingData.count > 0 {
+            results.append(try self._parseAnItemOrInnerList())
+            self.underlyingData.stripLeadingOWS()
+
+            // If we've consumed all the data, the parse is finished.
+            guard let next = self.underlyingData.popFirst() else {
+                break loop
+            }
+
+            // Otherwise, the next character needs to be a comma.
+            guard next == asciiComma else {
+                throw StructuredHeaderParsingError.invalidList
+            }
+            self.underlyingData.stripLeadingOWS()
+            guard self.underlyingData.count > 0 else {
+                // Trailing comma!
+                throw StructuredHeaderParsingError.invalidList
+            }
+        }
+
+        return results
+    }
+
+    private mutating func _parseADictionary() throws -> OrderedMap<Key, ItemOrInnerList> {
+        var results = OrderedMap<Key, ItemOrInnerList>()
+
+        loop: while self.underlyingData.count > 0 {
+            let key = try self._parseAKey()
+
+            if self.underlyingData.first == asciiEqual {
+                self.underlyingData.consumeFirst()
+                results[key] = try self._parseAnItemOrInnerList()
+            } else {
+                results[key] = .item(Item(bareItem: true, parameters: try self._parseParameters()))
+            }
+
+            self.underlyingData.stripLeadingOWS()
+
+            /// If we've consumed all the data, the parse is finished.
+            guard let next = self.underlyingData.popFirst() else {
+                break loop
+            }
+            guard next == asciiComma else {
+                throw StructuredHeaderParsingError.invalidDictionary
+            }
+            self.underlyingData.stripLeadingOWS()
+
+            guard self.underlyingData.count > 0 else {
+                // Trailing comma!
+                throw StructuredHeaderParsingError.invalidList
+            }
+        }
+
+        return results
+    }
+
+    private mutating func _parseAnItemOrInnerList() throws -> ItemOrInnerList {
+        if self.underlyingData.first == asciiOpenParenthesis {
+            return .innerList(try self._parseAnInnerList())
+        } else {
+            return .item(try self._parseAnItem())
+        }
+    }
+
+    private mutating func _parseAnInnerList() throws -> InnerList {
+        precondition(self.underlyingData.popFirst() == asciiOpenParenthesis)
+
+        var innerList = BareInnerList()
+
+        while self.underlyingData.count > 0 {
+            self.underlyingData.stripLeadingSpaces()
+
+            if self.underlyingData.first == asciiCloseParenthesis {
+                // Consume, parse parameters, and complete.
+                self.underlyingData.consumeFirst()
+                let parameters = try self._parseParameters()
+                return InnerList(bareInnerList: innerList, parameters: parameters)
+            }
+
+            innerList.append(try self._parseAnItem())
+
+            let nextChar = self.underlyingData.first
+            guard nextChar == asciiSpace || nextChar == asciiCloseParenthesis else {
+                throw StructuredHeaderParsingError.invalidInnerList
+            }
+        }
+
+        // If we got here, we never got the close character for the list. Not good! This is an error.
+        throw StructuredHeaderParsingError.invalidInnerList
+    }
+
+    private mutating func _parseAnItem() throws -> Item {
+        let bareItem = try _parseABareItem()
+        let parameters = try self._parseParameters()
+        return Item(bareItem: bareItem, parameters: parameters)
+    }
+
+    private mutating func _parseABareItem() throws -> BareItem {
+        guard let first = self.underlyingData.first else {
+            throw StructuredHeaderParsingError.invalidItem
+        }
+
+        switch first {
+        case asciiDash, asciiDigits:
+            return try self._parseAnIntegerOrDecimal()
+        case asciiDquote:
+            return try self._parseAString()
+        case asciiColon:
+            return try self._parseAByteSequence()
+        case asciiQuestionMark:
+            return try self._parseABoolean()
+        case asciiCapitals, asciiLowercases, asciiAsterisk:
+            return try self._parseAToken()
+        default:
+            throw StructuredHeaderParsingError.invalidItem
+        }
+    }
+
+    private mutating func _parseAnIntegerOrDecimal() throws -> BareItem {
+        var sign = 1
+        var type = IntegerOrDecimal.integer
+
+        if let first = self.underlyingData.first, first == asciiDash {
+            sign = -1
+            self.underlyingData.consumeFirst()
+        }
+
+        guard let first = self.underlyingData.first, asciiDigits.contains(first) else {
+            throw StructuredHeaderParsingError.invalidIntegerOrDecimal
+        }
+
+        var index = self.underlyingData.startIndex
+        let endIndex = self.underlyingData.endIndex
+        loop: while index < endIndex {
+            switch self.underlyingData[index] {
+            case asciiDigits:
+                // Do nothing
+                ()
+            case asciiPeriod where type == .integer:
+                // If input_number contains more than 12 characters, fail parsing. Otherwise,
+                // set type to decimal and consume.
+                if self.underlyingData.distance(from: self.underlyingData.startIndex, to: index) > 12 {
+                    throw StructuredHeaderParsingError.invalidIntegerOrDecimal
+                }
+                type = .decimal
+            default:
+                // Non period or number, we're done parsing.
+                break loop
+            }
+
+            // "Consume" the character by advancing.
+            self.underlyingData.formIndex(after: &index)
+
+            // If type is integer and the input contains more than 15 characters, or type is decimal and more than 16,
+            // fail parsing.
+            let count = self.underlyingData.distance(from: self.underlyingData.startIndex, to: index)
+            switch type {
+            case .integer:
+                if count > 15 {
+                    throw StructuredHeaderParsingError.invalidIntegerOrDecimal
+                }
+            case .decimal:
+                if count > 16 {
+                    throw StructuredHeaderParsingError.invalidIntegerOrDecimal
+                }
+            }
+        }
+
+        // Consume the string.
+        let integerBytes = self.underlyingData[..<index]
+        self.underlyingData = self.underlyingData[index...]
+
+        switch type {
+        case .integer:
+            // This intermediate string is sad, we should rewrite this manually to avoid it.
+            // This force-unwrap is safe, as we have validated that all characters are ascii digits.
+            let baseInt = Int(String(decoding: integerBytes, as: UTF8.self), radix: 10)!
+            return .integer(baseInt * sign)
+        case .decimal:
+            // This must be non-nil, otherwise we couldn't have flipped to the decimal type.
+            let periodIndex = integerBytes.firstIndex(of: asciiPeriod)!
+            let periodIndexDistance = integerBytes.distance(from: periodIndex, to: integerBytes.endIndex)
+            if periodIndexDistance == 1 || periodIndexDistance > 4 {
+                // Period may not be last, or have more than three characters after it.
+                throw StructuredHeaderParsingError.invalidIntegerOrDecimal
+            }
+
+            // Same notes here as above
+            let baseFloat = Float64(String(decoding: integerBytes, as: UTF8.self))!
+            return .decimal(baseFloat * Float64(sign))
+        }
+    }
+
+    private mutating func _parseAString() throws -> BareItem {
+        guard self.underlyingData.first == asciiDquote else {
+            throw StructuredHeaderParsingError.invalidString
+        }
+        self.underlyingData.consumeFirst()
+
+        // Ok, let's pause. Here we need to parse out a String and turn it into...well, into something.
+        // It doesn't have to be a String now, but at some stage a user is going to want it to be a String,
+        // so we need to include the idea that we'll have to manifest a String at some point.
+        //
+        // The wrinkle here is we have to deal with escapes. Two characters may appear escaped in strings:
+        // dquote and backslash. Worse, _only_ those two may appear escaped: any other escape sequence is invalid.
+        // This means the most naive algorithm, which also happens to be best for the cache and branch predictor
+        // (just treat a string as a byte slice, walk forward until we find dquote, and slice it out) doesn't work.
+        //
+        // We can choose to do this _anyway_, by searching for the first unescaped dquote. But we have to remember
+        // to handle the escaping at some point, and we also have to police character validity. Doing this later risks
+        // that we'll have evicted these bytes from cache, forcing a cache miss to get them back. Not ideal.
+        //
+        // So we do a different thing. We walk the string twice: first to validate and find its length, and then the
+        // second time to actually create the String. We can't do this in one step without risking gravely over-allocating
+        // for the String, which would be sad, so we tolerate doing it twice. While we do it, we record whether the string
+        // contains escapes. If it doesn't, we know that we can fall back to the optimised String construction with no branches,
+        // making this fairly quick. If it does, well, we have branchy awkward code, but at least we have confidence that our
+        // data is in cache.
+
+        // First, walk 1: find the length, validate as we go, check for escapes.
+        var escapes = 0
+        var index = self.underlyingData.startIndex
+        var endIndex = self.underlyingData.endIndex
+        loop: while index < endIndex {
+            let char = self.underlyingData[index]
+
+            switch char {
+            case asciiBackslash:
+                self.underlyingData.formIndex(after: &index)
+                if index == endIndex {
+                    throw StructuredHeaderParsingError.invalidString
+                }
+                let next = self.underlyingData[index]
+                guard next == asciiDquote || next == asciiBackslash else {
+                    throw StructuredHeaderParsingError.invalidString
+                }
+                escapes += 1
+
+            case asciiDquote:
+                // Unquoted dquote, this is the end of the string.
+                endIndex = index
+                break loop
+            case 0x00...0x1f, 0x7f...:
+                // Forbidden bytes in string: string must be VCHAR and SP.
+                throw StructuredHeaderParsingError.invalidString
+            default:
+                // Allowed, unescape, uncontrol byte.
+                ()
+            }
+
+            self.underlyingData.formIndex(after: &index)
+        }
+
+        // Oops, fell off the back of the string.
+        if endIndex == self.underlyingData.endIndex {
+            throw StructuredHeaderParsingError.invalidString
+        }
+        let stringSlice = self.underlyingData[self.underlyingData.startIndex..<index]
+        self.underlyingData.formIndex(after: &index)
+        self.underlyingData = self.underlyingData[index...]
+
+        // Ok, now we check: if we have encountered an escape, we have to fall back to the slow mode. If not,
+        // we can initialize the string directly.
+        if escapes == 0 {
+            return .string(String(decoding: stringSlice, as: UTF8.self))
+        } else {
+            return .string(String.decodingEscapes(stringSlice, escapes: escapes))
+        }
+    }
+
+    private mutating func _parseAByteSequence() throws -> BareItem {
+        guard self.underlyingData.first == asciiColon else {
+            throw StructuredHeaderParsingError.invalidByteSequence
+        }
+        self.underlyingData.consumeFirst()
+
+        var index = self.underlyingData.startIndex
+        while index < self.underlyingData.endIndex {
+            switch self.underlyingData[index] {
+            case asciiColon:
+                // Hey, this is the end! The base64 data is the data prior to here.
+                let consumedSlice = self.underlyingData[..<index]
+
+                // Skip the colon and consume it.
+                self.underlyingData.formIndex(after: &index)
+                self.underlyingData = self.underlyingData[index...]
+
+                return .undecodedByteSequence(consumedSlice)
+
+            case asciiCapitals, asciiLowercases, asciiDigits, asciiPlus, asciiSlash, asciiEqual:
+                // All valid characters for Base64 here.
+                self.underlyingData.formIndex(after: &index)
+            default:
+                // Invalid character
+                throw StructuredHeaderParsingError.invalidByteSequence
+            }
+        }
+
+        // Whoops, got to the end, invalid byte sequence.
+        throw StructuredHeaderParsingError.invalidByteSequence
+    }
+
+    private mutating func _parseABoolean() throws -> BareItem {
+        guard self.underlyingData.first == asciiQuestionMark else {
+            throw StructuredHeaderParsingError.invalidBoolean
+        }
+        self.underlyingData.consumeFirst()
+
+        switch self.underlyingData.first {
+        case asciiOne:
+            self.underlyingData.consumeFirst()
+            return true
+        case asciiZero:
+            self.underlyingData.consumeFirst()
+            return false
+        default:
+            // Whoops!
+            throw StructuredHeaderParsingError.invalidBoolean
+        }
+    }
+
+    private mutating func _parseAToken() throws -> BareItem {
+        switch self.underlyingData.first {
+        case .some(asciiCapitals), .some(asciiLowercases), .some(asciiAsterisk):
+            // Good
+            ()
+        default:
+            throw StructuredHeaderParsingError.invalidToken
+        }
+
+        var index = self.underlyingData.startIndex
+        loop: while index < self.underlyingData.endIndex {
+            switch self.underlyingData[index] {
+            // Valid token characters are RFC 7230 tchar, colon, and slash.
+            // tchar is:
+            //
+            // tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
+            //                / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
+            //                / DIGIT / ALPHA
+            //
+            // The following insane case statement covers this. Tokens suck.
+            case asciiExclamationMark, asciiOctothorpe, asciiDollar, asciiPercent,
+                 asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
+                 asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
+                 asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
+                 asciiColon, asciiSlash:
+                // Good, consume
+                self.underlyingData.formIndex(after: &index)
+            default:
+                // Token complete
+                break loop
+            }
+        }
+
+        // Token is complete either when we stop getting valid token characters or when
+        // we get to the end of the string.
+        let tokenSlice = self.underlyingData[..<index]
+        self.underlyingData = self.underlyingData[index...]
+        return .token(tokenSlice)
+    }
+
+    private mutating func _parseParameters() throws -> OrderedMap<BaseData.SubSequence, BareItem> {
+        var parameters = OrderedMap<BaseData.SubSequence, BareItem>()
+
+        // We want to loop while we still have bytes _and_ while the first character is asciiSemicolon.
+        // This covers both.
+        while self.underlyingData.first == asciiSemicolon {
+            // Consume the colon
+            self.underlyingData.consumeFirst()
+            self.underlyingData.stripLeadingSpaces()
+            let paramName = try self._parseAKey()
+            var paramValue: BareItem = true
+
+            if self.underlyingData.first == asciiEqual {
+                self.underlyingData.consumeFirst()
+                paramValue = try self._parseABareItem()
+            }
+
+            parameters[paramName] = paramValue
+        }
+
+        return parameters
+    }
+
+    private mutating func _parseAKey() throws -> BaseData.SubSequence {
+        guard let first = self.underlyingData.first, asciiLowercases.contains(first) || first == asciiAsterisk else {
+            throw StructuredHeaderParsingError.invalidKey
+        }
+
+        let key = self.underlyingData.prefix(while: {
+            switch $0 {
+            case asciiLowercases, asciiDigits, asciiUnderscore, asciiDash, asciiPeriod, asciiAsterisk:
+                return true
+            default:
+                return false
+            }
+        })
+        self.underlyingData = self.underlyingData.dropFirst(key.count)
+        return key
+    }
+}
+
+enum ItemOrInnerList<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    case item(Item<BaseData>)
+    case innerList(InnerList<BaseData>)
+}
+
+enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    case bool(Bool)
+    case integer(Int)
+    case decimal(Float64)  // Not great, can we do better?
+    case string(String)
+    case undecodedByteSequence(BaseData)
+    case token(BaseData)
+}
+
+extension BareItem: ExpressibleByBooleanLiteral {
+    init(booleanLiteral value: Bool) {
+        self = .bool(value)
+    }
+}
+
+extension BareItem: Hashable { }
+
+struct Item<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    var bareItem: BareItem<BaseData>
+    var parameters: OrderedMap<BaseData, BareItem<BaseData>>
+}
+
+extension Item: Hashable { }
+
+struct BareInnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private var items: [Item<BaseData>]
+
+    init() {
+        self.items = []
+    }
+
+    fileprivate mutating func append(_ item: Item<BaseData>) {
+        self.items.append(item)
+    }
+}
+
+extension BareInnerList: RandomAccessCollection, MutableCollection {
+    struct Index {
+        fileprivate var baseIndex: Array<Item<BaseData>>.Index
+
+        init(_ baseIndex: Array<Item<BaseData>>.Index) {
+            self.baseIndex = baseIndex
+        }
+    }
+
+    var count: Int {
+        return self.items.count
+    }
+
+    var startIndex: Index {
+        return Index(self.items.startIndex)
+    }
+
+    var endIndex: Index {
+        return Index(self.items.endIndex)
+    }
+
+    func index(after i: Index) -> Index {
+        return Index(self.items.index(after: i.baseIndex))
+    }
+
+    func index(before i: Index) -> Index {
+        return Index(self.items.index(before: i.baseIndex))
+    }
+
+    func index(_ i: Index, offsetBy offset: Int) -> Index {
+        return Index(self.items.index(i.baseIndex, offsetBy: offset))
+    }
+
+    subscript(index: Index) -> Item<BaseData> {
+        get {
+            return self.items[index.baseIndex]
+        }
+        set {
+            self.items[index.baseIndex] = newValue
+        }
+    }
+}
+
+extension BareInnerList.Index: Hashable { }
+
+extension BareInnerList.Index: Comparable {
+    static func <(lhs: Self, rhs: Self) -> Bool {
+        return lhs.baseIndex < rhs.baseIndex
+    }
+}
+
+struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    var bareInnerList: BareInnerList<BaseData>
+    var parameters: OrderedMap<BaseData, BareItem<BaseData>>
+}
+
+fileprivate enum IntegerOrDecimal {
+    case integer
+    case decimal
+}
+
+extension RandomAccessCollection where Element == UInt8, SubSequence == Self {
+    mutating func stripLeadingSpaces() {
+        self = self.drop(while: { $0 == asciiSpace })
+    }
+
+    mutating func stripLeadingOWS() {
+        self = self.drop(while: { $0 == asciiSpace || $0 == asciiTab })
+    }
+
+    mutating func consumeFirst() {
+        self = self.dropFirst()
+    }
+}
+
+extension String {
+    // This is the slow path, so we never inline this.
+    @inline(never)
+    fileprivate static func decodingEscapes<Bytes: RandomAccessCollection>(_ bytes: Bytes, escapes: Int) -> String where Bytes.Element == UInt8 {
+        // We assume the string is previously validated, so the escapes are easily removed. See the doc comment for
+        // `StrippingStringEscapesCollection` for more details on what we're doing here.
+        let unescapedBytes = StrippingStringEscapesCollection(bytes, escapes: escapes)
+        if #available(macOS 10.16, macCatalyst 10.16, iOS 14.0, watchOS 7.0, tvOS 14.0, *) {
+            return String(unsafeUninitializedCapacity: unescapedBytes.count) { innerPtr in
+                let (_, endIndex) = innerPtr.initialize(from: unescapedBytes)
+                return endIndex
+            }
+        } else {
+            return String(decoding: unescapedBytes, as: UTF8.self)
+        }
+    }
+}
+
+/// This helper struct is used to try to minimise the surface area of the unsafe string constructor.
+///
+/// We have a goal to create the String as cheaply as possible in the presence of escapes. Using the safe constructor will not
+/// do that: if a non-contiguous collection is used to create a String directly, an intermediate Array will be used to flatten
+/// the collection. As an escaped string is definitionally non-contiguous, we would hit that path, which is very sad.
+/// Until this issue is fixed (https://bugs.swift.org/browse/SR-13111) we take a different approach: we use
+/// `String.init(unsafeUninitializedCapacity:initializingWith)`. This is an unsafe function, so to reduce the unsafety as much
+/// as possible we define this safe wrapping Collection and then use `copyBytes` to implement the initialization.
+fileprivate struct StrippingStringEscapesCollection<BaseCollection: RandomAccessCollection> where BaseCollection.Element == UInt8 {
+    private var base: BaseCollection
+    private var escapes: UInt
+
+    init(_ base: BaseCollection, escapes: Int) {
+        self.base = base
+        self.escapes = UInt(escapes)
+    }
+}
+
+extension StrippingStringEscapesCollection: Collection {
+    fileprivate struct Index {
+        fileprivate var _baseIndex: BaseCollection.Index
+
+        fileprivate init(baseIndex: BaseCollection.Index) {
+            self._baseIndex = baseIndex
+        }
+    }
+
+    // This is an extremely important customisation point! Our base collection is random access,
+    // so we know that on the base this is O(1), but as this collection is _not_ random access here
+    // it's O(n).
+    fileprivate var count: Int {
+        return self.base.count - Int(self.escapes)
+    }
+
+    fileprivate var startIndex: Index {
+        // Tricky note here, but start index _might_ be an ascii backslash, which we have to skip.
+        return Index(baseIndex: self.unescapedIndex(self.base.startIndex))
+    }
+
+    fileprivate var endIndex: Index {
+        return Index(baseIndex: self.base.endIndex)
+    }
+
+    fileprivate func index(after i: Index) -> Index {
+        let next = self.base.index(after: i._baseIndex)
+        return Index(baseIndex: self.unescapedIndex(next))
+    }
+
+    fileprivate subscript(index: Index) -> UInt8 {
+        return self.base[index._baseIndex]
+    }
+
+    private func unescapedIndex(_ baseIndex: BaseCollection.Index) -> BaseCollection.Index {
+        if baseIndex == self.base.endIndex {
+            return baseIndex
+        }
+
+        if self.base[baseIndex] == asciiBackslash {
+            return self.base.index(after: baseIndex)
+        } else {
+            return baseIndex
+        }
+    }
+}
+
+extension StrippingStringEscapesCollection.Index: Equatable { }
+
+extension StrippingStringEscapesCollection.Index: Comparable {
+    fileprivate static func <(lhs: Self, rhs: Self) -> Bool {
+        return lhs._baseIndex < rhs._baseIndex
+    }
+}
+
