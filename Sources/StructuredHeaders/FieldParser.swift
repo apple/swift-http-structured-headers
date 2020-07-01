@@ -328,9 +328,7 @@ extension StructuredFieldParser {
     }
 
     private mutating func _parseAString() throws -> BareItem {
-        guard self.underlyingData.first == asciiDquote else {
-            throw StructuredHeaderParsingError.invalidString
-        }
+        assert(self.underlyingData.first == asciiDquote)
         self.underlyingData.consumeFirst()
 
         // Ok, let's pause. Here we need to parse out a String and turn it into...well, into something.
@@ -405,9 +403,7 @@ extension StructuredFieldParser {
     }
 
     private mutating func _parseAByteSequence() throws -> BareItem {
-        guard self.underlyingData.first == asciiColon else {
-            throw StructuredHeaderParsingError.invalidByteSequence
-        }
+        assert(self.underlyingData.first == asciiColon)
         self.underlyingData.consumeFirst()
 
         var index = self.underlyingData.startIndex
@@ -437,9 +433,7 @@ extension StructuredFieldParser {
     }
 
     private mutating func _parseABoolean() throws -> BareItem {
-        guard self.underlyingData.first == asciiQuestionMark else {
-            throw StructuredHeaderParsingError.invalidBoolean
-        }
+        assert(self.underlyingData.first == asciiQuestionMark)
         self.underlyingData.consumeFirst()
 
         switch self.underlyingData.first {
@@ -456,13 +450,7 @@ extension StructuredFieldParser {
     }
 
     private mutating func _parseAToken() throws -> BareItem {
-        switch self.underlyingData.first {
-        case .some(asciiCapitals), .some(asciiLowercases), .some(asciiAsterisk):
-            // Good
-            ()
-        default:
-            throw StructuredHeaderParsingError.invalidToken
-        }
+        assert(asciiCapitals.contains(self.underlyingData.first!) || asciiLowercases.contains(self.underlyingData.first!) || self.underlyingData.first! == asciiAsterisk)
 
         var index = self.underlyingData.startIndex
         loop: while index < self.underlyingData.endIndex {
