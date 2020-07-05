@@ -19,17 +19,17 @@
 /// maps in structured headers are small (fewer than 20 elements), and so the
 /// distinction between hashing and linear search is not really a concern. However, for
 /// future implementation flexibility, we continue to require that keys be hashable.
-struct OrderedMap<Key, Value> where Key: Hashable {
+public struct OrderedMap<Key, Value> where Key: Hashable {
     private var backing: [Entry]
 
-    init() {
+    public init() {
         self.backing = []
     }
 
     /// Look up the value for a given key.
     ///
     /// Warning! Unlike a regular dictionary, we do not promise this will be O(1)!
-    subscript(key: Key) -> Value? {
+    public subscript(key: Key) -> Value? {
         get {
             return self.backing.first(where: { $0.key == key }).map { $0.value }
         }
@@ -61,7 +61,7 @@ extension OrderedMap {
 
 // MARK:- Collection conformances
 extension OrderedMap: RandomAccessCollection, MutableCollection {
-    struct Index {
+    public struct Index {
         fileprivate var baseIndex: Array<(Key, Value)>.Index
 
         fileprivate init(_ baseIndex: Array<(Key, Value)>.Index) {
@@ -69,19 +69,19 @@ extension OrderedMap: RandomAccessCollection, MutableCollection {
         }
     }
 
-    var startIndex: Index {
+    public var startIndex: Index {
         return Index(self.backing.startIndex)
     }
 
-    var endIndex: Index {
+    public var endIndex: Index {
         return Index(self.backing.endIndex)
     }
 
-    var count: Int {
+    public var count: Int {
         return self.backing.count
     }
 
-    subscript(position: Index) -> (Key, Value) {
+    public subscript(position: Index) -> (Key, Value) {
         get {
             let element = self.backing[position.baseIndex]
             return (element.key, element.value)
@@ -91,15 +91,15 @@ extension OrderedMap: RandomAccessCollection, MutableCollection {
         }
     }
 
-    func index(_ i: Index, offsetBy distance: Int) -> Index {
+    public func index(_ i: Index, offsetBy distance: Int) -> Index {
         return Index(self.backing.index(i.baseIndex, offsetBy: distance))
     }
 
-    func index(after i: Index) -> Index {
+    public func index(after i: Index) -> Index {
         return self.index(i, offsetBy: 1)
     }
 
-    func index(before i: Index) -> Index {
+    public func index(before i: Index) -> Index {
         return self.index(i, offsetBy: -1)
     }
 }
@@ -107,30 +107,30 @@ extension OrderedMap: RandomAccessCollection, MutableCollection {
 extension OrderedMap.Index: Hashable { }
 
 extension OrderedMap.Index: Comparable {
-    static func < (lhs: Self, rhs: Self) -> Bool {
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         return lhs.baseIndex < rhs.baseIndex
     }
 }
 
 extension OrderedMap.Index: Strideable {
-    func advanced(by n: Int) -> Self {
+    public func advanced(by n: Int) -> Self {
         return Self(self.baseIndex.advanced(by: n))
     }
 
-    func distance(to other: Self) -> Int {
+    public func distance(to other: Self) -> Int {
         return self.baseIndex.distance(to: other.baseIndex)
     }
 }
 
 // MARK:- Helper conformances
 extension OrderedMap: ExpressibleByDictionaryLiteral {
-    init(dictionaryLiteral elements: (Key, Value)...) {
+    public init(dictionaryLiteral elements: (Key, Value)...) {
         self.backing = elements.map { Entry(key: $0.0, value: $0.1) }
     }
 }
 
 extension OrderedMap: CustomDebugStringConvertible {
-    var debugDescription: String {
+    public var debugDescription: String {
         let backingRepresentation = self.backing.map { "\($0.key): \($0.value)" }.joined(separator: ", ")
         return "[\(backingRepresentation)]"
     }

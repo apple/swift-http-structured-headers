@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct StructuredHeaderParsingError: Error {
+public struct StructuredHeaderError: Error {
     private enum _BaseError: Hashable {
         case invalidTrailingBytes
         case invalidInnerList
@@ -25,6 +25,10 @@ public struct StructuredHeaderParsingError: Error {
         case invalidToken
         case invalidList
         case invalidDictionary
+        case missingKey
+        case invalidTypeForItem
+        case integerOutOfRange
+        case indexOutOfRange
     }
 
     private var base: _BaseError
@@ -34,23 +38,27 @@ public struct StructuredHeaderParsingError: Error {
     }
 }
 
-extension StructuredHeaderParsingError {
-    public static let invalidTrailingBytes = StructuredHeaderParsingError(.invalidTrailingBytes)
-    public static let invalidInnerList = StructuredHeaderParsingError(.invalidInnerList)
-    public static let invalidItem = StructuredHeaderParsingError(.invalidItem)
-    public static let invalidKey = StructuredHeaderParsingError(.invalidKey)
-    public static let invalidIntegerOrDecimal = StructuredHeaderParsingError(.invalidIntegerOrDecimal)
-    public static let invalidString = StructuredHeaderParsingError(.invalidString)
-    public static let invalidByteSequence = StructuredHeaderParsingError(.invalidByteSequence)
-    public static let invalidBoolean = StructuredHeaderParsingError(.invalidBoolean)
-    public static let invalidToken = StructuredHeaderParsingError(.invalidToken)
-    public static let invalidList = StructuredHeaderParsingError(.invalidList)
-    public static let invalidDictionary = StructuredHeaderParsingError(.invalidDictionary)
+extension StructuredHeaderError {
+    public static let invalidTrailingBytes = StructuredHeaderError(.invalidTrailingBytes)
+    public static let invalidInnerList = StructuredHeaderError(.invalidInnerList)
+    public static let invalidItem = StructuredHeaderError(.invalidItem)
+    public static let invalidKey = StructuredHeaderError(.invalidKey)
+    public static let invalidIntegerOrDecimal = StructuredHeaderError(.invalidIntegerOrDecimal)
+    public static let invalidString = StructuredHeaderError(.invalidString)
+    public static let invalidByteSequence = StructuredHeaderError(.invalidByteSequence)
+    public static let invalidBoolean = StructuredHeaderError(.invalidBoolean)
+    public static let invalidToken = StructuredHeaderError(.invalidToken)
+    public static let invalidList = StructuredHeaderError(.invalidList)
+    public static let invalidDictionary = StructuredHeaderError(.invalidDictionary)
+    public static let missingKey = StructuredHeaderError(.missingKey)
+    public static let invalidTypeForItem = StructuredHeaderError(.invalidTypeForItem)
+    public static let integerOutOfRange = StructuredHeaderError(.integerOutOfRange)
+    public static let indexOutOfRange = StructuredHeaderError(.indexOutOfRange)
 }
 
-extension StructuredHeaderParsingError: Hashable { }
+extension StructuredHeaderError: Hashable { }
 
-extension StructuredHeaderParsingError: CustomStringConvertible {
+extension StructuredHeaderError: CustomStringConvertible {
     public var description: String {
         return String(describing: self.base)
     }

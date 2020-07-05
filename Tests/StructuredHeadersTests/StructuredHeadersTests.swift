@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 import Foundation
 import XCTest
-@testable import StructuredHeaders
+import StructuredHeaders
 
 enum FixtureTestError: Error {
     case base64DecodingFailed
