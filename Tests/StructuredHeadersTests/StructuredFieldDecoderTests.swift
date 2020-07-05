@@ -121,4 +121,71 @@ final class StructuredFieldDecoderTests: XCTestCase {
         XCTAssertThrowsError(try StructuredFieldDecoder().decode(Bool.self, from: Array(headerField.utf8)))
         XCTAssertThrowsError(try StructuredFieldDecoder().decode(String.self, from: Array(intField.utf8)))
     }
+
+    func testDecodingTopLevelItemWithParameters() throws {
+        struct IntWithParams: Codable, Equatable {
+            var item: Int
+            var parameters: [String: String]
+        }
+
+        let headerField = "5;bar=baz"
+        let expected = IntWithParams(item: 5, parameters: ["bar": "baz"])
+        XCTAssertEqual(expected, try StructuredFieldDecoder().decodeItemField(from: Array(headerField.utf8)))
+    }
+
+    func testDecodingTopLevelList() throws {
+        let headerField = "foo, bar, baz"
+        let expected = ["foo", "bar", "baz"]
+        XCTAssertEqual(expected, try StructuredFieldDecoder().decodeListField(from: Array(headerField.utf8)))
+        XCTAssertEqual(expected, try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+    }
+
+    func testDecodingLowercaseKeyStrategy() throws {
+        struct Camel: Codable, Equatable {
+            var hasHump: Bool
+        }
+
+        let headerField = "hashump"
+        let expected = Camel(hasHump: true)
+        var decoder = StructuredFieldDecoder()
+        decoder.keyDecodingStrategy = .lowercase
+
+        XCTAssertEqual(expected, try decoder.decodeDictionaryField(from: Array(headerField.utf8)))
+    }
+
+    func testDecodingLowercaseKeyStrategyParameters() throws {
+        struct CamelParameters: Codable, Equatable {
+            var hasHump: Bool
+        }
+
+        struct Camel: Codable, Equatable {
+            var item: String
+            var parameters: CamelParameters
+        }
+
+        let headerField = "dromedary;hashump"
+        let expected = Camel(item: "dromedary", parameters: .init(hasHump: true))
+        var decoder = StructuredFieldDecoder()
+        decoder.keyDecodingStrategy = .lowercase
+
+        XCTAssertEqual(expected, try decoder.decodeItemField(from: Array(headerField.utf8)))
+    }
+
+    func testDecodingKeyMissingFromDictionary() throws {
+        struct MissingKey: Codable {
+            var foo: Int
+        }
+
+        let headerField = "bar=baz"
+        XCTAssertThrowsError(try StructuredFieldDecoder().decodeDictionaryField(MissingKey.self, from: Array(headerField.utf8)))
+    }
+
+    func testDecodingKeyAsItemWantedInnerList() throws {
+        struct MissingInnerList: Codable {
+            var innerlist: [String]
+        }
+
+        let headerField = "innerlist=x"
+        XCTAssertThrowsError(try StructuredFieldDecoder().decodeDictionaryField(MissingInnerList.self, from: Array(headerField.utf8)))
+    }
 }

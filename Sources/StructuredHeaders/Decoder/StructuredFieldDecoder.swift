@@ -13,13 +13,50 @@
 //===----------------------------------------------------------------------===//
 
 public struct StructuredFieldDecoder {
+    public var keyDecodingStrategy: KeyDecodingStrategy?
+
     public init() { }
+}
+
+extension StructuredFieldDecoder {
+    public struct KeyDecodingStrategy: Hashable {
+        fileprivate enum Base: Hashable {
+            case lowercase
+        }
+
+        fileprivate var base: Base
+
+        /// Lowercase all coding keys before searching for them in keyed containers such as
+        /// dictionaries or parameters.
+        public static let lowercase = KeyDecodingStrategy(base: .lowercase)
+    }
 }
 
 extension StructuredFieldDecoder {
     public func decode<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
-        let decoder = _StructuredFieldDecoder(parser)
+        let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
+        return try type.init(from: decoder)
+    }
+
+    public func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+        let parser = StructuredFieldParser(data)
+        let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
+        try decoder.parseDictionaryField()
+        return try type.init(from: decoder)
+    }
+
+    public func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+        let parser = StructuredFieldParser(data)
+        let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
+        try decoder.parseListField()
+        return try type.init(from: decoder)
+    }
+
+    public func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+        let parser = StructuredFieldParser(data)
+        let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
+        try decoder.parseItemField()
         return try type.init(from: decoder)
     }
 }
@@ -31,9 +68,12 @@ class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.E
     // our way down with values, but doing that is a CoWy nightmare from which we cannot escape.
     private var _codingStack: [CodingStackEntry]
 
-    init(_ parser: StructuredFieldParser<BaseData>) {
+    var keyDecodingStrategy: StructuredFieldDecoder.KeyDecodingStrategy?
+
+    init(_ parser: StructuredFieldParser<BaseData>, keyDecodingStrategy: StructuredFieldDecoder.KeyDecodingStrategy?) {
         self.parser = parser
         self._codingStack = []
+        self.keyDecodingStrategy = keyDecodingStrategy
     }
 }
 
@@ -59,13 +99,10 @@ extension _StructuredFieldDecoder: Decoder {
 
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
         if self.currentElement == nil {
-            // First parse, this is a dictionary.
-            // TODO: This assumption is wrong. Item and List headers may appear here if users want
-            // their parameters. We have to check for those cases.
-            let parsed = try self.parser.parseDictionaryField()
-
-            // We unconditionally add to the base of the coding stack here. This element is never popped off.
-            self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .dictionary(parsed)))
+            // First parse. This may be a dictionary, but depending on the keys this may also be list or item.
+            // We can't really detect this (Key isn't caseiterable) so we just kinda have to hope. Users can tell
+            // us with alternative methods if we're wrong.
+            try self.parseDictionaryField()
         }
 
         switch self.currentElement! {
@@ -86,16 +123,13 @@ extension _StructuredFieldDecoder: Decoder {
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
         if self.currentElement == nil {
             // First parse, this is a list header.
-            let parsed = try self.parser.parseListField()
-
-            // We unconditionally add to the base of the coding stack here. This element is never popped off.
-            self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .list(parsed)))
+            try self.parseListField()
         }
 
         // We have unkeyed containers for lists, inner lists, and bare inner lists.
         switch self.currentElement! {
         case .list(let items):
-            fatalError("Not yet implemented")
+            return TopLevelListDecoder(items, decoder: self)
         case .innerList(let innerList):
             return BareInnerListDecoder(innerList.bareInnerList, decoder: self)
         case .bareInnerList(let bareInnerList):
@@ -109,10 +143,7 @@ extension _StructuredFieldDecoder: Decoder {
     func singleValueContainer() throws -> SingleValueDecodingContainer {
         if self.currentElement == nil {
             // First parse, this is a an item header.
-            let parsed = try self.parser.parseItemField()
-
-            // We unconditionally add to the base of the coding stack here. This element is never popped off.
-            self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .item(parsed)))
+            try self.parseItemField()
         }
 
         // We have single value containers for items and bareItems.
@@ -124,6 +155,30 @@ extension _StructuredFieldDecoder: Decoder {
         case .dictionary, .list, .innerList, .bareInnerList, .parameters:
             throw StructuredHeaderError.invalidTypeForItem
         }
+    }
+
+    func parseDictionaryField() throws {
+        precondition(self._codingStack.isEmpty)
+        let parsed = try self.parser.parseDictionaryField()
+
+        // We unconditionally add to the base of the coding stack here. This element is never popped off.
+        self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .dictionary(parsed)))
+    }
+
+    func parseListField() throws {
+        precondition(self._codingStack.isEmpty)
+        let parsed = try self.parser.parseListField()
+
+        // We unconditionally add to the base of the coding stack here. This element is never popped off.
+        self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .list(parsed)))
+    }
+
+    func parseItemField() throws {
+        precondition(self._codingStack.isEmpty)
+        let parsed = try self.parser.parseItemField()
+
+        // We unconditionally add to the base of the coding stack here. This element is never popped off.
+        self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .item(parsed)))
     }
 }
 

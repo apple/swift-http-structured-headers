@@ -42,7 +42,7 @@ extension DictionaryKeyedContainer: KeyedDecodingContainerProtocol {
     }
 
     func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
-        try self.decoder.push(_StructuredHeaderCodingKey(key))
+        try self.decoder.push(_StructuredHeaderCodingKey(key, keyDecodingStrategy: self.decoder.keyDecodingStrategy))
         defer {
             self.decoder.pop()
         }
@@ -50,7 +50,7 @@ extension DictionaryKeyedContainer: KeyedDecodingContainerProtocol {
     }
 
     func nestedContainer<NestedKey: CodingKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> {
-        try self.decoder.push(_StructuredHeaderCodingKey(key))
+        try self.decoder.push(_StructuredHeaderCodingKey(key, keyDecodingStrategy: self.decoder.keyDecodingStrategy))
         defer {
             self.decoder.pop()
         }
@@ -58,7 +58,7 @@ extension DictionaryKeyedContainer: KeyedDecodingContainerProtocol {
     }
 
     func nestedUnkeyedContainer(forKey key: Key) throws -> UnkeyedDecodingContainer {
-        try self.decoder.push(_StructuredHeaderCodingKey(key))
+        try self.decoder.push(_StructuredHeaderCodingKey(key, keyDecodingStrategy: self.decoder.keyDecodingStrategy))
         defer {
             self.decoder.pop()
         }

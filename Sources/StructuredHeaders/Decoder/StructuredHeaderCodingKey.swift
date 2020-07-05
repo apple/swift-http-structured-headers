@@ -26,8 +26,16 @@ struct _StructuredHeaderCodingKey : CodingKey {
         self.intValue = intValue
     }
 
-    init<Key: CodingKey>(_ key: Key) {
-        self.stringValue = key.stringValue
+    init<Key: CodingKey>(_ key: Key, keyDecodingStrategy: StructuredFieldDecoder.KeyDecodingStrategy?) {
+        switch keyDecodingStrategy {
+        case .none:
+            self.stringValue = key.stringValue
+        case .some(.lowercase):
+            self.stringValue = key.stringValue.lowercased()
+        default:
+            preconditionFailure("Invalid key decoding strategy")
+        }
+
         self.intValue = key.intValue
     }
 }
