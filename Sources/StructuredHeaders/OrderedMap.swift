@@ -19,6 +19,10 @@
 /// maps in structured headers are small (fewer than 20 elements), and so the
 /// distinction between hashing and linear search is not really a concern. However, for
 /// future implementation flexibility, we continue to require that keys be hashable.
+///
+/// Note that this preserves _original_ insertion order: if you overwrite a key's value, the
+/// key does not move to "last". This is a specific requirement for Structured Headers and may
+/// harm the generality of this implementation.
 public struct OrderedMap<Key, Value> where Key: Hashable {
     private var backing: [Entry]
 
@@ -35,9 +39,12 @@ public struct OrderedMap<Key, Value> where Key: Hashable {
         }
         set {
             if let existing = self.backing.firstIndex(where: { $0.key == key }) {
-                self.backing.remove(at: existing)
-            }
-            if let newValue = newValue {
+                if let newValue = newValue {
+                    self.backing[existing] = Entry(key: key, value: newValue)
+                } else {
+                    self.backing.remove(at: existing)
+                }
+            } else if let newValue = newValue {
                 self.backing.append(Entry(key: key, value: newValue))
             }
         }

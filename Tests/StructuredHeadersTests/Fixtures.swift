@@ -19,12 +19,42 @@ enum FixturesLoader {
         return URL(string: "../TestFixtures/", relativeTo: myURL)!.absoluteURL
     }
 
-    static var fixtures: [StructuredHeaderTestFixture] {
+    private static var serializationFixturesDirectory: URL {
+        return fixturesDirectory.appendingPathComponent("serialisation-tests").absoluteURL
+    }
+
+    static var parsingFixtures: [StructuredHeaderTestFixture] {
         // ContentsOfDirectory can throw if it hits EINTR, just spin
         var files: [URL]? = nil
         for _ in 0..<1000 {
             do {
                 files = try FileManager.default.contentsOfDirectory(at: fixturesDirectory, includingPropertiesForKeys: nil, options: [])
+                break
+            } catch let error as NSError {
+                guard let underlyingError = error.userInfo[NSUnderlyingErrorKey] as? NSError, underlyingError.domain == NSPOSIXErrorDomain, underlyingError.code == EINTR else {
+                    fatalError("\(error)")
+                }
+                // Ok, we'll continue
+            }
+        }
+        guard let realFiles = files else {
+            fatalError("Hit EINTR 1000 times!")
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        return realFiles.filter { $0.pathExtension == "json" }.flatMap { file -> [StructuredHeaderTestFixture] in
+            let content = try! Data(contentsOf: file, options: [.uncached, .mappedIfSafe])
+            return try! decoder.decode([StructuredHeaderTestFixture].self, from: content)
+        }
+    }
+
+    static var serializingFixtures: [StructuredHeaderTestFixture] {
+        // ContentsOfDirectory can throw if it hits EINTR, just spin
+        var files: [URL]? = nil
+        for _ in 0..<1000 {
+            do {
+                files = try FileManager.default.contentsOfDirectory(at: serializationFixturesDirectory, includingPropertiesForKeys: nil, options: [])
                 break
             } catch let error as NSError {
                 guard let underlyingError = error.userInfo[NSUnderlyingErrorKey] as? NSError, underlyingError.domain == NSPOSIXErrorDomain, underlyingError.code == EINTR else {
@@ -50,8 +80,8 @@ struct StructuredHeaderTestFixture: Decodable {
     /// The name of this test.
     var name: String
 
-    /// The list of header fields that should be parsed.
-    var raw: [String]
+    /// The list of header fields that should be parsed. Not present if this is a serialization test.
+    var raw: [String]?
 
     /// The type to use to parse the fields
     var headerType: String
@@ -98,6 +128,15 @@ enum JSONSchema: Decodable {
             self = .array(value)
         } else {
             preconditionFailure("Failed to decode at \(container.codingPath)")
+        }
+    }
+
+    var isArray: Bool {
+        switch self {
+        case .array:
+            return true
+        case .dictionary, .integer, .double, .string, .bool:
+            return false
         }
     }
 }

@@ -19,7 +19,7 @@ enum FixtureTestError: Error {
     case base64DecodingFailed
 }
 
-final class StructuredHeadersTests: XCTestCase {
+final class StructuredFieldParserTests: XCTestCase {
     enum TestResult<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         case dictionary(OrderedMap<BaseData, ItemOrInnerList<BaseData>>)
         case list([ItemOrInnerList<BaseData>])
@@ -31,12 +31,11 @@ final class StructuredHeadersTests: XCTestCase {
         case (.integer(let baseInt), .integer(let jsonInt)):
             XCTAssertEqual(baseInt, jsonInt, "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.decimal(let baseDecimal), .double(let jsonDouble)):
-            XCTAssertEqual(baseDecimal, jsonDouble, "\(fixtureName): Got \(bareItem), expected \(schema)")
+            XCTAssertEqual(String(baseDecimal), String(jsonDouble), "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.decimal(let baseDecimal), .integer(let jsonInteger)):
             // Due to limits of Foundation's JSONSerialization, we can get types that decode as integers but are actually decimals.
-            // We just cannot tell the difference here, so we tolerate this flexibility by checking whether the baseDecimal is indeed
-            // an integer and using that.
-            XCTAssertEqual(baseDecimal, Double(jsonInteger), "\(fixtureName): Got \(bareItem), expected \(schema)")
+            // We just cannot tell the difference here, so we tolerate this flexibility.
+            XCTAssertEqual(Double(baseDecimal), Double(jsonInteger), "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.string(let baseString), .string(let jsonString)):
             XCTAssertEqual(baseString, jsonString, "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.token(let baseToken), .dictionary(let typeDictionary)):
@@ -165,7 +164,11 @@ final class StructuredHeadersTests: XCTestCase {
 
     private func _runTestOnFixture(_ fixture: StructuredHeaderTestFixture) {
         // Temporary join here for now, we may want to use a fancy collection at some point.
-        let joinedHeaders = Array(fixture.raw.joined(separator: ", ").utf8)
+        guard let raw = fixture.raw else {
+            // Serialization only test, skip.
+            return
+        }
+        let joinedHeaders = Array(raw.joined(separator: ", ").utf8)
 
         do {
             var parser = StructuredFieldParser(joinedHeaders)
@@ -211,7 +214,7 @@ final class StructuredHeadersTests: XCTestCase {
 
     func testCanPassAllFixtures() throws {
         // This is a bulk-test: we run across all the fixtures in the fixtures directory to confirm we can handle all of them.
-        for fixture in FixturesLoader.fixtures {
+        for fixture in FixturesLoader.parsingFixtures {
             self._runTestOnFixture(fixture)
         }
     }

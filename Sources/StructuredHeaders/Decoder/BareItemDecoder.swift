@@ -142,7 +142,8 @@ extension BareItemDecoder: SingleValueDecodingContainer {
             throw StructuredHeaderError.invalidTypeForItem
         }
 
-        return T(decimal)
+        // Going via Double is a bit sad. Swift Numerics would help here.
+        return T(Double(decimal))
     }
 
     private func _decodeFixedWidthInteger<T: FixedWidthInteger>(_ type: T.Type) throws -> T {

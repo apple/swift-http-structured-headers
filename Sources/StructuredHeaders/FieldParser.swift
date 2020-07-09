@@ -12,44 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-fileprivate let asciiSpace = UInt8(ascii: " ")
-fileprivate let asciiTab = UInt8(ascii: "\t")
-fileprivate let asciiOpenParenthesis = UInt8(ascii: "(")
-fileprivate let asciiCloseParenthesis = UInt8(ascii: ")")
-fileprivate let asciiDash = UInt8(ascii: "-")
-fileprivate let asciiUnderscore = UInt8(ascii: "_")
-fileprivate let asciiZero = UInt8(ascii: "0")
-fileprivate let asciiOne = UInt8(ascii: "1")
-fileprivate let asciiNine = UInt8(ascii: "9")
-fileprivate let asciiDigits = asciiZero...asciiNine
-fileprivate let asciiDquote = UInt8(ascii: "\"")
-fileprivate let asciiColon = UInt8(ascii: ":")
-fileprivate let asciiSemicolon = UInt8(ascii: ";")
-fileprivate let asciiBackslash = UInt8(ascii: "\\")
-fileprivate let asciiQuestionMark = UInt8(ascii: "?")
-fileprivate let asciiExclamationMark = UInt8(ascii: "!")
-fileprivate let asciiOctothorpe = UInt8(ascii: "#")
-fileprivate let asciiDollar = UInt8(ascii: "$")
-fileprivate let asciiPercent = UInt8(ascii: "%")
-fileprivate let asciiAmpersand = UInt8(ascii: "&")
-fileprivate let asciiSquote = UInt8(ascii: "'")
-fileprivate let asciiCaret = UInt8(ascii: "^")
-fileprivate let asciiBacktick = UInt8(ascii: "`")
-fileprivate let asciiPipe = UInt8(ascii: "|")
-fileprivate let asciiTilde = UInt8(ascii: "~")
-fileprivate let asciiAsterisk = UInt8(ascii: "*")
-fileprivate let asciiEqual = UInt8(ascii: "=")
-fileprivate let asciiPlus = UInt8(ascii: "+")
-fileprivate let asciiSlash = UInt8(ascii: "/")
-fileprivate let asciiPeriod = UInt8(ascii: ".")
-fileprivate let asciiComma = UInt8(ascii: ",")
-fileprivate let asciiCapitalA = UInt8(ascii: "A")
-fileprivate let asciiCapitalZ = UInt8(ascii: "Z")
-fileprivate let asciiLowerA = UInt8(ascii: "a")
-fileprivate let asciiLowerZ = UInt8(ascii: "z")
-fileprivate let asciiCapitals = asciiCapitalA...asciiCapitalZ
-fileprivate let asciiLowercases = asciiLowerA...asciiLowerZ
-
 /// A FieldParser is the basic parsing object for structured header fields represented as lists.
 public struct StructuredFieldParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
     // Right now I'm on the fence about whether this should be generic. It's convenient,
@@ -322,8 +284,9 @@ extension StructuredFieldParser {
             }
 
             // Same notes here as above
-            let baseFloat = Float64(String(decoding: integerBytes, as: UTF8.self))!
-            return .decimal(baseFloat * Float64(sign))
+            var decimal = PseudoDecimal(bytes: integerBytes)
+            decimal.mantissa *= Int64(sign)
+            return .decimal(decimal)
         }
     }
 

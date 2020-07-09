@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+// MARK:- StructuredHeaderError
 public struct StructuredHeaderError: Error {
     private enum _BaseError: Hashable {
         case invalidTrailingBytes

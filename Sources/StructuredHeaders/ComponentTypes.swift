@@ -29,7 +29,7 @@ extension ItemOrInnerList: Hashable { }
 public enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     case bool(Bool)
     case integer(Int)
-    case decimal(Float64)  // Not great, can we do better?
+    case decimal(PseudoDecimal)
     case string(String)
     case undecodedByteSequence(BaseData)
     case token(BaseData)
@@ -49,7 +49,7 @@ extension BareItem: ExpressibleByIntegerLiteral {
 
 extension BareItem: ExpressibleByFloatLiteral {
     public init(floatLiteral value: Float64) {
-        self = .decimal(value)
+        self = .decimal(.init(floatLiteral: value))
     }
 }
 
@@ -65,6 +65,11 @@ extension BareItem: Hashable { }
 public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     public var bareItem: BareItem<BaseData>
     public var parameters: OrderedMap<BaseData, BareItem<BaseData>>
+
+    public init(bareItem: BareItem<BaseData>, parameters: OrderedMap<BaseData, BareItem<BaseData>>) {
+        self.bareItem = bareItem
+        self.parameters = parameters
+    }
 }
 
 extension Item: Hashable { }
@@ -144,4 +149,9 @@ extension BareInnerList.Index: Comparable {
 public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     public var bareInnerList: BareInnerList<BaseData>
     public var parameters: OrderedMap<BaseData, BareItem<BaseData>>
+
+    public init(bareInnerList: BareInnerList<BaseData>, parameters: OrderedMap<BaseData, BareItem<BaseData>>) {
+        self.bareInnerList = bareInnerList
+        self.parameters = parameters
+    }
 }
