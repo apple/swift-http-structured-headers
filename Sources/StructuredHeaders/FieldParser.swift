@@ -443,7 +443,7 @@ extension StructuredFieldParser {
         // we get to the end of the string.
         let tokenSlice = self.underlyingData[..<index]
         self.underlyingData = self.underlyingData[index...]
-        return .token(tokenSlice)
+        return .token(String(decoding: tokenSlice, as: UTF8.self))
     }
 
     private mutating func _parseParameters() throws -> OrderedMap<BaseData.SubSequence, BareItem> {

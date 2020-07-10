@@ -193,7 +193,7 @@ extension BareItem where BaseData == ArraySlice<UInt8> {
         case .dictionary(let typeObject):
             switch (typeObject["__type"], typeObject["value"]) {
             case (.some(.string("token")), .some(.string(let value))):
-                self = .token(ArraySlice(value.utf8))
+                self = .token(value)
 
             case (.some(.string("binary")), .some(.string(let value))):
                 let expectedBase64Bytes = Data(base32Encoded: Data(value.utf8)).base64EncodedData()

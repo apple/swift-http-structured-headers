@@ -38,14 +38,14 @@ final class StructuredFieldParserTests: XCTestCase {
             XCTAssertEqual(Double(baseDecimal), Double(jsonInteger), "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.string(let baseString), .string(let jsonString)):
             XCTAssertEqual(baseString, jsonString, "\(fixtureName): Got \(bareItem), expected \(schema)")
-        case (.token(let baseToken), .dictionary(let typeDictionary)):
+        case (.token(let token), .dictionary(let typeDictionary)):
             guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"], case .string(let typeValue) = typeDictionary["value"] else {
                 XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")
                 return
             }
 
             XCTAssertEqual(typeName, "token", "\(fixtureName): Expected type token, got type \(typeName)")
-            XCTAssertEqual(typeValue, String(decoding: baseToken, as: UTF8.self), "\(fixtureName): Got \(String(decoding: baseToken, as: UTF8.self)), expected \(typeValue)")
+            XCTAssertEqual(typeValue, token, "\(fixtureName): Got \(token), expected \(typeValue)")
         case (.undecodedByteSequence(let binary), .dictionary(let typeDictionary)):
             guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"], case .string(let typeValue) = typeDictionary["value"] else {
                 XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")

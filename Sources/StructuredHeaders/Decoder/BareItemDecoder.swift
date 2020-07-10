@@ -81,7 +81,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         case .string(let string):
             return string
         case .token(let token):
-            return String(decoding: token, as: UTF8.self)
+            return token
         default:
             throw StructuredHeaderError.invalidTypeForItem
         }

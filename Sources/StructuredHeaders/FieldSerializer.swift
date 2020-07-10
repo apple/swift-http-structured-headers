@@ -176,38 +176,10 @@ extension StructuredFieldSerializer {
             }
             self.data.append(asciiDquote)
         case .token(let token):
-            switch token.first {
-            case .some(asciiCapitals), .some(asciiLowercases), .some(asciiAsterisk):
-                // Good
-                ()
-            default:
+            guard token.isValidToken else {
                 throw StructuredHeaderError.invalidToken
             }
-
-            for byte in token {
-                switch byte {
-                // Valid token characters are RFC 7230 tchar, colon, and slash.
-                // tchar is:
-                //
-                // tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
-                //                / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
-                //                / DIGIT / ALPHA
-                //
-                // The following insane case statement covers this. Tokens suck.
-                case asciiExclamationMark, asciiOctothorpe, asciiDollar, asciiPercent,
-                     asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
-                     asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
-                     asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
-                     asciiColon, asciiSlash:
-                    // Good
-                    ()
-                default:
-                    // Bad token
-                    throw StructuredHeaderError.invalidToken
-                }
-            }
-
-            self.data.append(contentsOf: token)
+            self.data.append(contentsOf: token.utf8)
         case .undecodedByteSequence(let bytes):
             // We require the user to have gotten this right.
             self.data.append(asciiColon)

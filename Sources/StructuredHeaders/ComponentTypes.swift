@@ -32,7 +32,7 @@ public enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element ==
     case decimal(PseudoDecimal)
     case string(String)
     case undecodedByteSequence(BaseData)
-    case token(BaseData)
+    case token(String)
 }
 
 extension BareItem: ExpressibleByBooleanLiteral {
@@ -55,7 +55,11 @@ extension BareItem: ExpressibleByFloatLiteral {
 
 extension BareItem: ExpressibleByStringLiteral {
     public init(stringLiteral value: StringLiteralType) {
-        self = .string(value)
+        if value.isValidToken {
+            self = .token(value)
+        } else {
+            self = .string(value)
+        }
     }
 }
 
@@ -153,5 +157,44 @@ public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseDa
     public init(bareInnerList: BareInnerList<BaseData>, parameters: OrderedMap<BaseData, BareItem<BaseData>>) {
         self.bareInnerList = bareInnerList
         self.parameters = parameters
+    }
+}
+
+extension String {
+    var isValidToken: Bool {
+        let view = self.utf8
+
+        switch view.first {
+        case .some(asciiCapitals), .some(asciiLowercases), .some(asciiAsterisk):
+            // Good
+            ()
+        default:
+            return false
+        }
+
+        for byte in view {
+            switch byte {
+            // Valid token characters are RFC 7230 tchar, colon, and slash.
+            // tchar is:
+            //
+            // tchar          = "!" / "#" / "$" / "%" / "&" / "'" / "*"
+            //                / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
+            //                / DIGIT / ALPHA
+            //
+            // The following insane case statement covers this. Tokens suck.
+            case asciiExclamationMark, asciiOctothorpe, asciiDollar, asciiPercent,
+                 asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
+                 asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
+                 asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
+                 asciiColon, asciiSlash:
+                // Good
+                ()
+            default:
+                // Bad token
+                return false
+            }
+        }
+
+        return true
     }
 }
