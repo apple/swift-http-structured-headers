@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 struct ParametersDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var parameters: OrderedMap<BaseData.SubSequence, BareItem<BaseData.SubSequence>>
+    private var parameters: OrderedMap<String, BareItem<BaseData.SubSequence>>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ parameters: OrderedMap<BaseData.SubSequence, BareItem<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ parameters: OrderedMap<String, BareItem<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
         self.parameters = parameters
         self.decoder = decoder
     }
@@ -29,11 +29,11 @@ extension ParametersDecoder: KeyedDecodingContainerProtocol {
     }
 
     var allKeys: [Key] {
-        return self.parameters.compactMap { Key(stringValue: String(decoding: $0.0, as: UTF8.self)) }
+        return self.parameters.compactMap { Key(stringValue: $0.0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        return self.parameters.contains(where: { $0.0.elementsEqual(key.stringValue.utf8) })
+        return self.parameters.contains(where: { $0.0 == key.stringValue })
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {

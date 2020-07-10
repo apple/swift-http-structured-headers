@@ -13,11 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 struct DictionaryKeyedContainer<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var dictionary: OrderedMap<BaseData.SubSequence, ItemOrInnerList<BaseData.SubSequence>>
+    private var dictionary: OrderedMap<String, ItemOrInnerList<BaseData.SubSequence>>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ dictionary: OrderedMap<BaseData.SubSequence, ItemOrInnerList<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ dictionary: OrderedMap<String, ItemOrInnerList<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
         self.dictionary = dictionary
         self.decoder = decoder
     }
@@ -29,11 +29,11 @@ extension DictionaryKeyedContainer: KeyedDecodingContainerProtocol {
     }
 
     var allKeys: [Key] {
-        return self.dictionary.compactMap { Key(stringValue: String(decoding: $0.0, as: UTF8.self)) }
+        return self.dictionary.compactMap { Key(stringValue: $0.0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        return self.dictionary.contains(where: { $0.0.elementsEqual(key.stringValue.utf8) })
+        return self.dictionary.contains(where: { $0.0 == key.stringValue })
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {

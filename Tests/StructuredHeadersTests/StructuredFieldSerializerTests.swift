@@ -17,7 +17,7 @@ import StructuredHeaders
 
 final class StructuredFieldSerializerTests: XCTestCase {
     enum TestResult<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-        case dictionary(OrderedMap<BaseData, ItemOrInnerList<BaseData>>)
+        case dictionary(OrderedMap<String, ItemOrInnerList<BaseData>>)
         case list([ItemOrInnerList<BaseData>])
         case item(Item<BaseData>)
     }
@@ -132,10 +132,10 @@ extension StructuredFieldSerializerTests.TestResult where BaseData == ArraySlice
         switch schema {
         case .dictionary(let dictionary):
             // Top level JSON objects are encoding dictionaries.
-            var dict = OrderedMap<BaseData, ItemOrInnerList<BaseData>>()
+            var dict = OrderedMap<String, ItemOrInnerList<BaseData>>()
 
             for (name, value) in dictionary {
-                dict[ArraySlice(name.utf8)] = try ItemOrInnerList(value)
+                dict[name] = try ItemOrInnerList(value)
             }
 
             self = .dictionary(dict)
@@ -234,7 +234,7 @@ extension BareInnerList where BaseData == ArraySlice<UInt8> {
     }
 }
 
-extension OrderedMap where Key == ArraySlice<UInt8>, Value == BareItem<ArraySlice<UInt8>> {
+extension OrderedMap where Key == String, Value == BareItem<ArraySlice<UInt8>> {
     init(parameters: JSONSchema) throws {
         guard case .dictionary(let jsonDict) = parameters else {
             fatalError("Invalid format for parameters: \(parameters)")
@@ -243,7 +243,7 @@ extension OrderedMap where Key == ArraySlice<UInt8>, Value == BareItem<ArraySlic
         self.init()
 
         for (name, value) in jsonDict {
-            self[ArraySlice(name.utf8)] = try BareItem(value)
+            self[name] = try BareItem(value)
         }
     }
 }

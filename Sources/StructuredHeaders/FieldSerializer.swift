@@ -27,7 +27,7 @@ public struct StructuredFieldSerializer {
 
 extension StructuredFieldSerializer {
     // TODO: decide if this is the best API, it forces allocations.
-    public mutating func writeDictionaryHeader<BaseData: RandomAccessCollection>(_ root: OrderedMap<BaseData, ItemOrInnerList<BaseData>>) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    public mutating func writeDictionaryHeader<BaseData: RandomAccessCollection>(_ root: OrderedMap<String, ItemOrInnerList<BaseData>>) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         guard root.count > 0 else {
             return []
         }
@@ -61,7 +61,7 @@ extension StructuredFieldSerializer {
 }
 
 extension StructuredFieldSerializer {
-    private mutating func serializeADictionary<BaseData: RandomAccessCollection>(_ dictionary: OrderedMap<BaseData, ItemOrInnerList<BaseData>>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeADictionary<BaseData: RandomAccessCollection>(_ dictionary: OrderedMap<String, ItemOrInnerList<BaseData>>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         for (name, value) in dictionary {
             try self.serializeAKey(name)
 
@@ -130,7 +130,7 @@ extension StructuredFieldSerializer {
         try self.serializeParameters(item.parameters)
     }
 
-    private mutating func serializeParameters<BaseData: RandomAccessCollection>(_ parameters: OrderedMap<BaseData, BareItem<BaseData>>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeParameters<BaseData: RandomAccessCollection>(_ parameters: OrderedMap<String, BareItem<BaseData>>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         for (key, value) in parameters {
             self.data.append(asciiSemicolon)
             try self.serializeAKey(key)
@@ -145,10 +145,10 @@ extension StructuredFieldSerializer {
         }
     }
 
-    private mutating func serializeAKey<BaseData: RandomAccessCollection>(_ key: BaseData) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeAKey(_ key: String) throws {
         // We touch each byte twice here, but that's ok: this is cache friendly and less branchy (the copy gets to be memcpy in some cases!)
         try key.validateStructuredHeaderKey()
-        self.data.append(contentsOf: key)
+        self.data.append(contentsOf: key.utf8)
     }
 
     private mutating func serializeABareItem<BaseData: RandomAccessCollection>(_ item: BareItem<BaseData>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -193,9 +193,10 @@ extension StructuredFieldSerializer {
     }
 }
 
-extension RandomAccessCollection where Element == UInt8 {
+extension String {
     func validateStructuredHeaderKey() throws {
-        if let firstByte = self.first {
+        let utf8View = self.utf8
+        if let firstByte = utf8View.first {
             switch firstByte {
             case asciiLowercases, asciiAsterisk:
                 // Good
@@ -205,7 +206,7 @@ extension RandomAccessCollection where Element == UInt8 {
             }
         }
 
-        let validKey = self.dropFirst().allSatisfy {
+        let validKey = utf8View.dropFirst().allSatisfy {
             switch $0 {
             case asciiLowercases, asciiDigits, asciiUnderscore,
                  asciiDash, asciiPeriod, asciiAsterisk:

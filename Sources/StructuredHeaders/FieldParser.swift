@@ -32,7 +32,7 @@ extension StructuredFieldParser {
     public typealias BareInnerList = StructuredHeaders.BareInnerList<BaseData.SubSequence>
     public typealias InnerList = StructuredHeaders.InnerList<BaseData.SubSequence>
     public typealias ItemOrInnerList = StructuredHeaders.ItemOrInnerList<BaseData.SubSequence>
-    public typealias Key = BaseData.SubSequence
+    public typealias Key = String
 
     /// Parse the HTTP structured field as a list.
     ///
@@ -446,8 +446,8 @@ extension StructuredFieldParser {
         return .token(String(decoding: tokenSlice, as: UTF8.self))
     }
 
-    private mutating func _parseParameters() throws -> OrderedMap<BaseData.SubSequence, BareItem> {
-        var parameters = OrderedMap<BaseData.SubSequence, BareItem>()
+    private mutating func _parseParameters() throws -> OrderedMap<Key, BareItem> {
+        var parameters = OrderedMap<Key, BareItem>()
 
         // We want to loop while we still have bytes _and_ while the first character is asciiSemicolon.
         // This covers both.
@@ -469,7 +469,7 @@ extension StructuredFieldParser {
         return parameters
     }
 
-    private mutating func _parseAKey() throws -> BaseData.SubSequence {
+    private mutating func _parseAKey() throws -> Key {
         guard let first = self.underlyingData.first, asciiLowercases.contains(first) || first == asciiAsterisk else {
             throw StructuredHeaderError.invalidKey
         }
@@ -483,7 +483,7 @@ extension StructuredFieldParser {
             }
         })
         self.underlyingData = self.underlyingData.dropFirst(key.count)
-        return key
+        return String(decoding: key, as: UTF8.self)
     }
 }
 

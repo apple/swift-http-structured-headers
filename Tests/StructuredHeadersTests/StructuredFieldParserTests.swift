@@ -21,7 +21,7 @@ enum FixtureTestError: Error {
 
 final class StructuredFieldParserTests: XCTestCase {
     enum TestResult<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-        case dictionary(OrderedMap<BaseData, ItemOrInnerList<BaseData>>)
+        case dictionary(OrderedMap<String, ItemOrInnerList<BaseData>>)
         case list([ItemOrInnerList<BaseData>])
         case item(Item<BaseData>)
     }
@@ -65,15 +65,15 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateParameters<BaseData: RandomAccessCollection>(_ parameters: OrderedMap<BaseData, BareItem<BaseData>>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateParameters<BaseData: RandomAccessCollection>(_ parameters: OrderedMap<String, BareItem<BaseData>>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         guard case .dictionary(let expectedParameters) = schema else {
             XCTFail("\(fixtureName): Expected parameters to be a JSON dictionary, but got \(schema)")
             return
         }
         XCTAssertEqual(expectedParameters.count, parameters.count, "\(fixtureName): Different numbers of parameters: expected \(expectedParameters), got \(parameters)")
         for (name, value) in parameters {
-            guard let expectedValue = expectedParameters[String(decoding: name, as: UTF8.self)] else {
-                XCTFail("\(fixtureName): Did not contain parameter for \(String(decoding: name, as: UTF8.self))")
+            guard let expectedValue = expectedParameters[name] else {
+                XCTFail("\(fixtureName): Did not contain parameter for \(name)")
                 return
             }
             try self._validateBareItem(value, against: expectedValue, fixtureName: fixtureName)
@@ -128,7 +128,7 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateDictionary<BaseData: RandomAccessCollection>(_ result: OrderedMap<BaseData, ItemOrInnerList<BaseData>>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateDictionary<BaseData: RandomAccessCollection>(_ result: OrderedMap<String, ItemOrInnerList<BaseData>>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         guard case .dictionary(let expectedElements) = schema else {
             XCTFail("\(fixtureName): Unexpected dictionary: got \(result), expected \(schema)")
             return
@@ -136,8 +136,8 @@ final class StructuredFieldParserTests: XCTestCase {
 
         XCTAssertEqual(expectedElements.count, result.count, "\(fixtureName): Different counts in dictionary: got \(result), expected \(expectedElements)")
         for (key, value) in result {
-            guard let expectedEntry = expectedElements[String(decoding: key, as: UTF8.self)] else {
-                XCTFail("\(fixtureName): Could not find \(String(decoding: key, as: UTF8.self)) in \(expectedElements)")
+            guard let expectedEntry = expectedElements[key] else {
+                XCTFail("\(fixtureName): Could not find \(key) in \(expectedElements)")
                 return
             }
             switch value {

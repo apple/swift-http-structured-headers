@@ -185,18 +185,18 @@ extension _StructuredFieldDecoder: Decoder {
 extension _StructuredFieldDecoder {
     /// The basic elements that make up a Structured Header
     fileprivate enum Element {
-        case dictionary(OrderedMap<BaseData.SubSequence, ItemOrInnerList<BaseData.SubSequence>>)
+        case dictionary(OrderedMap<String, ItemOrInnerList<BaseData.SubSequence>>)
         case list([ItemOrInnerList<BaseData.SubSequence>])
         case item(Item<BaseData.SubSequence>)
         case innerList(InnerList<BaseData.SubSequence>)
         case bareItem(BareItem<BaseData.SubSequence>)
         case bareInnerList(BareInnerList<BaseData.SubSequence>)
-        case parameters(OrderedMap<BaseData.SubSequence, BareItem<BaseData.SubSequence>>)
+        case parameters(OrderedMap<String, BareItem<BaseData.SubSequence>>)
 
         func innerElement(for key: _StructuredHeaderCodingKey) throws -> Element {
             switch self {
             case .dictionary(let dictionary):
-                guard let element = dictionary.first(where: { $0.0.elementsEqual(key.stringValue.utf8) }) else {
+                guard let element = dictionary.first(where: { $0.0 == key.stringValue }) else {
                     throw StructuredHeaderError.invalidTypeForItem
                 }
                 switch element.1 {
@@ -251,7 +251,7 @@ extension _StructuredFieldDecoder {
                 let index = innerList.index(innerList.startIndex, offsetBy: offset)
                 return .item(innerList[index])
             case .parameters(let params):
-                guard let element = params.first(where: { $0.0.elementsEqual(key.stringValue.utf8) }) else {
+                guard let element = params.first(where: { $0.0 == key.stringValue }) else {
                     throw StructuredHeaderError.invalidTypeForItem
                 }
                 return .bareItem(element.1)

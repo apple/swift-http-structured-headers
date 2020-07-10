@@ -68,9 +68,9 @@ extension BareItem: Hashable { }
 // MARK:- Item
 public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     public var bareItem: BareItem<BaseData>
-    public var parameters: OrderedMap<BaseData, BareItem<BaseData>>
+    public var parameters: OrderedMap<String, BareItem<BaseData>>
 
-    public init(bareItem: BareItem<BaseData>, parameters: OrderedMap<BaseData, BareItem<BaseData>>) {
+    public init(bareItem: BareItem<BaseData>, parameters: OrderedMap<String, BareItem<BaseData>>) {
         self.bareItem = bareItem
         self.parameters = parameters
     }
@@ -152,9 +152,9 @@ extension BareInnerList.Index: Comparable {
 // MARK:- InnerList
 public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     public var bareInnerList: BareInnerList<BaseData>
-    public var parameters: OrderedMap<BaseData, BareItem<BaseData>>
+    public var parameters: OrderedMap<String, BareItem<BaseData>>
 
-    public init(bareInnerList: BareInnerList<BaseData>, parameters: OrderedMap<BaseData, BareItem<BaseData>>) {
+    public init(bareInnerList: BareInnerList<BaseData>, parameters: OrderedMap<String, BareItem<BaseData>>) {
         self.bareInnerList = bareInnerList
         self.parameters = parameters
     }
