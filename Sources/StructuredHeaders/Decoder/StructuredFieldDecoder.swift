@@ -64,7 +64,7 @@ extension StructuredFieldDecoder {
 class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
     private var parser: StructuredFieldParser<BaseData>
 
-    // For now we use a stack here because the CoW operations on Array would stuck. Ideally I'd just have us decode
+    // For now we use a stack here because the CoW operations on Array would suck. Ideally I'd just have us decode
     // our way down with values, but doing that is a CoWy nightmare from which we cannot escape.
     private var _codingStack: [CodingStackEntry]
 
