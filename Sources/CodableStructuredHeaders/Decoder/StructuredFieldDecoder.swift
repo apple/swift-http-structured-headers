@@ -14,13 +14,17 @@
 import Foundation
 import StructuredHeaders
 
+/// A `StructuredFieldDecoder` allows decoding `Decodable` objects from a HTTP
+/// structured header field.
 public struct StructuredFieldDecoder {
+    /// A strategy that should be used to map coding keys to wire format keys.
     public var keyDecodingStrategy: KeyDecodingStrategy?
 
     public init() { }
 }
 
 extension StructuredFieldDecoder {
+    /// A strategy that should be used to map coding keys to wire format keys.
     public struct KeyDecodingStrategy: Hashable {
         fileprivate enum Base: Hashable {
             case lowercase
@@ -35,12 +39,31 @@ extension StructuredFieldDecoder {
 }
 
 extension StructuredFieldDecoder {
+    /// Attempt to decode an object from a structured header field.
+    ///
+    /// This method will attempt to guess what kind of structured header field is being
+    /// parsed based on the structure of `type`. This is useful for quick prototyping, but
+    /// generally this method should be avoided in favour of one of the other `decode`
+    /// methods on this type.
+    ///
+    /// - parameters:
+    ///     - type: The type of the object to decode.
+    ///     - data: The bytes of the structured header field.
+    /// - throws: If the header field could not be parsed, or could not be decoded.
+    /// - returns: An object of type `StructuredField`.
     public func decode<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         return try type.init(from: decoder)
     }
 
+    /// Attempt to decode an object from a structured header dictionary field.
+    ///
+    /// - parameters:
+    ///     - type: The type of the object to decode.
+    ///     - data: The bytes of the structured header field.
+    /// - throws: If the header field could not be parsed, or could not be decoded.
+    /// - returns: An object of type `StructuredField`.
     public func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
@@ -48,6 +71,13 @@ extension StructuredFieldDecoder {
         return try type.init(from: decoder)
     }
 
+    /// Attempt to decode an object from a structured header list field.
+    ///
+    /// - parameters:
+    ///     - type: The type of the object to decode.
+    ///     - data: The bytes of the structured header field.
+    /// - throws: If the header field could not be parsed, or could not be decoded.
+    /// - returns: An object of type `StructuredField`.
     public func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
@@ -55,6 +85,13 @@ extension StructuredFieldDecoder {
         return try type.init(from: decoder)
     }
 
+    /// Attempt to decode an object from a structured header item field.
+    ///
+    /// - parameters:
+    ///     - type: The type of the object to decode.
+    ///     - data: The bytes of the structured header field.
+    /// - throws: If the header field could not be parsed, or could not be decoded.
+    /// - returns: An object of type `StructuredField`.
     public func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)

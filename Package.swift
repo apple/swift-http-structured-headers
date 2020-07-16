@@ -15,7 +15,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "swift-structured-headers",
+    name: "swift-http-structured-headers",
     products: [
         .library(
             name: "StructuredHeaders",

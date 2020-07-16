@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// A FieldParser is the basic parsing object for structured header fields represented as lists.
+/// A `StructuredFieldParser` is the basic parsing object for structured header fields.
 public struct StructuredFieldParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
     // Right now I'm on the fence about whether this should be generic. It's convenient,
     // and makes it really easy for us to express the parsing over a wide range of data types.
@@ -37,6 +37,9 @@ extension StructuredFieldParser {
     /// Parse the HTTP structured field as a list.
     ///
     /// This is a straightforward implementation of the parser in the draft spec.
+    ///
+    /// - throws: If the field could not be parsed.
+    /// - returns: An array of items or inner lists.
     public mutating func parseListField() throws -> [ItemOrInnerList] {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()
@@ -56,6 +59,9 @@ extension StructuredFieldParser {
     }
 
     /// Parse the HTTP structured header field as a dictionary.
+    ///
+    /// - throws: If the field could not be parsed.
+    /// - returns: An `OrderedMap` corresponding to the entries in the dictionary.
     public mutating func parseDictionaryField() throws -> OrderedMap<Key, ItemOrInnerList> {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()
@@ -75,6 +81,9 @@ extension StructuredFieldParser {
     }
 
     /// Parse the HTTP structured header field as an item.
+    ///
+    /// - throws: If the field could not be parsed.
+    /// - returns: The `Item` in the field.
     public mutating func parseItemField() throws -> Item {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()

@@ -14,6 +14,8 @@
 import Foundation
 import StructuredHeaders
 
+/// A `StructuredFieldEncoder` allows encoding `Encodable` objects to the format of a HTTP
+/// structured header field.
 public struct StructuredFieldEncoder {
     public var keyEncodingStrategy: KeyEncodingStrategy?
 
@@ -21,6 +23,7 @@ public struct StructuredFieldEncoder {
 }
 
 extension StructuredFieldEncoder {
+    /// A strategy that should be used to map coding keys to wire format keys.
     public struct KeyEncodingStrategy: Hashable {
         fileprivate enum Base: Hashable {
             case lowercase
@@ -35,18 +38,36 @@ extension StructuredFieldEncoder {
 }
 
 extension StructuredFieldEncoder {
+    /// Attempt to encode an object into a structured header dictionary field.
+    ///
+    /// - parameters:
+    ///     - data: The object to encode.
+    /// - throws: If the header field could not be encoded, or could not be serialized.
+    /// - returns: The bytes representing the HTTP structured header field.
     public func encodeDictionaryField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         let serializer = StructuredFieldSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeDictionaryField(data)
     }
 
+    /// Attempt to encode an object into a structured header list field.
+    ///
+    /// - parameters:
+    ///     - data: The object to encode.
+    /// - throws: If the header field could not be encoded, or could not be serialized.
+    /// - returns: The bytes representing the HTTP structured header field.
     public func encodeListField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         let serializer = StructuredFieldSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeListField(data)
     }
 
+    /// Attempt to encode an object into a structured header item field.
+    ///
+    /// - parameters:
+    ///     - data: The object to encode.
+    /// - throws: If the header field could not be encoded, or could not be serialized.
+    /// - returns: The bytes representing the HTTP structured header field.
     public func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         let serializer = StructuredFieldSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)

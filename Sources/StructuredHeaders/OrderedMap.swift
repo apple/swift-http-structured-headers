@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// OrderedMap is a data type that has associative-array properties, but that
+/// `OrderedMap` is a data type that has associative-array properties, but that
 /// maintains insertion order.
 ///
 /// Our initial implementation takes advantage of the fact that the vast majority of

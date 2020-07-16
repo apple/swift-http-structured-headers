@@ -14,8 +14,8 @@
 
 fileprivate let validIntegerRange = Int64(-999999999999999)...Int64(999999999999999)
 
+/// A `StructuredFieldSerializer` is the basic parsing object for structured header fields.
 public struct StructuredFieldSerializer {
-    // TODO: Allow users to choose this.
     private var data: [UInt8]
 
     public init() {
@@ -24,7 +24,12 @@ public struct StructuredFieldSerializer {
 }
 
 extension StructuredFieldSerializer {
-    // TODO: decide if this is the best API, it forces allocations.
+    /// Writes a structured headers dictionary header field.
+    ///
+    /// - parameters:
+    ///     - root: The dictionary object.
+    /// - throws: If the dictionary could not be serialized.
+    /// - returns: The bytes of the serialized header field.
     public mutating func writeDictionaryHeader<BaseData: RandomAccessCollection>(_ root: OrderedMap<String, ItemOrInnerList<BaseData>>) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         guard root.count > 0 else {
             return []
@@ -37,6 +42,12 @@ extension StructuredFieldSerializer {
         return self.data
     }
 
+    /// Writes a structured headers list header field.
+    ///
+    /// - parameters:
+    ///     - root: The list object.
+    /// - throws: If the list could not be serialized.
+    /// - returns: The bytes of the serialized header field.
     public mutating func writeListHeader<BaseData: RandomAccessCollection>(_ list: [ItemOrInnerList<BaseData>]) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         guard list.count > 0 else {
             return []
@@ -49,6 +60,12 @@ extension StructuredFieldSerializer {
         return self.data
     }
 
+    /// Writes a structured headers item header field.
+    ///
+    /// - parameters:
+    ///     - root: The item.
+    /// - throws: If the item could not be serialized.
+    /// - returns: The bytes of the serialized header field.
     public mutating func writeItemHeader<BaseData: RandomAccessCollection>(_ item: Item<BaseData>) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         defer {
             self.data.removeAll(keepingCapacity: true)

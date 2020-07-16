@@ -18,6 +18,8 @@
 // They are not used by those using the Codable interface.
 
 // MARK:- ItemOrInnerList
+/// `ItemOrInnerList` represents the values in a structured header dictionary, or the
+/// entries in a structured header list.
 public enum ItemOrInnerList<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     case item(Item<BaseData>)
     case innerList(InnerList<BaseData>)
@@ -26,12 +28,26 @@ public enum ItemOrInnerList<BaseData: RandomAccessCollection> where BaseData.Ele
 extension ItemOrInnerList: Hashable { }
 
 // MARK:- BareItem
+/// `BareItem` is a representation of the base data types at the bottom of a structured
+/// header field. These types are not parameterised: they are raw data.
 public enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    /// A boolean item.
     case bool(Bool)
+
+    /// An integer item.
     case integer(Int)
+
+    /// A decimal item.
     case decimal(PseudoDecimal)
+
+    /// A string item.
     case string(String)
+
+    /// A byte sequence. This case must contain base64-encoded data, as
+    /// `StructuredHeaders` does not do base64 encoding or decoding.
     case undecodedByteSequence(BaseData)
+
+    /// A token item.
     case token(String)
 }
 
@@ -66,8 +82,13 @@ extension BareItem: ExpressibleByStringLiteral {
 extension BareItem: Hashable { }
 
 // MARK:- Item
+/// `Item` represents a structured header field item: a combination of a `bareItem`
+/// and some parameters.
 public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    /// The `BareItem` that this `Item` contains.
     public var bareItem: BareItem<BaseData>
+
+    /// The parameters associated with `bareItem`
     public var parameters: OrderedMap<String, BareItem<BaseData>>
 
     public init(bareItem: BareItem<BaseData>, parameters: OrderedMap<String, BareItem<BaseData>>) {
@@ -79,6 +100,8 @@ public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == U
 extension Item: Hashable { }
 
 // MARK:- BareInnerList
+/// A `BareInnerList` represents the items contained within an `InnerList`, without
+/// the associated parameters.
 public struct BareInnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     private var items: [Item<BaseData>]
 
@@ -150,8 +173,12 @@ extension BareInnerList.Index: Comparable {
 }
 
 // MARK:- InnerList
+/// An `InnerList` is a list of items, with some associated parameters.
 public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    /// The items contained within this inner list.
     public var bareInnerList: BareInnerList<BaseData>
+
+    /// The parameters associated with the `bareInnerList`.
     public var parameters: OrderedMap<String, BareItem<BaseData>>
 
     public init(bareInnerList: BareInnerList<BaseData>, parameters: OrderedMap<String, BareItem<BaseData>>) {
@@ -161,6 +188,8 @@ public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseDa
 }
 
 extension String {
+    /// Whether this string is a valid structured headers token, or whether it would
+    /// need to be stored in a structured headers string.
     public var structuredHeadersIsValidToken: Bool {
         let view = self.utf8
 

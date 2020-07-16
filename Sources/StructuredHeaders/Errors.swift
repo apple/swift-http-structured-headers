@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 // MARK:- StructuredHeaderError
+/// Errors that may be encountered when working with structured headers.
 public struct StructuredHeaderError: Error {
     private enum _BaseError: Hashable {
         case invalidTrailingBytes
