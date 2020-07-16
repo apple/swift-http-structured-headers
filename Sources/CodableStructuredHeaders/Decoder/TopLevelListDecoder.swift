@@ -11,22 +11,23 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import StructuredHeaders
 
-struct BareInnerListDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var list: BareInnerList<BaseData.SubSequence>
+struct TopLevelListDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private var list: [ItemOrInnerList<BaseData.SubSequence>]
 
     private var currentOffset: Int
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ list: BareInnerList<BaseData.SubSequence>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ list: [ItemOrInnerList<BaseData.SubSequence>], decoder: _StructuredFieldDecoder<BaseData>) {
         self.list = list
         self.currentOffset = 0
         self.decoder = decoder
     }
 }
 
-extension BareInnerListDecoder: UnkeyedDecodingContainer {
+extension TopLevelListDecoder: UnkeyedDecodingContainer {
     var codingPath: [CodingKey] {
         return self.decoder.codingPath
     }

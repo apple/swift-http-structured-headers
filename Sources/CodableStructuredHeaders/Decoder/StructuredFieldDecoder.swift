@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import StructuredHeaders
 
 public struct StructuredFieldDecoder {
     public var keyDecodingStrategy: KeyDecodingStrategy?

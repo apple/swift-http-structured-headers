@@ -174,7 +174,7 @@ extension StructuredFieldSerializer {
             }
             self.data.append(asciiDquote)
         case .token(let token):
-            guard token.isValidToken else {
+            guard token.structuredHeadersIsValidToken else {
                 throw StructuredHeaderError.invalidToken
             }
             self.data.append(contentsOf: token.utf8)

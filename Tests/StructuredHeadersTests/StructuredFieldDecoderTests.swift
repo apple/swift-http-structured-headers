@@ -14,6 +14,7 @@
 import Foundation
 import XCTest
 import StructuredHeaders
+import CodableStructuredHeaders
 
 struct ListyDictionaryFieldParameters: Codable, Equatable {
     var q: Double?

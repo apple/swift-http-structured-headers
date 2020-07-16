@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import StructuredHeaders
 
 /// This object translates between the keys used by the encoder and the keys used by the encoding object.
 ///

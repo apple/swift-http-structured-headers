@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import StructuredHeaders
 
 public struct StructuredFieldEncoder {
     public var keyEncodingStrategy: KeyEncodingStrategy?
@@ -167,7 +168,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ value: String) throws {
-        if value.isValidToken {
+        if value.structuredHeadersIsValidToken {
             try self.currentStackEntry.storage.insertBareItem(.token(value))
         } else {
             try self.currentStackEntry.storage.insertBareItem(.string(value))
@@ -308,7 +309,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: String) throws {
-        if value.isValidToken {
+        if value.structuredHeadersIsValidToken {
             try self.currentStackEntry.storage.appendBareItem(.token(value))
         } else {
             try self.currentStackEntry.storage.appendBareItem(.string(value))
@@ -444,7 +445,7 @@ extension _StructuredFieldEncoder {
 
     func encode(_ value: String, forKey key: String) throws {
         let key = self.sanitizeKey(key)
-        if value.isValidToken {
+        if value.structuredHeadersIsValidToken {
             try self.currentStackEntry.storage.insertBareItem(.token(value), atKey: key)
         } else {
             try self.currentStackEntry.storage.insertBareItem(.string(value), atKey: key)
@@ -809,7 +810,6 @@ extension _StructuredFieldEncoder {
 
 extension Item where BaseData == ArraySlice<UInt8> {
     fileprivate init(_ partialItem: _StructuredFieldEncoder.NodeType.PartialItem) {
-        self.bareItem = partialItem.bareItem!
-        self.parameters = partialItem.parameters
+        self.init(bareItem: partialItem.bareItem!, parameters: partialItem.parameters)
     }
 }

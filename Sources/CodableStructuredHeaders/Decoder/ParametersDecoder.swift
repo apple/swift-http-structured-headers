@@ -11,42 +11,38 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import StructuredHeaders
 
-private let keyedItemDecoderSupportedKeys = ["item", "parameters"]
-
-/// Used when someone has requested a keyed decoder for a property of item type.
-///
-/// There are only two valid keys for this: "item" and "parameters".
-struct KeyedItemDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var item: Item<BaseData.SubSequence>
+struct ParametersDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private var parameters: OrderedMap<String, BareItem<BaseData.SubSequence>>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ item: Item<BaseData.SubSequence>, decoder: _StructuredFieldDecoder<BaseData>) {
-        self.item = item
+    init(_ parameters: OrderedMap<String, BareItem<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
+        self.parameters = parameters
         self.decoder = decoder
     }
 }
 
-extension KeyedItemDecoder: KeyedDecodingContainerProtocol {
+extension ParametersDecoder: KeyedDecodingContainerProtocol {
     var codingPath: [CodingKey] {
         return self.decoder.codingPath
     }
 
     var allKeys: [Key] {
-        return keyedItemDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
+        return self.parameters.compactMap { Key(stringValue: $0.0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        return keyedItemDecoderSupportedKeys.contains(key.stringValue)
+        return self.parameters.contains(where: { $0.0 == key.stringValue })
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {
-        // Keys are never nil for this type.
-        return false
+        // We will decode nil if the key is not present.
+        return !self.contains(key)
     }
 
-    func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T: Decodable {
+    func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T : Decodable {
         try self.decoder.push(_StructuredHeaderCodingKey(key, keyDecodingStrategy: self.decoder.keyDecodingStrategy))
         defer {
             self.decoder.pop()
@@ -71,12 +67,12 @@ extension KeyedItemDecoder: KeyedDecodingContainerProtocol {
     }
 
     func superDecoder() throws -> Decoder {
-        // Items never support inherited types.
+        // Parameters never support inherited types.
         throw StructuredHeaderError.invalidTypeForItem
     }
 
     func superDecoder(forKey key: Key) throws -> Decoder {
-        // Items never support inherited types.
+        // Parameters never support inherited types.
         throw StructuredHeaderError.invalidTypeForItem
     }
 }

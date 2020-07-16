@@ -14,6 +14,7 @@
 import Foundation
 import XCTest
 import StructuredHeaders
+import CodableStructuredHeaders
 
 final class StructuredFieldEncoderTests: XCTestCase {
     func testSimpleItemHeaderEncodeBareItem() throws {

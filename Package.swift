@@ -20,16 +20,22 @@ let package = Package(
         .library(
             name: "StructuredHeaders",
             targets: ["StructuredHeaders"]),
+        .library(
+            name: "CodableStructuredHeaders",
+            targets: ["CodableStructuredHeaders"]),
     ],
     targets: [
         .target(
             name: "StructuredHeaders",
             dependencies: []),
         .target(
+            name: "CodableStructuredHeaders",
+            dependencies: ["StructuredHeaders"]),
+        .target(
             name: "sh-parser",
             dependencies: ["StructuredHeaders"]),
         .testTarget(
             name: "StructuredHeadersTests",
-            dependencies: ["StructuredHeaders"]),
+            dependencies: ["StructuredHeaders", "CodableStructuredHeaders"]),
     ]
 )

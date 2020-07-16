@@ -55,7 +55,7 @@ extension BareItem: ExpressibleByFloatLiteral {
 
 extension BareItem: ExpressibleByStringLiteral {
     public init(stringLiteral value: StringLiteralType) {
-        if value.isValidToken {
+        if value.structuredHeadersIsValidToken {
             self = .token(value)
         } else {
             self = .string(value)
@@ -161,7 +161,7 @@ public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseDa
 }
 
 extension String {
-    var isValidToken: Bool {
+    public var structuredHeadersIsValidToken: Bool {
         let view = self.utf8
 
         switch view.first {
