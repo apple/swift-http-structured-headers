@@ -11,8 +11,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
-// We need this for string formatting of floats. Remove if we don't need that anymore.
-import Foundation
 
 fileprivate let validIntegerRange = Int64(-999999999999999)...Int64(999999999999999)
 
