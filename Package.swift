@@ -25,6 +25,9 @@ let package = Package(
         .target(
             name: "StructuredHeaders",
             dependencies: []),
+        .target(
+            name: "sh-parser",
+            dependencies: ["StructuredHeaders"]),
         .testTarget(
             name: "StructuredHeadersTests",
             dependencies: ["StructuredHeaders"]),

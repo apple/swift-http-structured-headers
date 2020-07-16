@@ -1,0 +1,207 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the SwiftNIO open source project
+//
+// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Licensed under Apache License v2.0
+//
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of SwiftNIO project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
+
+import Foundation
+import StructuredHeaders
+
+struct Flags {
+    var headerType: HeaderType
+
+    init() {
+        // Default to item
+        self.headerType = .item
+
+        for argument in CommandLine.arguments.dropFirst() {
+            switch argument {
+            case "--dictionary":
+                self.headerType = .dictionary
+
+            case "--list":
+                self.headerType = .list
+
+            case "--item":
+                self.headerType = .item
+
+            default:
+                Self.helpAndExit()
+            }
+        }
+    }
+
+    private static func helpAndExit() -> Never {
+        print("Flags:")
+        print("")
+        print("\t--dictionary: Parse as dictionary field")
+        print("\t--list: Parse as list field")
+        print("\t--item: Parse as item field (default)")
+        exit(2)
+    }
+}
+
+extension Flags {
+    enum HeaderType {
+        case dictionary
+        case list
+        case item
+    }
+}
+
+enum Header {
+    case dictionary(OrderedMap<String, ItemOrInnerList<Data>>)
+    case list([ItemOrInnerList<Data>])
+    case item(Item<Data>)
+
+    func prettyPrint() {
+        switch self {
+        case .dictionary(let dict):
+            print("- dictionary (\(dict.count) entries):")
+            dict.prettyPrint(depth: 1)
+        case .list(let list):
+            print("- list (\(list.count) entries):")
+            list.prettyPrint(depth: 1)
+        case .item(let item):
+            print("- item:")
+            item.prettyPrint(depth: 1)
+        }
+    }
+}
+
+extension Array where Element == ItemOrInnerList<Data> {
+    func prettyPrint(depth: Int) {
+        let tabs = String(repeating: "\t", count: depth)
+        for (offset, element) in self.enumerated() {
+            print("\(tabs)- [\(offset)]:")
+            element.prettyPrint(depth: depth + 1)
+        }
+    }
+}
+
+extension OrderedMap where Key == String, Value == ItemOrInnerList<Data> {
+    func prettyPrint(depth: Int) {
+        let tabs = String(repeating: "\t", count: depth)
+        for (key, value) in self {
+            print("\(tabs)- \(key):")
+            value.prettyPrint(depth: depth + 1)
+        }
+    }
+}
+
+extension OrderedMap where Key == String, Value == BareItem<Data> {
+    func prettyPrint(depth: Int) {
+        let tabs = String(repeating: "\t", count: depth)
+
+        for (key, value) in self {
+            print("\(tabs)- \(key): \(value.prettyFormat())")
+        }
+    }
+}
+
+extension ItemOrInnerList where BaseData == Data {
+    func prettyPrint(depth: Int) {
+        switch self {
+        case .item(let item):
+            item.prettyPrint(depth: depth)
+        case .innerList(let list):
+            list.prettyPrint(depth: depth)
+        }
+    }
+}
+
+extension Item where BaseData == Data {
+    func prettyPrint(depth: Int) {
+        let tabs = String(repeating: "\t", count: depth)
+
+        print("\(tabs)- item: \(self.bareItem.prettyFormat())")
+        print("\(tabs)- parameters (\(parameters.count) entries):")
+        self.parameters.prettyPrint(depth: depth + 1)
+    }
+}
+
+extension InnerList where BaseData == Data {
+    func prettyPrint(depth: Int) {
+        let tabs = String(repeating: "\t", count: depth)
+
+        print("\(tabs)- innerList (\(parameters.count) entries):")
+        self.bareInnerList.prettyPrint(depth: depth + 1)
+        print("\(tabs)- parameters (\(parameters.count) entries):")
+        self.parameters.prettyPrint(depth: depth + 1)
+    }
+}
+
+extension BareInnerList where BaseData == Data {
+    func prettyPrint(depth: Int) {
+        let tabs = String(repeating: "\t", count: depth)
+        for (offset, element) in self.enumerated() {
+            print("\(tabs)- [\(offset)]:")
+            element.prettyPrint(depth: depth + 1)
+        }
+    }
+}
+
+extension BareItem where BaseData == Data {
+    func prettyFormat() -> String {
+        switch self {
+        case .bool(let bool):
+            return "boolean \(bool)"
+        case .integer(let int):
+            return "integer \(int)"
+        case .string(let string):
+            return "string \"\(string)\""
+        case .token(let token):
+            return "token \(token)"
+        case .undecodedByteSequence(let bytes):
+            return "byte sequence \(bytes)"
+        case .decimal(let decimal):
+            let d = Decimal(sign: decimal.mantissa > 0 ? .plus : .minus,
+                            exponent: Int(decimal.exponent), significand: Decimal(decimal.mantissa))
+            return "decimal \(d)"
+        }
+    }
+}
+
+func main() {
+    do {
+        let flags = Flags()
+        var data = FileHandle.standardInput.readDataToEndOfFile()
+
+        // We need to strip trailing newlines.
+        var index = data.endIndex
+        while index > data.startIndex {
+            data.formIndex(before: &index)
+            if data[index] != UInt8(ascii: "\n") {
+                break
+            }
+        }
+        data = data[...index]
+        var parser = StructuredFieldParser(data)
+
+        let result: Header
+        switch flags.headerType {
+        case .dictionary:
+            result = .dictionary(try parser.parseDictionaryField())
+        case .list:
+            result = .list(try parser.parseListField())
+        case .item:
+            result = .item(try parser.parseItemField())
+        }
+
+        result.prettyPrint()
+    } catch {
+        print("error: \(error)")
+        exit(1)
+    }
+}
+
+main()
+
