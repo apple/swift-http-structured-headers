@@ -189,4 +189,97 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "innerlist=x"
         XCTAssertThrowsError(try StructuredFieldDecoder().decodeDictionaryField(MissingInnerList.self, from: Array(headerField.utf8)))
     }
+
+    func testDecodingBinaryAsTopLevelData() throws {
+        let headerField = ":AQIDBA==:"
+        XCTAssertEqual(
+            Data([1, 2, 3, 4]),
+            try StructuredFieldDecoder().decodeItemField(Data.self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingBinaryAsParameterisedData() throws {
+        struct Item: Codable, Equatable {
+            var item: Data
+            var parameters: [String: Float]
+        }
+
+        let headerFieldNoParameters = ":AQIDBA==:"
+        let headerFieldParameters = ":AQIDBA==:;q=0.8"
+
+        XCTAssertEqual(
+            Item(item: Data([1, 2, 3, 4]), parameters: [:]),
+            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldNoParameters.utf8))
+        )
+
+        XCTAssertEqual(
+            Item(item: Data([1, 2, 3, 4]), parameters: ["q": 0.8]),
+            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldParameters.utf8))
+        )
+    }
+
+    func testDecodingBinaryInParameterField() throws {
+        struct Item: Codable, Equatable {
+            var item: Int
+            var parameters: [String: Data]
+        }
+
+        let headerField = "1;q=:AQIDBA==:"
+        XCTAssertEqual(
+            Item(item: 1, parameters: ["q": Data([1, 2, 3, 4])]),
+            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingBinaryInOuterListRaw() throws {
+        let headerField = ":AQIDBA==:, :BQYHCA==:"
+        XCTAssertEqual(
+            [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])],
+            try StructuredFieldDecoder().decodeListField([Data].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingBinaryInOuterListKeyed() throws {
+        struct ListField: Codable, Equatable {
+            var items: [Data]
+        }
+        let headerField = ":AQIDBA==:, :BQYHCA==:"
+        XCTAssertEqual(
+            [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])],
+            try StructuredFieldDecoder().decodeListField([Data].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingBinaryInInnerListRaw() throws {
+        let headerField = "(:AQIDBA==: :BQYHCA==:), (:AQIDBA==: :BQYHCA==:)"
+        XCTAssertEqual(
+            Array(repeating: [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])], count: 2),
+            try StructuredFieldDecoder().decodeListField([[Data]].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingBinaryInInnerListKeyed() throws {
+        struct ListField: Codable, Equatable {
+            var items: [Data]
+            var parameters: [String: Bool]
+        }
+        let headerField = "(:AQIDBA==: :BQYHCA==:);foo, (:AQIDBA==: :BQYHCA==:);foo"
+        XCTAssertEqual(
+            Array(repeating: ListField(items: [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])], parameters: ["foo": true]), count: 2),
+            try StructuredFieldDecoder().decodeListField([ListField].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingBinaryInDictionaries() throws {
+        struct DictionaryField: Codable, Equatable {
+            var bin: Data
+            var box: Data
+        }
+
+        let headerField = "bin=:AQIDBA==:, box=:AQIDBA==:"
+        XCTAssertEqual(
+            DictionaryField(bin: Data([1, 2, 3, 4]), box: Data([1, 2, 3, 4])),
+            try StructuredFieldDecoder().decodeDictionaryField(DictionaryField.self, from: Array(headerField.utf8))
+        )
+    }
 }

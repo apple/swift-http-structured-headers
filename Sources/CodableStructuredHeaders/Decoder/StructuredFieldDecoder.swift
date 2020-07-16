@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import Foundation
 import StructuredHeaders
 
 public struct StructuredFieldDecoder {
@@ -58,7 +59,15 @@ extension StructuredFieldDecoder {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseItemField()
-        return try type.init(from: decoder)
+
+        // An escape hatch here for top-level data: if we don't do this, it'll ask for
+        // an unkeyed container and get very confused.
+        if type is Data.Type {
+            let container = try decoder.singleValueContainer()
+            return try container.decode(Data.self) as! StructuredField
+        } else {
+            return try type.init(from: decoder)
+        }
     }
 }
 

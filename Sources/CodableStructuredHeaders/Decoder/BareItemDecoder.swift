@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import Foundation
 import StructuredHeaders
 
 struct BareItemDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -96,6 +97,18 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         return bool
     }
 
+    func decode(_ type: Data.Type) throws -> Data {
+        guard case .undecodedByteSequence(let data) = self.item else {
+            throw StructuredHeaderError.invalidTypeForItem
+        }
+
+        guard let decoded = Data(base64Encoded: Data(data)) else {
+            throw StructuredHeaderError.invalidByteSequence
+        }
+
+        return decoded
+    }
+
     func decodeNil() -> Bool {
         // Items are never nil.
         return false
@@ -131,6 +144,8 @@ extension BareItemDecoder: SingleValueDecodingContainer {
             return try self.decode(String.self) as! T
         case is Bool.Type:
             return try self.decode(Bool.self) as! T
+        case is Data.Type:
+            return try self.decode(Data.self) as! T
         default:
             // Some other codable type. Not sure what to do here yet.
             // TODO: What about binary data here? For now we'll ignore it.

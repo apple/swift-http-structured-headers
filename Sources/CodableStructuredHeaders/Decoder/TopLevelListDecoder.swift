@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import Foundation
 import StructuredHeaders
 
 struct TopLevelListDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
@@ -64,7 +65,13 @@ extension TopLevelListDecoder: UnkeyedDecodingContainer {
         defer {
             self.decoder.pop()
         }
-        return try type.init(from: self.decoder)
+
+        if type is Data.Type {
+            let container = try self.decoder.singleValueContainer()
+            return try container.decode(Data.self) as! T
+        } else {
+            return try type.init(from: self.decoder)
+        }
     }
 
     mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {

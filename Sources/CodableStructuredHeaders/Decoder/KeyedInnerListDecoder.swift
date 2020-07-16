@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import Foundation
 import StructuredHeaders
 
 private let keyedInnerListDecoderSupportedKeys = ["items", "parameters"]
@@ -52,7 +53,13 @@ extension KeyedInnerListDecoder: KeyedDecodingContainerProtocol {
         defer {
             self.decoder.pop()
         }
-        return try type.init(from: self.decoder)
+
+        if type is Data.Type {
+            let container = try self.decoder.singleValueContainer()
+            return try container.decode(Data.self) as! T
+        } else {
+            return try type.init(from: self.decoder)
+        }
     }
 
     func nestedContainer<NestedKey: CodingKey>(keyedBy type: NestedKey.Type, forKey key: Key) throws -> KeyedDecodingContainer<NestedKey> {

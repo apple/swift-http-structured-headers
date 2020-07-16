@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import Foundation
 import StructuredHeaders
 
 public struct StructuredFieldEncoder {
@@ -105,7 +106,17 @@ class _StructuredFieldEncoder {
 
     fileprivate func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         self.push(key: .init(stringValue: ""), newStorage: .itemHeader)
-        try data.encode(to: self)
+
+        // There's an awkward special hook here: if the outer type is `Data`,
+        // we skip the regular encoding path. This is because otherwise `Data` will
+        // ask for an unkeyed container and it all falls apart.
+        //
+        // Everything else goes through the normal flow.
+        if let value = data as? Data {
+            try self.encode(value)
+        } else {
+            try data.encode(to: self)
+        }
 
         switch self.currentStackEntry.storage {
         case .item(let item):
@@ -223,6 +234,11 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self._encodeFixedWidthInteger(value)
     }
 
+    func encode(_ data: Data) throws {
+        let encoded = data.base64EncodedData()
+        try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(encoded))
+    }
+
     func encode<T>(_ value: T) throws where T : Encodable {
         switch value {
         case let value as UInt8:
@@ -253,9 +269,9 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
             try self.encode(value)
         case let value as Bool:
             try self.encode(value)
+        case let value as Data:
+            try self.encode(value)
         default:
-            // Some other codable type. Not sure what to do yet.
-            // TODO: what about binary data here?
             throw StructuredHeaderError.invalidTypeForItem
         }
     }
@@ -364,6 +380,10 @@ extension _StructuredFieldEncoder {
         try self._appendFixedWidthInteger(value)
     }
 
+    func append(_ value: Data) throws {
+        try self.currentStackEntry.storage.appendBareItem(.undecodedByteSequence(value.base64EncodedData()))
+    }
+
     func append<T>(_ value: T) throws where T : Encodable {
         switch value {
         case let value as UInt8:
@@ -393,6 +413,8 @@ extension _StructuredFieldEncoder {
         case let value as String:
             try self.append(value)
         case let value as Bool:
+            try self.append(value)
+        case let value as Data:
             try self.append(value)
         default:
             // Some other codable type.
@@ -512,6 +534,11 @@ extension _StructuredFieldEncoder {
         try self._encodeFixedWidthInteger(value, forKey: key)
     }
 
+    func encode(_ value: Data, forKey key: String) throws {
+        let key = self.sanitizeKey(key)
+        try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(value.base64EncodedData()), atKey: key)
+    }
+
     func encode<T>(_ value: T, forKey key: String) throws where T: Encodable {
         let key = self.sanitizeKey(key)
 
@@ -543,6 +570,8 @@ extension _StructuredFieldEncoder {
         case let value as String:
             try self.encode(value, forKey: key)
         case let value as Bool:
+            try self.encode(value, forKey: key)
+        case let value as Data:
             try self.encode(value, forKey: key)
         default:
             // Ok, we don't know what this is. This can only happen for a dictionary, or
@@ -642,7 +671,7 @@ extension _StructuredFieldEncoder {
     /// Note that we never have a bare item here. This is deliberate: bare items
     /// are not a container for anything else, and so can never appear.
     internal enum NodeType {
-        typealias DataType = ArraySlice<UInt8>
+        typealias DataType = Data
 
         case dictionaryHeader
         case listHeader
@@ -808,7 +837,7 @@ extension _StructuredFieldEncoder {
 }
 
 
-extension Item where BaseData == ArraySlice<UInt8> {
+extension Item where BaseData == _StructuredFieldEncoder.NodeType.DataType {
     fileprivate init(_ partialItem: _StructuredFieldEncoder.NodeType.PartialItem) {
         self.init(bareItem: partialItem.bareItem!, parameters: partialItem.parameters)
     }

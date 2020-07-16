@@ -37,6 +37,9 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Decimal
         XCTAssertEqual(Array("102.2".utf8), try encoder.encodeItemField(Float(102.2)))
         XCTAssertEqual(Array("-166.66".utf8), try encoder.encodeItemField(Double(-166.66)))
+
+        // Binary Data
+        XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encodeItemField(Data([1, 2, 3, 4])))
     }
 
     func testEncodeKeyedItemHeader() throws {
@@ -62,6 +65,10 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Decimal
         XCTAssertEqual(Array("102.2;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Float(102.2), parameters: ["y": false])))
         XCTAssertEqual(Array("-166.66".utf8), try encoder.encodeItemField(KeyedItem(item: Double(-166.66), parameters: [:])))
+
+        // Binary
+        XCTAssertEqual(Array(":AQIDBA==:;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Data([1, 2, 3, 4]), parameters: ["y": false])))
+        XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encodeItemField(KeyedItem(item: Data([1, 2, 3, 4]), parameters: [:])))
     }
 
     func testEncodeKeyedItemHeaderWithParamsAsStruct() throws {
@@ -118,6 +125,10 @@ final class StructuredFieldEncoderTests: XCTestCase {
 
         // Decimal
         XCTAssertEqual(Array("102.2, -166.66".utf8), try encoder.encodeListField([Float(102.2), Float(-166.66)]))
+
+        // Binary
+        XCTAssertEqual(Array(":AQIDBA==:, :BQYHCA==:".utf8),
+                       try encoder.encodeListField([Data([1, 2, 3, 4]), Data([5, 6, 7, 8])]))
     }
 
     func testListFieldInnerItemsWithDict() throws {
