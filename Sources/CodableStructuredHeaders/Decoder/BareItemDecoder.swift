@@ -109,6 +109,16 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         return decoded
     }
 
+    func decode(_ type: Decimal.Type) throws -> Decimal {
+        guard case .decimal(let pseudoDecimal) = self.item else {
+            throw StructuredHeaderError.invalidTypeForItem
+        }
+
+        return Decimal(sign: pseudoDecimal.mantissa > 0 ? .plus : .minus,
+                       exponent: Int(pseudoDecimal.exponent),
+                       significand: Decimal(pseudoDecimal.mantissa))
+    }
+
     func decodeNil() -> Bool {
         // Items are never nil.
         return false
@@ -146,9 +156,9 @@ extension BareItemDecoder: SingleValueDecodingContainer {
             return try self.decode(Bool.self) as! T
         case is Data.Type:
             return try self.decode(Data.self) as! T
+        case is Decimal.Type:
+            return try self.decode(Decimal.self) as! T
         default:
-            // Some other codable type. Not sure what to do here yet.
-            // TODO: What about binary data here? For now we'll ignore it.
             throw StructuredHeaderError.invalidTypeForItem
         }
     }

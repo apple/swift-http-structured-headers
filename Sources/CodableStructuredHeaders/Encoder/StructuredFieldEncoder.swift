@@ -128,12 +128,15 @@ class _StructuredFieldEncoder {
     fileprivate func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         self.push(key: .init(stringValue: ""), newStorage: .itemHeader)
 
-        // There's an awkward special hook here: if the outer type is `Data`,
+        // There's an awkward special hook here: if the outer type is `Data` or `Decimal`,
         // we skip the regular encoding path. This is because otherwise `Data` will
-        // ask for an unkeyed container and it all falls apart.
+        // ask for an unkeyed container and `Decimal` for a keyed one,
+        // and it all falls apart.
         //
         // Everything else goes through the normal flow.
         if let value = data as? Data {
+            try self.encode(value)
+        } else if let value = data as? Decimal {
             try self.encode(value)
         } else {
             try data.encode(to: self)
@@ -260,6 +263,16 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(encoded))
     }
 
+    func encode(_ data: Decimal) throws {
+        let significand = (data.significand as NSNumber).intValue  // Yes, really.
+        guard let exponent = Int8(exactly: data.exponent) else {
+            throw StructuredHeaderError.invalidIntegerOrDecimal
+        }
+
+        let pd = PseudoDecimal(mantissa: significand, exponent: Int(exponent))
+        try self.currentStackEntry.storage.insertBareItem(.decimal(pd))
+    }
+
     func encode<T>(_ value: T) throws where T : Encodable {
         switch value {
         case let value as UInt8:
@@ -291,6 +304,8 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         case let value as Bool:
             try self.encode(value)
         case let value as Data:
+            try self.encode(value)
+        case let value as Decimal:
             try self.encode(value)
         default:
             throw StructuredHeaderError.invalidTypeForItem
@@ -405,6 +420,16 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.appendBareItem(.undecodedByteSequence(value.base64EncodedData()))
     }
 
+    func append(_ value: Decimal) throws {
+        let significand = (value.significand as NSNumber).intValue  // Yes, really.
+        guard let exponent = Int8(exactly: value.exponent) else {
+            throw StructuredHeaderError.invalidIntegerOrDecimal
+        }
+
+        let pd = PseudoDecimal(mantissa: significand, exponent: Int(exponent))
+        try self.currentStackEntry.storage.appendBareItem(.decimal(pd))
+    }
+
     func append<T>(_ value: T) throws where T : Encodable {
         switch value {
         case let value as UInt8:
@@ -436,6 +461,8 @@ extension _StructuredFieldEncoder {
         case let value as Bool:
             try self.append(value)
         case let value as Data:
+            try self.append(value)
+        case let value as Decimal:
             try self.append(value)
         default:
             // Some other codable type.
@@ -560,6 +587,16 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(value.base64EncodedData()), atKey: key)
     }
 
+    func encode(_ value: Decimal, forKey key: String) throws {
+        let significand = (value.significand as NSNumber).intValue  // Yes, really.
+        guard let exponent = Int8(exactly: value.exponent) else {
+            throw StructuredHeaderError.invalidIntegerOrDecimal
+        }
+
+        let pd = PseudoDecimal(mantissa: significand, exponent: Int(exponent))
+        try self.currentStackEntry.storage.insertBareItem(.decimal(pd), atKey: key)
+    }
+
     func encode<T>(_ value: T, forKey key: String) throws where T: Encodable {
         let key = self.sanitizeKey(key)
 
@@ -593,6 +630,8 @@ extension _StructuredFieldEncoder {
         case let value as Bool:
             try self.encode(value, forKey: key)
         case let value as Data:
+            try self.encode(value, forKey: key)
+        case let value as Decimal:
             try self.encode(value, forKey: key)
         default:
             // Ok, we don't know what this is. This can only happen for a dictionary, or

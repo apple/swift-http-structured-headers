@@ -102,6 +102,9 @@ extension StructuredFieldDecoder {
         if type is Data.Type {
             let container = try decoder.singleValueContainer()
             return try container.decode(Data.self) as! StructuredField
+        } else if type is Decimal.Type {
+            let container = try decoder.singleValueContainer()
+            return try container.decode(Decimal.self) as! StructuredField
         } else {
             return try type.init(from: decoder)
         }

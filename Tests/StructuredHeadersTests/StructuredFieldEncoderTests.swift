@@ -37,6 +37,8 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Decimal
         XCTAssertEqual(Array("102.2".utf8), try encoder.encodeItemField(Float(102.2)))
         XCTAssertEqual(Array("-166.66".utf8), try encoder.encodeItemField(Double(-166.66)))
+        XCTAssertEqual(Array("987654321.123".utf8), try encoder.encodeItemField(Decimal(string: "987654321.123")!))
+        XCTAssertEqual(Array("-123456789.321".utf8), try encoder.encodeItemField(Decimal(string: "-123456789.321")!))
 
         // Binary Data
         XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encodeItemField(Data([1, 2, 3, 4])))
@@ -65,6 +67,8 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Decimal
         XCTAssertEqual(Array("102.2;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Float(102.2), parameters: ["y": false])))
         XCTAssertEqual(Array("-166.66".utf8), try encoder.encodeItemField(KeyedItem(item: Double(-166.66), parameters: [:])))
+        XCTAssertEqual(Array("987654321.123;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Decimal(string: "987654321.123")!, parameters: ["y": false])))
+        XCTAssertEqual(Array("-123456789.321".utf8), try encoder.encodeItemField(KeyedItem(item: Decimal(string: "-123456789.321")!, parameters: [:])))
 
         // Binary
         XCTAssertEqual(Array(":AQIDBA==:;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Data([1, 2, 3, 4]), parameters: ["y": false])))
@@ -125,6 +129,7 @@ final class StructuredFieldEncoderTests: XCTestCase {
 
         // Decimal
         XCTAssertEqual(Array("102.2, -166.66".utf8), try encoder.encodeListField([Float(102.2), Float(-166.66)]))
+        XCTAssertEqual(Array("123456789.321, -987654321.123".utf8), try encoder.encodeListField([Decimal(string: "123456789.321")!, Decimal(string: "-987654321.123")!]))
 
         // Binary
         XCTAssertEqual(Array(":AQIDBA==:, :BQYHCA==:".utf8),

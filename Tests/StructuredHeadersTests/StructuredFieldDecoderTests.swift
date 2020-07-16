@@ -282,4 +282,86 @@ final class StructuredFieldDecoderTests: XCTestCase {
             try StructuredFieldDecoder().decodeDictionaryField(DictionaryField.self, from: Array(headerField.utf8))
         )
     }
+
+    func testDecodingDecimalAsTopLevelData() throws {
+        let headerField = "987654321.123"
+        XCTAssertEqual(
+            Decimal(string: "987654321.123")!,
+            try StructuredFieldDecoder().decodeItemField(Decimal.self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDecimalAsParameterisedData() throws {
+        struct Item: Codable, Equatable {
+            var item: Decimal
+            var parameters: [String: Float]
+        }
+
+        let headerFieldNoParameters = "987654321.123"
+        let headerFieldParameters = "987654321.123;q=0.8"
+
+        XCTAssertEqual(
+            Item(item: Decimal(string: "987654321.123")!, parameters: [:]),
+            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldNoParameters.utf8))
+        )
+
+        XCTAssertEqual(
+            Item(item: Decimal(string: "987654321.123")!, parameters: ["q": 0.8]),
+            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldParameters.utf8))
+        )
+    }
+
+    func testDecodingDecimalInParameterField() throws {
+        struct Item: Codable, Equatable {
+            var item: Int
+            var parameters: [String: Decimal]
+        }
+
+        let headerField = "1;q=987654321.123"
+        XCTAssertEqual(
+            Item(item: 1, parameters: ["q": Decimal(string: "987654321.123")!]),
+            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDecimalInOuterListRaw() throws {
+        let headerField = "987654321.123, 123456789.321"
+        XCTAssertEqual(
+            [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!],
+            try StructuredFieldDecoder().decodeListField([Decimal].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDecimalInInnerListRaw() throws {
+        let headerField = "(987654321.123 123456789.321), (987654321.123 123456789.321)"
+        XCTAssertEqual(
+            Array(repeating: [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!], count: 2),
+            try StructuredFieldDecoder().decodeListField([[Decimal]].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDecimalInInnerListKeyed() throws {
+        struct ListField: Codable, Equatable {
+            var items: [Decimal]
+            var parameters: [String: Bool]
+        }
+        let headerField = "(987654321.123 123456789.321);foo, (987654321.123 123456789.321);foo"
+        XCTAssertEqual(
+            Array(repeating: ListField(items: [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!], parameters: ["foo": true]), count: 2),
+            try StructuredFieldDecoder().decodeListField([ListField].self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDecimalInDictionaries() throws {
+        struct DictionaryField: Codable, Equatable {
+            var bin: Decimal
+            var box: Decimal
+        }
+
+        let headerField = "bin=987654321.123, box=123456789.321"
+        XCTAssertEqual(
+            DictionaryField(bin: Decimal(string: "987654321.123")!, box: Decimal(string: "123456789.321")!),
+            try StructuredFieldDecoder().decodeDictionaryField(DictionaryField.self, from: Array(headerField.utf8))
+        )
+    }
 }
