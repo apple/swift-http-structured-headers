@@ -7,7 +7,7 @@
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
-## See CONTRIBUTORS.md for the list of SwiftNIO project authors
+## See CONTRIBUTORS.txt for the list of SwiftNIO project authors
 ##
 ## SPDX-License-Identifier: Apache-2.0
 ##
@@ -56,7 +56,7 @@ for language in swift-or-c bash dtrace; do
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
-// See CONTRIBUTORS.md for the list of SwiftNIO project authors
+// See CONTRIBUTORS.txt for the list of SwiftNIO project authors
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -75,7 +75,7 @@ EOF
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
-## See CONTRIBUTORS.md for the list of SwiftNIO project authors
+## See CONTRIBUTORS.txt for the list of SwiftNIO project authors
 ##
 ## SPDX-License-Identifier: Apache-2.0
 ##
@@ -94,7 +94,7 @@ EOF
  *  Licensed under Apache License v2.0
  *
  *  See LICENSE.txt for license information
- *  See CONTRIBUTORS.md for the list of SwiftNIO project authors
+ *  See CONTRIBUTORS.txt for the list of SwiftNIO project authors
  *
  *  SPDX-License-Identifier: Apache-2.0
  *

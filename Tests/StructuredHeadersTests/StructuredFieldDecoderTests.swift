@@ -1,4 +1,3 @@
-import CodableStructuredHeaders
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -12,6 +11,7 @@ import CodableStructuredHeaders
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
+import CodableStructuredHeaders
 import Foundation
 import StructuredHeaders
 import XCTest
