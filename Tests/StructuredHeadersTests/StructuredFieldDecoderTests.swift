@@ -1,3 +1,4 @@
+import CodableStructuredHeaders
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -12,9 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import XCTest
 import StructuredHeaders
-import CodableStructuredHeaders
+import XCTest
 
 struct ListyDictionaryFieldParameters: Codable, Equatable {
     var q: Double?
@@ -30,7 +30,6 @@ struct ListyDictionaryParameterisedList: Codable, Equatable {
     var items: [ListyDictionaryParameterisedString]
     var parameters: ListyDictionaryFieldParameters
 }
-
 
 /// An example ListyDictionary structured header field.
 ///
@@ -86,7 +85,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
         // rather than crashing for all non-Int64 types. (Ignoring Int/UInt due to their platform
         // dependence)
         let headerField = "-999999999999999;bar=baz"
-        let expected = Int64(-999999999999999)
+        let expected = Int64(-999_999_999_999_999)
 
         XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int8.self, from: Array(headerField.utf8)))
         XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt8.self, from: Array(headerField.utf8)))

@@ -26,11 +26,11 @@ struct StructuredFieldUnkeyedEncodingContainer {
 
 extension StructuredFieldUnkeyedEncodingContainer: UnkeyedEncodingContainer {
     var codingPath: [CodingKey] {
-        return self.encoder.codingPath
+        self.encoder.codingPath
     }
 
     var count: Int {
-        return self.encoder.count
+        self.encoder.count
     }
 
     func encodeNil() throws {
@@ -93,21 +93,19 @@ extension StructuredFieldUnkeyedEncodingContainer: UnkeyedEncodingContainer {
         try self.encoder.append(value)
     }
 
-    func encode<T>(_ value: T) throws where T : Encodable {
+    func encode<T>(_ value: T) throws where T: Encodable {
         try self.encoder.append(value)
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
         return self.encoder.container(keyedBy: keyType)
     }
 
     mutating func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {
-        return self.encoder.unkeyedContainer()
+        self.encoder.unkeyedContainer()
     }
 
     mutating func superEncoder() -> Encoder {
-        return self.encoder
+        self.encoder
     }
-
-
 }

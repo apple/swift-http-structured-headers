@@ -26,12 +26,11 @@ struct StructuredFieldKeyedEncodingContainer<Key: CodingKey> {
 
 extension StructuredFieldKeyedEncodingContainer: KeyedEncodingContainerProtocol {
     var codingPath: [CodingKey] {
-        return self.encoder.codingPath
+        self.encoder.codingPath
     }
 
     mutating func encodeNil(forKey key: Key) throws {
         // Nil has no representation in structured headers
-        return
     }
 
     mutating func encode(_ value: Bool, forKey key: Key) throws {
@@ -90,25 +89,23 @@ extension StructuredFieldKeyedEncodingContainer: KeyedEncodingContainerProtocol 
         try self.encoder.encode(value, forKey: key.stringValue)
     }
 
-    mutating func encode<T>(_ value: T, forKey key: Key) throws where T : Encodable {
+    mutating func encode<T>(_ value: T, forKey key: Key) throws where T: Encodable {
         try self.encoder.encode(value, forKey: key.stringValue)
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey : CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
         return self.encoder.container(keyedBy: keyType)
     }
 
     mutating func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {
-        return self.encoder.unkeyedContainer()
+        self.encoder.unkeyedContainer()
     }
 
     mutating func superEncoder() -> Encoder {
-        return self.encoder
+        self.encoder
     }
 
     mutating func superEncoder(forKey key: Key) -> Encoder {
-        return self.encoder
+        self.encoder
     }
-
-    
 }

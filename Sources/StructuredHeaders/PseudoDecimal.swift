@@ -41,7 +41,7 @@ public struct PseudoDecimal: Hashable {
 
     public var mantissa: Int64 {
         get {
-            return self._mantissa
+            self._mantissa
         }
         set {
             Self.fatalValidate(mantissa: newValue, exponent: self._exponent)
@@ -51,7 +51,7 @@ public struct PseudoDecimal: Hashable {
 
     public var exponent: Int8 {
         get {
-            return self._exponent
+            self._exponent
         }
         set {
             Self.fatalValidate(mantissa: self._mantissa, exponent: newValue)
@@ -181,7 +181,6 @@ extension PseudoDecimal: ExpressibleByFloatLiteral {
         }
     }
 }
-
 
 extension String {
     public init(_ decimal: PseudoDecimal) {

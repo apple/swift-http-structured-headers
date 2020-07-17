@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import XCTest
 import StructuredHeaders
+import XCTest
 
 enum FixtureTestError: Error {
     case base64DecodingFailed
@@ -96,9 +96,9 @@ final class StructuredFieldParserTests: XCTestCase {
 
     private func _validateInnerList<BaseData: RandomAccessCollection>(_ innerList: InnerList<BaseData>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
         guard case .array(let arrayElements) = schema,
-              arrayElements.count == 2,
-              case .some(.array(let expectedItems)) = arrayElements.first,
-              let expectedParameters = arrayElements.last else {
+            arrayElements.count == 2,
+            case .some(.array(let expectedItems)) = arrayElements.first,
+            let expectedParameters = arrayElements.last else {
             XCTFail("\(fixtureName): Unexpected inner list: got \(innerList), expected \(schema)")
             return
         }

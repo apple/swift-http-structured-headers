@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 import StructuredHeaders
 
-struct _StructuredHeaderCodingKey : CodingKey {
+struct _StructuredHeaderCodingKey: CodingKey {
     var stringValue: String
     var intValue: Int?
 

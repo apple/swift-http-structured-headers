@@ -27,59 +27,59 @@ struct BareItemDecoder<BaseData: RandomAccessCollection> where BaseData.Element 
 
 extension BareItemDecoder: SingleValueDecodingContainer {
     var codingPath: [CodingKey] {
-        return self._codingPath as [CodingKey]
+        self._codingPath as [CodingKey]
     }
 
     func decode(_ type: UInt8.Type) throws -> UInt8 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: Int8.Type) throws -> Int8 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: UInt16.Type) throws -> UInt16 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: Int16.Type) throws -> Int16 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: UInt32.Type) throws -> UInt32 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: Int32.Type) throws -> Int32 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: UInt64.Type) throws -> UInt64 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: Int64.Type) throws -> Int64 {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: UInt.Type) throws -> UInt {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: Int.Type) throws -> Int {
-        return try self._decodeFixedWidthInteger(type)
+        try self._decodeFixedWidthInteger(type)
     }
 
     func decode(_ type: Float.Type) throws -> Float {
-        return try self._decodeBinaryFloatingPoint(type)
+        try self._decodeBinaryFloatingPoint(type)
     }
 
     func decode(_ type: Double.Type) throws -> Double {
-        return try self._decodeBinaryFloatingPoint(type)
+        try self._decodeBinaryFloatingPoint(type)
     }
 
-    func decode(_ type: String.Type) throws -> String {
-        switch item {
+    func decode(_: String.Type) throws -> String {
+        switch self.item {
         case .string(let string):
             return string
         case .token(let token):
@@ -89,7 +89,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         }
     }
 
-    func decode(_ type: Bool.Type) throws -> Bool {
+    func decode(_: Bool.Type) throws -> Bool {
         guard case .bool(let bool) = self.item else {
             throw StructuredHeaderError.invalidTypeForItem
         }
@@ -97,7 +97,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         return bool
     }
 
-    func decode(_ type: Data.Type) throws -> Data {
+    func decode(_: Data.Type) throws -> Data {
         guard case .undecodedByteSequence(let data) = self.item else {
             throw StructuredHeaderError.invalidTypeForItem
         }
@@ -109,7 +109,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         return decoded
     }
 
-    func decode(_ type: Decimal.Type) throws -> Decimal {
+    func decode(_: Decimal.Type) throws -> Decimal {
         guard case .decimal(let pseudoDecimal) = self.item else {
             throw StructuredHeaderError.invalidTypeForItem
         }
@@ -121,7 +121,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
 
     func decodeNil() -> Bool {
         // Items are never nil.
-        return false
+        false
     }
 
     func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
@@ -163,7 +163,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         }
     }
 
-    private func _decodeBinaryFloatingPoint<T: BinaryFloatingPoint>(_ type: T.Type) throws -> T {
+    private func _decodeBinaryFloatingPoint<T: BinaryFloatingPoint>(_: T.Type) throws -> T {
         guard case .decimal(let decimal) = self.item else {
             throw StructuredHeaderError.invalidTypeForItem
         }
@@ -172,7 +172,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         return T(Double(decimal))
     }
 
-    private func _decodeFixedWidthInteger<T: FixedWidthInteger>(_ type: T.Type) throws -> T {
+    private func _decodeFixedWidthInteger<T: FixedWidthInteger>(_: T.Type) throws -> T {
         guard case .integer(let int) = self.item else {
             throw StructuredHeaderError.invalidTypeForItem
         }

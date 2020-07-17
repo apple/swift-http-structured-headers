@@ -32,20 +32,20 @@ struct KeyedItemDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where 
 
 extension KeyedItemDecoder: KeyedDecodingContainerProtocol {
     var codingPath: [CodingKey] {
-        return self.decoder.codingPath
+        self.decoder.codingPath
     }
 
     var allKeys: [Key] {
-        return keyedItemDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
+        keyedItemDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        return keyedItemDecoderSupportedKeys.contains(key.stringValue)
+        keyedItemDecoderSupportedKeys.contains(key.stringValue)
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {
         // Keys are never nil for this type.
-        return false
+        false
     }
 
     func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T: Decodable {

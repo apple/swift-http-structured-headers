@@ -35,7 +35,7 @@ public struct OrderedMap<Key, Value> where Key: Hashable {
     /// Warning! Unlike a regular dictionary, we do not promise this will be O(1)!
     public subscript(key: Key) -> Value? {
         get {
-            return self.backing.first(where: { $0.key == key }).map { $0.value }
+            self.backing.first(where: { $0.key == key }).map { $0.value }
         }
         set {
             if let existing = self.backing.firstIndex(where: { $0.key == key }) {
@@ -51,7 +51,8 @@ public struct OrderedMap<Key, Value> where Key: Hashable {
     }
 }
 
-// MARK:- Helper struct for storing elements
+// MARK: - Helper struct for storing elements
+
 extension OrderedMap {
     // This struct takes some explaining.
     //
@@ -66,7 +67,8 @@ extension OrderedMap {
     }
 }
 
-// MARK:- Collection conformances
+// MARK: - Collection conformances
+
 extension OrderedMap: RandomAccessCollection, MutableCollection {
     public struct Index {
         fileprivate var baseIndex: Array<(Key, Value)>.Index
@@ -77,15 +79,15 @@ extension OrderedMap: RandomAccessCollection, MutableCollection {
     }
 
     public var startIndex: Index {
-        return Index(self.backing.startIndex)
+        Index(self.backing.startIndex)
     }
 
     public var endIndex: Index {
-        return Index(self.backing.endIndex)
+        Index(self.backing.endIndex)
     }
 
     public var count: Int {
-        return self.backing.count
+        self.backing.count
     }
 
     public subscript(position: Index) -> (Key, Value) {
@@ -99,37 +101,38 @@ extension OrderedMap: RandomAccessCollection, MutableCollection {
     }
 
     public func index(_ i: Index, offsetBy distance: Int) -> Index {
-        return Index(self.backing.index(i.baseIndex, offsetBy: distance))
+        Index(self.backing.index(i.baseIndex, offsetBy: distance))
     }
 
     public func index(after i: Index) -> Index {
-        return self.index(i, offsetBy: 1)
+        self.index(i, offsetBy: 1)
     }
 
     public func index(before i: Index) -> Index {
-        return self.index(i, offsetBy: -1)
+        self.index(i, offsetBy: -1)
     }
 }
 
-extension OrderedMap.Index: Hashable { }
+extension OrderedMap.Index: Hashable {}
 
 extension OrderedMap.Index: Comparable {
     public static func < (lhs: Self, rhs: Self) -> Bool {
-        return lhs.baseIndex < rhs.baseIndex
+        lhs.baseIndex < rhs.baseIndex
     }
 }
 
 extension OrderedMap.Index: Strideable {
     public func advanced(by n: Int) -> Self {
-        return Self(self.baseIndex.advanced(by: n))
+        Self(self.baseIndex.advanced(by: n))
     }
 
     public func distance(to other: Self) -> Int {
-        return self.baseIndex.distance(to: other.baseIndex)
+        self.baseIndex.distance(to: other.baseIndex)
     }
 }
 
-// MARK:- Helper conformances
+// MARK: - Helper conformances
+
 extension OrderedMap: ExpressibleByDictionaryLiteral {
     public init(dictionaryLiteral elements: (Key, Value)...) {
         self.backing = elements.map { Entry(key: $0.0, value: $0.1) }
@@ -143,8 +146,9 @@ extension OrderedMap: CustomDebugStringConvertible {
     }
 }
 
-// MARK:- Conditional conformances
-extension OrderedMap.Entry: Equatable where Key: Equatable, Value: Equatable { }
-extension OrderedMap: Equatable where Key: Equatable, Value: Equatable { }
-extension OrderedMap.Entry: Hashable where Key: Hashable, Value: Hashable { }
-extension OrderedMap: Hashable where Key: Hashable, Value: Hashable { }
+// MARK: - Conditional conformances
+
+extension OrderedMap.Entry: Equatable where Key: Equatable, Value: Equatable {}
+extension OrderedMap: Equatable where Key: Equatable, Value: Equatable {}
+extension OrderedMap.Entry: Hashable where Key: Hashable, Value: Hashable {}
+extension OrderedMap: Hashable where Key: Hashable, Value: Hashable {}

@@ -20,7 +20,7 @@ public struct StructuredFieldDecoder {
     /// A strategy that should be used to map coding keys to wire format keys.
     public var keyDecodingStrategy: KeyDecodingStrategy?
 
-    public init() { }
+    public init() {}
 }
 
 extension StructuredFieldDecoder {
@@ -129,10 +129,10 @@ class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.E
 
 extension _StructuredFieldDecoder: Decoder {
     var codingPath: [CodingKey] {
-        return self._codingStack.map { $0.key as CodingKey }
+        self._codingStack.map { $0.key as CodingKey }
     }
 
-    var userInfo: [CodingUserInfoKey : Any] {
+    var userInfo: [CodingUserInfoKey: Any] {
         [:]
     }
 
@@ -147,7 +147,7 @@ extension _StructuredFieldDecoder: Decoder {
         self._codingStack.removeLast()
     }
 
-    func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key : CodingKey {
+    func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key: CodingKey {
         if self.currentElement == nil {
             // First parse. This may be a dictionary, but depending on the keys this may also be list or item.
             // We can't really detect this (Key isn't caseiterable) so we just kinda have to hope. Users can tell
@@ -321,6 +321,6 @@ extension _StructuredFieldDecoder {
 
     /// The element at the current head of the coding stack.
     private var currentElement: Element? {
-        return self._codingStack.last.map { $0.element }
+        self._codingStack.last.map { $0.element }
     }
 }

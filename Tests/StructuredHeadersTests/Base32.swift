@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 import Foundation
 
-fileprivate let base32DecoderAlphabet: [UnicodeScalar: UInt64] = [
+private let base32DecoderAlphabet: [UnicodeScalar: UInt64] = [
     "A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7,
     "I": 8, "J": 9, "K": 10, "L": 11, "M": 12, "N": 13, "O": 14, "P": 15,
     "Q": 16, "R": 17, "S": 18, "T": 19, "U": 20, "V": 21, "W": 22, "X": 23,
@@ -25,7 +25,7 @@ extension Data {
         self = Data()
 
         for start in stride(from: data.startIndex, to: data.endIndex, by: 8) {
-            let bytes = data[start..<(start + 8)]
+            let bytes = data[start ..< (start + 8)]
             precondition(bytes.count == 8)
             var seenEquals = 0
 
@@ -60,7 +60,7 @@ extension Data {
                 fatalError("Impossible equals count: \(seenEquals)")
             }
 
-            for byteNumber in (ignoredBytes..<5).reversed() {
+            for byteNumber in (ignoredBytes ..< 5).reversed() {
                 let byte = UInt8(truncatingIfNeeded: rawValue >> (byteNumber * 8))
                 self.append(byte)
             }

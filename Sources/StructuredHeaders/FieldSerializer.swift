@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-fileprivate let validIntegerRange = Int64(-999999999999999)...Int64(999999999999999)
+private let validIntegerRange = Int64(-999_999_999_999_999) ... Int64(999_999_999_999_999)
 
 /// A `StructuredFieldSerializer` is the basic parsing object for structured header fields.
 public struct StructuredFieldSerializer {
@@ -179,7 +179,7 @@ extension StructuredFieldSerializer {
             self.data.append(contentsOf: String(decimal).utf8)
         case .string(let string):
             let bytes = string.utf8
-            guard bytes.allSatisfy({ !(0x00...0x1f).contains($0) && $0 != 0x7f && $0 < 0x80 }) else {
+            guard bytes.allSatisfy({ !(0x00 ... 0x1F).contains($0) && $0 != 0x7F && $0 < 0x80 }) else {
                 throw StructuredHeaderError.invalidString
             }
             self.data.append(asciiDquote)
@@ -236,4 +236,3 @@ extension String {
         }
     }
 }
-

@@ -17,7 +17,8 @@
 // These types are used by the parser, the serializer, and by users of the direct encoding/decoding APIs.
 // They are not used by those using the Codable interface.
 
-// MARK:- ItemOrInnerList
+// MARK: - ItemOrInnerList
+
 /// `ItemOrInnerList` represents the values in a structured header dictionary, or the
 /// entries in a structured header list.
 public enum ItemOrInnerList<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -25,9 +26,10 @@ public enum ItemOrInnerList<BaseData: RandomAccessCollection> where BaseData.Ele
     case innerList(InnerList<BaseData>)
 }
 
-extension ItemOrInnerList: Hashable { }
+extension ItemOrInnerList: Hashable {}
 
-// MARK:- BareItem
+// MARK: - BareItem
+
 /// `BareItem` is a representation of the base data types at the bottom of a structured
 /// header field. These types are not parameterised: they are raw data.
 public enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -79,9 +81,10 @@ extension BareItem: ExpressibleByStringLiteral {
     }
 }
 
-extension BareItem: Hashable { }
+extension BareItem: Hashable {}
 
-// MARK:- Item
+// MARK: - Item
+
 /// `Item` represents a structured header field item: a combination of a `bareItem`
 /// and some parameters.
 public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -97,9 +100,10 @@ public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == U
     }
 }
 
-extension Item: Hashable { }
+extension Item: Hashable {}
 
-// MARK:- BareInnerList
+// MARK: - BareInnerList
+
 /// A `BareInnerList` represents the items contained within an `InnerList`, without
 /// the associated parameters.
 public struct BareInnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -131,32 +135,32 @@ extension BareInnerList: RandomAccessCollection, MutableCollection {
     }
 
     public var count: Int {
-        return self.items.count
+        self.items.count
     }
 
     public var startIndex: Index {
-        return Index(self.items.startIndex)
+        Index(self.items.startIndex)
     }
 
     public var endIndex: Index {
-        return Index(self.items.endIndex)
+        Index(self.items.endIndex)
     }
 
     public func index(after i: Index) -> Index {
-        return Index(self.items.index(after: i.baseIndex))
+        Index(self.items.index(after: i.baseIndex))
     }
 
     public func index(before i: Index) -> Index {
-        return Index(self.items.index(before: i.baseIndex))
+        Index(self.items.index(before: i.baseIndex))
     }
 
     public func index(_ i: Index, offsetBy offset: Int) -> Index {
-        return Index(self.items.index(i.baseIndex, offsetBy: offset))
+        Index(self.items.index(i.baseIndex, offsetBy: offset))
     }
 
     public subscript(index: Index) -> Item<BaseData> {
         get {
-            return self.items[index.baseIndex]
+            self.items[index.baseIndex]
         }
         set {
             self.items[index.baseIndex] = newValue
@@ -164,15 +168,16 @@ extension BareInnerList: RandomAccessCollection, MutableCollection {
     }
 }
 
-extension BareInnerList.Index: Hashable { }
+extension BareInnerList.Index: Hashable {}
 
 extension BareInnerList.Index: Comparable {
-    public static func <(lhs: Self, rhs: Self) -> Bool {
-        return lhs.baseIndex < rhs.baseIndex
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        lhs.baseIndex < rhs.baseIndex
     }
 }
 
-// MARK:- InnerList
+// MARK: - InnerList
+
 /// An `InnerList` is a list of items, with some associated parameters.
 public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
     /// The items contained within this inner list.

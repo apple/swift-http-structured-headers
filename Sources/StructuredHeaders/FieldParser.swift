@@ -346,7 +346,7 @@ extension StructuredFieldParser {
                 // Unquoted dquote, this is the end of the string.
                 endIndex = index
                 break loop
-            case 0x00...0x1f, 0x7f...:
+            case 0x00 ... 0x1F, 0x7F...:
                 // Forbidden bytes in string: string must be VCHAR and SP.
                 throw StructuredHeaderError.invalidString
             default:
@@ -361,7 +361,7 @@ extension StructuredFieldParser {
         if endIndex == self.underlyingData.endIndex {
             throw StructuredHeaderError.invalidString
         }
-        let stringSlice = self.underlyingData[self.underlyingData.startIndex..<index]
+        let stringSlice = self.underlyingData[self.underlyingData.startIndex ..< index]
         self.underlyingData.formIndex(after: &index)
         self.underlyingData = self.underlyingData[index...]
 
@@ -496,7 +496,7 @@ extension StructuredFieldParser {
     }
 }
 
-fileprivate enum IntegerOrDecimal {
+private enum IntegerOrDecimal {
     case integer
     case decimal
 }
@@ -541,7 +541,7 @@ extension String {
 /// Until this issue is fixed (https://bugs.swift.org/browse/SR-13111) we take a different approach: we use
 /// `String.init(unsafeUninitializedCapacity:initializingWith)`. This is an unsafe function, so to reduce the unsafety as much
 /// as possible we define this safe wrapping Collection and then use `copyBytes` to implement the initialization.
-fileprivate struct StrippingStringEscapesCollection<BaseCollection: RandomAccessCollection> where BaseCollection.Element == UInt8 {
+private struct StrippingStringEscapesCollection<BaseCollection: RandomAccessCollection> where BaseCollection.Element == UInt8 {
     private var base: BaseCollection
     private var escapes: UInt
 
@@ -564,16 +564,16 @@ extension StrippingStringEscapesCollection: Collection {
     // so we know that on the base this is O(1), but as this collection is _not_ random access here
     // it's O(n).
     fileprivate var count: Int {
-        return self.base.count - Int(self.escapes)
+        self.base.count - Int(self.escapes)
     }
 
     fileprivate var startIndex: Index {
         // Tricky note here, but start index _might_ be an ascii backslash, which we have to skip.
-        return Index(baseIndex: self.unescapedIndex(self.base.startIndex))
+        Index(baseIndex: self.unescapedIndex(self.base.startIndex))
     }
 
     fileprivate var endIndex: Index {
-        return Index(baseIndex: self.base.endIndex)
+        Index(baseIndex: self.base.endIndex)
     }
 
     fileprivate func index(after i: Index) -> Index {
@@ -582,7 +582,7 @@ extension StrippingStringEscapesCollection: Collection {
     }
 
     fileprivate subscript(index: Index) -> UInt8 {
-        return self.base[index._baseIndex]
+        self.base[index._baseIndex]
     }
 
     private func unescapedIndex(_ baseIndex: BaseCollection.Index) -> BaseCollection.Index {
@@ -598,11 +598,10 @@ extension StrippingStringEscapesCollection: Collection {
     }
 }
 
-extension StrippingStringEscapesCollection.Index: Equatable { }
+extension StrippingStringEscapesCollection.Index: Equatable {}
 
 extension StrippingStringEscapesCollection.Index: Comparable {
-    fileprivate static func <(lhs: Self, rhs: Self) -> Bool {
-        return lhs._baseIndex < rhs._baseIndex
+    fileprivate static func < (lhs: Self, rhs: Self) -> Bool {
+        lhs._baseIndex < rhs._baseIndex
     }
 }
-

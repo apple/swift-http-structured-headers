@@ -19,7 +19,7 @@ import StructuredHeaders
 public struct StructuredFieldEncoder {
     public var keyEncodingStrategy: KeyEncodingStrategy?
 
-    public init() { }
+    public init() {}
 }
 
 extension StructuredFieldEncoder {
@@ -90,7 +90,7 @@ class _StructuredFieldEncoder {
         self.serializer = serializer
         self._codingPath = []
         self.keyEncodingStrategy = keyEncodingStrategy
-        self.currentStackEntry = CodingStackEntry(key: .init(stringValue: ""), storage: .itemHeader)  // This default doesn't matter right now.
+        self.currentStackEntry = CodingStackEntry(key: .init(stringValue: ""), storage: .itemHeader) // This default doesn't matter right now.
     }
 
     fileprivate func encodeDictionaryField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
@@ -157,10 +157,10 @@ class _StructuredFieldEncoder {
 
 extension _StructuredFieldEncoder: Encoder {
     var codingPath: [CodingKey] {
-        return self._codingPath.map { $0.key as CodingKey }
+        self._codingPath.map { $0.key as CodingKey }
     }
 
-    var userInfo: [CodingUserInfoKey : Any] {
+    var userInfo: [CodingUserInfoKey: Any] {
         [:]
     }
 
@@ -184,11 +184,11 @@ extension _StructuredFieldEncoder: Encoder {
     }
 
     func unkeyedContainer() -> UnkeyedEncodingContainer {
-        return StructuredFieldUnkeyedEncodingContainer(encoder: self)
+        StructuredFieldUnkeyedEncodingContainer(encoder: self)
     }
 
     func singleValueContainer() -> SingleValueEncodingContainer {
-        return self
+        self
     }
 }
 
@@ -264,7 +264,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ data: Decimal) throws {
-        let significand = (data.significand as NSNumber).intValue  // Yes, really.
+        let significand = (data.significand as NSNumber).intValue // Yes, really.
         guard let exponent = Int8(exactly: data.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
@@ -273,7 +273,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd))
     }
 
-    func encode<T>(_ value: T) throws where T : Encodable {
+    func encode<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let value as UInt8:
             try self.encode(value)
@@ -421,7 +421,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: Decimal) throws {
-        let significand = (value.significand as NSNumber).intValue  // Yes, really.
+        let significand = (value.significand as NSNumber).intValue // Yes, really.
         guard let exponent = Int8(exactly: value.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
@@ -430,7 +430,7 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.appendBareItem(.decimal(pd))
     }
 
-    func append<T>(_ value: T) throws where T : Encodable {
+    func append<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let value as UInt8:
             try self.append(value)
@@ -588,7 +588,7 @@ extension _StructuredFieldEncoder {
     }
 
     func encode(_ value: Decimal, forKey key: String) throws {
-        let significand = (value.significand as NSNumber).intValue  // Yes, really.
+        let significand = (value.significand as NSNumber).intValue // Yes, really.
         guard let exponent = Int8(exactly: value.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
@@ -685,7 +685,6 @@ extension _StructuredFieldEncoder {
                 default:
                     throw StructuredHeaderError.invalidTypeForItem
                 }
-
 
             case .listHeader, .list, .itemHeader, .bareInnerList,
                  .parameters:
@@ -895,7 +894,6 @@ extension _StructuredFieldEncoder {
         }
     }
 }
-
 
 extension Item where BaseData == _StructuredFieldEncoder.NodeType.DataType {
     fileprivate init(_ partialItem: _StructuredFieldEncoder.NodeType.PartialItem) {

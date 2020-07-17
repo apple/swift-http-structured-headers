@@ -30,27 +30,27 @@ struct TopLevelListDecoder<BaseData: RandomAccessCollection> where BaseData.Elem
 
 extension TopLevelListDecoder: UnkeyedDecodingContainer {
     var codingPath: [CodingKey] {
-        return self.decoder.codingPath
+        self.decoder.codingPath
     }
 
     var count: Int? {
-        return self.list.count
+        self.list.count
     }
 
     var isAtEnd: Bool {
-        return self.currentOffset == self.list.count
+        self.currentOffset == self.list.count
     }
 
     var currentIndex: Int {
-        return self.currentOffset
+        self.currentOffset
     }
 
     mutating func decodeNil() throws -> Bool {
         // We never decode nil.
-        return false
+        false
     }
 
-    mutating func decode<T>(_ type: T.Type) throws -> T where T : Decodable {
+    mutating func decode<T>(_ type: T.Type) throws -> T where T: Decodable {
         // This is a request to decode a scalar. We decode the next entry and increment the index.
         guard !self.isAtEnd else {
             throw StructuredHeaderError.indexOutOfRange
@@ -77,7 +77,7 @@ extension TopLevelListDecoder: UnkeyedDecodingContainer {
         }
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey : CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
         // This is a request to decode a full item. We decode the next entry and increment the index.
         guard !self.isAtEnd else {
             throw StructuredHeaderError.indexOutOfRange
@@ -116,5 +116,4 @@ extension TopLevelListDecoder: UnkeyedDecodingContainer {
         // No inheritance here folks
         throw StructuredHeaderError.invalidTypeForItem
     }
-
 }

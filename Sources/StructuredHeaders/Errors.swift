@@ -12,7 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-// MARK:- StructuredHeaderError
+// MARK: - StructuredHeaderError
+
 /// Errors that may be encountered when working with structured headers.
 public struct StructuredHeaderError: Error {
     private enum _BaseError: Hashable {
@@ -58,10 +59,10 @@ extension StructuredHeaderError {
     public static let indexOutOfRange = StructuredHeaderError(.indexOutOfRange)
 }
 
-extension StructuredHeaderError: Hashable { }
+extension StructuredHeaderError: Hashable {}
 
 extension StructuredHeaderError: CustomStringConvertible {
     public var description: String {
-        return String(describing: self.base)
+        String(describing: self.base)
     }
 }

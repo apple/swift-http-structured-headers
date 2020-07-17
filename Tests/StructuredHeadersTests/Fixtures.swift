@@ -20,13 +20,13 @@ enum FixturesLoader {
     }
 
     private static var serializationFixturesDirectory: URL {
-        return fixturesDirectory.appendingPathComponent("serialisation-tests").absoluteURL
+        fixturesDirectory.appendingPathComponent("serialisation-tests").absoluteURL
     }
 
     static var parsingFixtures: [StructuredHeaderTestFixture] {
         // ContentsOfDirectory can throw if it hits EINTR, just spin
-        var files: [URL]? = nil
-        for _ in 0..<1000 {
+        var files: [URL]?
+        for _ in 0 ..< 1000 {
             do {
                 files = try FileManager.default.contentsOfDirectory(at: fixturesDirectory, includingPropertiesForKeys: nil, options: [])
                 break
@@ -51,8 +51,8 @@ enum FixturesLoader {
 
     static var serializingFixtures: [StructuredHeaderTestFixture] {
         // ContentsOfDirectory can throw if it hits EINTR, just spin
-        var files: [URL]? = nil
-        for _ in 0..<1000 {
+        var files: [URL]?
+        for _ in 0 ..< 1000 {
             do {
                 files = try FileManager.default.contentsOfDirectory(at: serializationFixturesDirectory, includingPropertiesForKeys: nil, options: [])
                 break

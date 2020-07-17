@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import XCTest
 import StructuredHeaders
+import XCTest
 
 final class StructuredFieldSerializerTests: XCTestCase {
     enum TestResult<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
@@ -65,7 +65,7 @@ final class StructuredFieldSerializerTests: XCTestCase {
         guard let raw = fixture.raw else {
             fatalError("Cannot run round-trip test without raw header.")
         }
-        
+
         let joinedHeaders = Array(raw.joined(separator: ", ").utf8)
 
         do {
@@ -83,7 +83,6 @@ final class StructuredFieldSerializerTests: XCTestCase {
                 XCTFail("\(fixture.name): Unexpected header type \(fixture.headerType)")
                 return
             }
-
 
             var serializer = StructuredFieldSerializer()
             let serialized: [UInt8]
@@ -113,7 +112,7 @@ final class StructuredFieldSerializerTests: XCTestCase {
     func testCanPassAllParsingFixtures() throws {
         // This is a bulk-test: we run across all the fixtures in the fixtures directory to confirm we can handle all of them.
         for fixture in FixturesLoader.parsingFixtures {
-            if fixture.mustFail != true && fixture.canFail != true {
+            if fixture.mustFail != true, fixture.canFail != true {
                 self._runRoundTripTest(fixture)
             }
         }
@@ -143,7 +142,7 @@ extension StructuredFieldSerializerTests.TestResult where BaseData == ArraySlice
         case .array(let jsonArray):
             // Top level JSON arrays may be either list headers or item headers. To know, we have
             // to investigate a bit. An item will have only two entries, and neither will be an array.
-            if jsonArray.count == 2, let first = jsonArray.first, let last = jsonArray.last, !first.isArray && !last.isArray {
+            if jsonArray.count == 2, let first = jsonArray.first, let last = jsonArray.last, !first.isArray, !last.isArray {
                 // This is an item!
                 self = .item(try Item(schema))
             } else {

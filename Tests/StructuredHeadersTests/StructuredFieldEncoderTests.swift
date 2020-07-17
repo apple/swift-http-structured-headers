@@ -1,3 +1,4 @@
+import CodableStructuredHeaders
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -12,9 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import XCTest
 import StructuredHeaders
-import CodableStructuredHeaders
+import XCTest
 
 final class StructuredFieldEncoderTests: XCTestCase {
     func testSimpleItemHeaderEncodeBareItem() throws {
@@ -144,7 +144,7 @@ final class StructuredFieldEncoderTests: XCTestCase {
 
         let encoder = StructuredFieldEncoder()
         let header = [Item(parameters: ["q": 0.8], item: "gzip"),
-                      Item(parameters: ["q": 0.6], item: "deflate"),]
+                      Item(parameters: ["q": 0.6], item: "deflate")]
 
         XCTAssertEqual(Array("gzip;q=0.8, deflate;q=0.6".utf8),
                        try encoder.encodeListField(header))
@@ -200,7 +200,7 @@ final class StructuredFieldEncoderTests: XCTestCase {
             ],
             [
                 Item(item: 3, parameters: ["odd": true]),
-                Item(item: 4, parameters: ["odd": false])
+                Item(item: 4, parameters: ["odd": false]),
             ],
         ]
         XCTAssertEqual(Array("(1;odd 2;odd=?0), (3;odd 4;odd=?0)".utf8),
