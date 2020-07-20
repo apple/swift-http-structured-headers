@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 #if canImport(Darwin)
 import Darwin
-#elseif canImport(GLibc)
-import GLibc
+#elseif canImport(Glibc)
+import Glibc
 #else
 #error("Unsupported OS")
 #endif
