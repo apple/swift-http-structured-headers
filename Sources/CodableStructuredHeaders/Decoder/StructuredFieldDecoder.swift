@@ -41,20 +41,20 @@ extension StructuredFieldDecoder {
 extension StructuredFieldDecoder {
     /// Attempt to decode an object from a structured header field.
     ///
-    /// This method will attempt to guess what kind of structured header field is being
-    /// parsed based on the structure of `type`. This is useful for quick prototyping, but
-    /// generally this method should be avoided in favour of one of the other `decode`
-    /// methods on this type.
-    ///
     /// - parameters:
     ///     - type: The type of the object to decode.
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decode<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-        let parser = StructuredFieldParser(data)
-        let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
-        return try type.init(from: decoder)
+    public func decode<StructuredField: StructuredHeaderField, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+        switch StructuredField.structuredFieldType {
+        case .item:
+            return try self.decodeItemField(from: data)
+        case .list:
+            return try self.decodeListField(from: data)
+        case .dictionary:
+            return try self.decodeDictionaryField(from: data)
+        }
     }
 
     /// Attempt to decode an object from a structured header dictionary field.
@@ -64,7 +64,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseDictionaryField()
@@ -78,7 +78,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseListField()
@@ -92,7 +92,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseItemField()
@@ -148,34 +148,24 @@ extension _StructuredFieldDecoder: Decoder {
     }
 
     func container<Key>(keyedBy type: Key.Type) throws -> KeyedDecodingContainer<Key> where Key: CodingKey {
-        if self.currentElement == nil {
-            // First parse. This may be a dictionary, but depending on the keys this may also be list or item.
-            // We can't really detect this (Key isn't caseiterable) so we just kinda have to hope. Users can tell
-            // us with alternative methods if we're wrong.
-            try self.parseDictionaryField()
-        }
-
         switch self.currentElement! {
         case .dictionary(let dictionary):
             return KeyedDecodingContainer(DictionaryKeyedContainer(dictionary, decoder: self))
         case .item(let item):
             return KeyedDecodingContainer(KeyedItemDecoder(item, decoder: self))
+        case .list(let list):
+            return KeyedDecodingContainer(KeyedTopLevelListDecoder(list, decoder: self))
         case .innerList(let innerList):
             return KeyedDecodingContainer(KeyedInnerListDecoder(innerList, decoder: self))
         case .parameters(let parameters):
             return KeyedDecodingContainer(ParametersDecoder(parameters, decoder: self))
-        case .bareItem, .bareInnerList, .list:
+        case .bareItem, .bareInnerList:
             // No keyed container for these types.
             throw StructuredHeaderError.invalidTypeForItem
         }
     }
 
     func unkeyedContainer() throws -> UnkeyedDecodingContainer {
-        if self.currentElement == nil {
-            // First parse, this is a list header.
-            try self.parseListField()
-        }
-
         // We have unkeyed containers for lists, inner lists, and bare inner lists.
         switch self.currentElement! {
         case .list(let items):
@@ -191,11 +181,6 @@ extension _StructuredFieldDecoder: Decoder {
     }
 
     func singleValueContainer() throws -> SingleValueDecodingContainer {
-        if self.currentElement == nil {
-            // First parse, this is a an item header.
-            try self.parseItemField()
-        }
-
         // We have single value containers for items and bareItems.
         switch self.currentElement! {
         case .item(let item):
@@ -256,15 +241,23 @@ extension _StructuredFieldDecoder {
                     return .innerList(innerList)
                 }
             case .list(let list):
-                guard let offset = key.intValue, offset < list.count else {
+                if let offset = key.intValue {
+                    guard offset < list.count else {
+                        throw StructuredHeaderError.invalidTypeForItem
+                    }
+                    let index = list.index(list.startIndex, offsetBy: offset)
+                    switch list[index] {
+                    case .item(let item):
+                        return .item(item)
+                    case .innerList(let innerList):
+                        return .innerList(innerList)
+                    }
+                } else if key.stringValue == "items" {
+                    // Oh, the outer layer is keyed. That's fine, just put ourselves
+                    // back on the stack.
+                    return .list(list)
+                } else {
                     throw StructuredHeaderError.invalidTypeForItem
-                }
-                let index = list.index(list.startIndex, offsetBy: offset)
-                switch list[index] {
-                case .item(let item):
-                    return .item(item)
-                case .innerList(let innerList):
-                    return .innerList(innerList)
                 }
             case .item(let item):
                 // Two keys, "item" and "parameters".

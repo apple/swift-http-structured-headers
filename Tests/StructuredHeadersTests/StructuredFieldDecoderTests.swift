@@ -31,10 +31,36 @@ struct ListyDictionaryParameterisedList: Codable, Equatable {
     var parameters: ListyDictionaryFieldParameters
 }
 
+fileprivate struct Item<Base: Codable & Equatable>: StructuredHeaderField, Equatable {
+    static var structuredFieldType: StructuredHeaderFieldType {
+        return .item
+    }
+
+    var item: Base
+
+    init(_ item: Base) {
+        self.item = item
+    }
+}
+
+fileprivate struct List<Base: Codable & Equatable>: StructuredHeaderField, Equatable {
+    static var structuredFieldType: StructuredHeaderFieldType {
+        return .list
+    }
+
+    var items: [Base]
+
+    init(_ items: [Base]) {
+        self.items = items
+    }
+}
+
 /// An example ListyDictionary structured header field.
 ///
 /// An example of this field is: 'primary=bar;q=1.0, secondary=baz;q=0.5;fallback=last, acceptablejurisdictions=(AU;q=1.0 GB;q=0.9 FR);fallback=primary'
-struct ListyDictionaryField: Codable, Equatable {
+struct ListyDictionaryField: StructuredHeaderField, Equatable {
+    static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+
     var primary: ListyDictionaryParameterisedString
     var secondary: ListyDictionaryParameterisedString
     var acceptablejurisdictions: ListyDictionaryParameterisedList
@@ -53,7 +79,9 @@ final class StructuredFieldDecoderTests: XCTestCase {
     }
 
     func testCanDecodeParameterisedItemsWithoutParameters() throws {
-        struct ListyDictionaryNoParams: Codable, Equatable {
+        struct ListyDictionaryNoParams: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+
             var primary: String
             var secondary: String
             var acceptablejurisdictions: [String]
@@ -67,16 +95,16 @@ final class StructuredFieldDecoderTests: XCTestCase {
     func testCanDecodeIntegersInVariousWays() throws {
         let headerField = "5;bar=baz"
 
-        XCTAssertEqual(UInt8(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(Int8(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(UInt16(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(Int16(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(UInt32(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(Int32(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(UInt64(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(Int64(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(UInt(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(Int(5), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(UInt8(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Int8(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(UInt16(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Int16(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(UInt32(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Int32(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(UInt64(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Int64(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(UInt(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Int(5)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
     }
 
     func testOutOfRangeNumbersAreReported() throws {
@@ -85,63 +113,66 @@ final class StructuredFieldDecoderTests: XCTestCase {
         // rather than crashing for all non-Int64 types. (Ignoring Int/UInt due to their platform
         // dependence)
         let headerField = "-999999999999999;bar=baz"
-        let expected = Int64(-999_999_999_999_999)
+        let expected = Item(Int64(-999_999_999_999_999))
 
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int8.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt8.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int16.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt16.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int32.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt32.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt64.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int8>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt8>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int16>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt16>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int32>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt32>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt64>.self, from: Array(headerField.utf8)))
         XCTAssertEqual(expected, try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
     }
 
     func testDoubleAndFloatInterchangeable() throws {
         let headerField = "5.0;bar=baz"
 
-        XCTAssertEqual(Float(5.0), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
-        XCTAssertEqual(Double(5.0), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Float(5.0)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
+        XCTAssertEqual(Item(Double(5.0)), try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
     }
 
     func testAskingForTheWrongType() throws {
         let headerField = "gzip"
         let intField = "5"
 
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int8.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt8.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int16.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt16.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int32.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt32.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Int64.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(UInt64.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Double.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Float.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Bool.self, from: Array(headerField.utf8)))
-        XCTAssertThrowsError(try StructuredFieldDecoder().decode(String.self, from: Array(intField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int8>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt8>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int16>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt16>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int32>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt32>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Int64>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<UInt64>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Double>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Float>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<Bool>.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(Item<String>.self, from: Array(intField.utf8)))
     }
 
     func testDecodingTopLevelItemWithParameters() throws {
-        struct IntWithParams: Codable, Equatable {
+        struct IntWithParams: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
+
             var item: Int
             var parameters: [String: String]
         }
 
         let headerField = "5;bar=baz"
         let expected = IntWithParams(item: 5, parameters: ["bar": "baz"])
-        XCTAssertEqual(expected, try StructuredFieldDecoder().decodeItemField(from: Array(headerField.utf8)))
+        XCTAssertEqual(expected, try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
     }
 
     func testDecodingTopLevelList() throws {
         let headerField = "foo, bar, baz"
-        let expected = ["foo", "bar", "baz"]
-        XCTAssertEqual(expected, try StructuredFieldDecoder().decodeListField(from: Array(headerField.utf8)))
+        let expected = List(["foo", "bar", "baz"])
         XCTAssertEqual(expected, try StructuredFieldDecoder().decode(from: Array(headerField.utf8)))
     }
 
     func testDecodingLowercaseKeyStrategy() throws {
-        struct Camel: Codable, Equatable {
+        struct Camel: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+
             var hasHump: Bool
         }
 
@@ -150,7 +181,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
         var decoder = StructuredFieldDecoder()
         decoder.keyDecodingStrategy = .lowercase
 
-        XCTAssertEqual(expected, try decoder.decodeDictionaryField(from: Array(headerField.utf8)))
+        XCTAssertEqual(expected, try decoder.decode(from: Array(headerField.utf8)))
     }
 
     func testDecodingLowercaseKeyStrategyParameters() throws {
@@ -158,7 +189,9 @@ final class StructuredFieldDecoderTests: XCTestCase {
             var hasHump: Bool
         }
 
-        struct Camel: Codable, Equatable {
+        struct Camel: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
+
             var item: String
             var parameters: CamelParameters
         }
@@ -168,37 +201,40 @@ final class StructuredFieldDecoderTests: XCTestCase {
         var decoder = StructuredFieldDecoder()
         decoder.keyDecodingStrategy = .lowercase
 
-        XCTAssertEqual(expected, try decoder.decodeItemField(from: Array(headerField.utf8)))
+        XCTAssertEqual(expected, try decoder.decode(from: Array(headerField.utf8)))
     }
 
     func testDecodingKeyMissingFromDictionary() throws {
-        struct MissingKey: Codable {
+        struct MissingKey: StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
             var foo: Int
         }
 
         let headerField = "bar=baz"
-        XCTAssertThrowsError(try StructuredFieldDecoder().decodeDictionaryField(MissingKey.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(MissingKey.self, from: Array(headerField.utf8)))
     }
 
     func testDecodingKeyAsItemWantedInnerList() throws {
-        struct MissingInnerList: Codable {
+        struct MissingInnerList: StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
             var innerlist: [String]
         }
 
         let headerField = "innerlist=x"
-        XCTAssertThrowsError(try StructuredFieldDecoder().decodeDictionaryField(MissingInnerList.self, from: Array(headerField.utf8)))
+        XCTAssertThrowsError(try StructuredFieldDecoder().decode(MissingInnerList.self, from: Array(headerField.utf8)))
     }
 
     func testDecodingBinaryAsTopLevelData() throws {
         let headerField = ":AQIDBA==:"
         XCTAssertEqual(
-            Data([1, 2, 3, 4]),
-            try StructuredFieldDecoder().decodeItemField(Data.self, from: Array(headerField.utf8))
+            Item(Data([1, 2, 3, 4])),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingBinaryAsParameterisedData() throws {
-        struct Item: Codable, Equatable {
+        struct Item: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Data
             var parameters: [String: Float]
         }
@@ -208,17 +244,18 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
         XCTAssertEqual(
             Item(item: Data([1, 2, 3, 4]), parameters: [:]),
-            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldNoParameters.utf8))
+            try StructuredFieldDecoder().decode(Item.self, from: Array(headerFieldNoParameters.utf8))
         )
 
         XCTAssertEqual(
             Item(item: Data([1, 2, 3, 4]), parameters: ["q": 0.8]),
-            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldParameters.utf8))
+            try StructuredFieldDecoder().decode(Item.self, from: Array(headerFieldParameters.utf8))
         )
     }
 
     func testDecodingBinaryInParameterField() throws {
-        struct Item: Codable, Equatable {
+        struct Item: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Int
             var parameters: [String: Data]
         }
@@ -226,34 +263,31 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "1;q=:AQIDBA==:"
         XCTAssertEqual(
             Item(item: 1, parameters: ["q": Data([1, 2, 3, 4])]),
-            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerField.utf8))
+            try StructuredFieldDecoder().decode(Item.self, from: Array(headerField.utf8))
         )
     }
 
     func testDecodingBinaryInOuterListRaw() throws {
         let headerField = ":AQIDBA==:, :BQYHCA==:"
         XCTAssertEqual(
-            [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])],
-            try StructuredFieldDecoder().decodeListField([Data].self, from: Array(headerField.utf8))
+            List([Data([1, 2, 3, 4]), Data([5, 6, 7, 8])]),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingBinaryInOuterListKeyed() throws {
-        struct ListField: Codable, Equatable {
-            var items: [Data]
-        }
         let headerField = ":AQIDBA==:, :BQYHCA==:"
         XCTAssertEqual(
-            [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])],
-            try StructuredFieldDecoder().decodeListField([Data].self, from: Array(headerField.utf8))
+            List([Data([1, 2, 3, 4]), Data([5, 6, 7, 8])]),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingBinaryInInnerListRaw() throws {
         let headerField = "(:AQIDBA==: :BQYHCA==:), (:AQIDBA==: :BQYHCA==:)"
         XCTAssertEqual(
-            Array(repeating: [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])], count: 2),
-            try StructuredFieldDecoder().decodeListField([[Data]].self, from: Array(headerField.utf8))
+            List(Array(repeating: [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])], count: 2)),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
@@ -264,13 +298,14 @@ final class StructuredFieldDecoderTests: XCTestCase {
         }
         let headerField = "(:AQIDBA==: :BQYHCA==:);foo, (:AQIDBA==: :BQYHCA==:);foo"
         XCTAssertEqual(
-            Array(repeating: ListField(items: [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])], parameters: ["foo": true]), count: 2),
-            try StructuredFieldDecoder().decodeListField([ListField].self, from: Array(headerField.utf8))
+            List(Array(repeating: ListField(items: [Data([1, 2, 3, 4]), Data([5, 6, 7, 8])], parameters: ["foo": true]), count: 2)),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingBinaryInDictionaries() throws {
-        struct DictionaryField: Codable, Equatable {
+        struct DictionaryField: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
             var bin: Data
             var box: Data
         }
@@ -278,20 +313,21 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "bin=:AQIDBA==:, box=:AQIDBA==:"
         XCTAssertEqual(
             DictionaryField(bin: Data([1, 2, 3, 4]), box: Data([1, 2, 3, 4])),
-            try StructuredFieldDecoder().decodeDictionaryField(DictionaryField.self, from: Array(headerField.utf8))
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingDecimalAsTopLevelData() throws {
         let headerField = "987654321.123"
         XCTAssertEqual(
-            Decimal(string: "987654321.123")!,
-            try StructuredFieldDecoder().decodeItemField(Decimal.self, from: Array(headerField.utf8))
+            Item(Decimal(string: "987654321.123")!),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingDecimalAsParameterisedData() throws {
-        struct Item: Codable, Equatable {
+        struct Item: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Decimal
             var parameters: [String: Float]
         }
@@ -301,17 +337,18 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
         XCTAssertEqual(
             Item(item: Decimal(string: "987654321.123")!, parameters: [:]),
-            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldNoParameters.utf8))
+            try StructuredFieldDecoder().decode(from: Array(headerFieldNoParameters.utf8))
         )
 
         XCTAssertEqual(
             Item(item: Decimal(string: "987654321.123")!, parameters: ["q": 0.8]),
-            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerFieldParameters.utf8))
+            try StructuredFieldDecoder().decode(from: Array(headerFieldParameters.utf8))
         )
     }
 
     func testDecodingDecimalInParameterField() throws {
-        struct Item: Codable, Equatable {
+        struct Item: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Int
             var parameters: [String: Decimal]
         }
@@ -319,23 +356,23 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "1;q=987654321.123"
         XCTAssertEqual(
             Item(item: 1, parameters: ["q": Decimal(string: "987654321.123")!]),
-            try StructuredFieldDecoder().decodeItemField(Item.self, from: Array(headerField.utf8))
+            try StructuredFieldDecoder().decode(Item.self, from: Array(headerField.utf8))
         )
     }
 
     func testDecodingDecimalInOuterListRaw() throws {
         let headerField = "987654321.123, 123456789.321"
         XCTAssertEqual(
-            [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!],
-            try StructuredFieldDecoder().decodeListField([Decimal].self, from: Array(headerField.utf8))
+            List([Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!]),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingDecimalInInnerListRaw() throws {
         let headerField = "(987654321.123 123456789.321), (987654321.123 123456789.321)"
         XCTAssertEqual(
-            Array(repeating: [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!], count: 2),
-            try StructuredFieldDecoder().decodeListField([[Decimal]].self, from: Array(headerField.utf8))
+            List(Array(repeating: [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!], count: 2)),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
@@ -346,13 +383,14 @@ final class StructuredFieldDecoderTests: XCTestCase {
         }
         let headerField = "(987654321.123 123456789.321);foo, (987654321.123 123456789.321);foo"
         XCTAssertEqual(
-            Array(repeating: ListField(items: [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!], parameters: ["foo": true]), count: 2),
-            try StructuredFieldDecoder().decodeListField([ListField].self, from: Array(headerField.utf8))
+            List(Array(repeating: ListField(items: [Decimal(string: "987654321.123")!, Decimal(string: "123456789.321")!], parameters: ["foo": true]), count: 2)),
+            try StructuredFieldDecoder().decode(from: Array(headerField.utf8))
         )
     }
 
     func testDecodingDecimalInDictionaries() throws {
-        struct DictionaryField: Codable, Equatable {
+        struct DictionaryField: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
             var bin: Decimal
             var box: Decimal
         }
@@ -360,7 +398,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "bin=987654321.123, box=123456789.321"
         XCTAssertEqual(
             DictionaryField(bin: Decimal(string: "987654321.123")!, box: Decimal(string: "123456789.321")!),
-            try StructuredFieldDecoder().decodeDictionaryField(DictionaryField.self, from: Array(headerField.utf8))
+            try StructuredFieldDecoder().decode(DictionaryField.self, from: Array(headerField.utf8))
         )
     }
 }
