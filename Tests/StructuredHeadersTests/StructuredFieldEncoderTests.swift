@@ -23,29 +23,32 @@ final class StructuredFieldEncoderTests: XCTestCase {
         let encoder = StructuredFieldEncoder()
 
         // Bool
-        XCTAssertEqual(Array("?1".utf8), try encoder.encodeItemField(true))
-        XCTAssertEqual(Array("?0".utf8), try encoder.encodeItemField(false))
+        XCTAssertEqual(Array("?1".utf8), try encoder.encode(ItemField(true)))
+        XCTAssertEqual(Array("?0".utf8), try encoder.encode(ItemField(false)))
 
         // String and token
-        XCTAssertEqual(Array("\"hello, world\"".utf8), try encoder.encodeItemField("hello, world"))
-        XCTAssertEqual(Array("gzip".utf8), try encoder.encodeItemField("gzip"))
+        XCTAssertEqual(Array("\"hello, world\"".utf8), try encoder.encode(ItemField("hello, world")))
+        XCTAssertEqual(Array("gzip".utf8), try encoder.encode(ItemField("gzip")))
 
         // Integer
-        XCTAssertEqual(Array("10".utf8), try encoder.encodeItemField(UInt8(10)))
-        XCTAssertEqual(Array("-10".utf8), try encoder.encodeItemField(Int64(-10)))
+        XCTAssertEqual(Array("10".utf8), try encoder.encode(ItemField(UInt8(10))))
+        XCTAssertEqual(Array("-10".utf8), try encoder.encode(ItemField(Int64(-10))))
 
         // Decimal
-        XCTAssertEqual(Array("102.2".utf8), try encoder.encodeItemField(Float(102.2)))
-        XCTAssertEqual(Array("-166.66".utf8), try encoder.encodeItemField(Double(-166.66)))
-        XCTAssertEqual(Array("987654321.123".utf8), try encoder.encodeItemField(Decimal(string: "987654321.123")!))
-        XCTAssertEqual(Array("-123456789.321".utf8), try encoder.encodeItemField(Decimal(string: "-123456789.321")!))
+        XCTAssertEqual(Array("102.2".utf8), try encoder.encode(ItemField(Float(102.2))))
+        XCTAssertEqual(Array("-166.66".utf8), try encoder.encode(ItemField(Double(-166.66))))
+        XCTAssertEqual(Array("987654321.123".utf8), try encoder.encode(ItemField(Decimal(string: "987654321.123")!)))
+        XCTAssertEqual(Array("-123456789.321".utf8), try encoder.encode(ItemField(Decimal(string: "-123456789.321")!)))
 
         // Binary Data
-        XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encodeItemField(Data([1, 2, 3, 4])))
+        XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encode(ItemField(Data([1, 2, 3, 4]))))
     }
 
     func testEncodeKeyedItemHeader() throws {
-        struct KeyedItem<ItemType: Encodable & Equatable>: Equatable, Encodable {
+        struct KeyedItem<ItemType: Codable & Equatable>: Equatable, StructuredHeaderField {
+            static var structuredFieldType: StructuredHeaderFieldType {
+                return .item
+            }
             var item: ItemType
             var parameters: [String: Bool]
         }
@@ -53,64 +56,76 @@ final class StructuredFieldEncoderTests: XCTestCase {
         let encoder = StructuredFieldEncoder()
 
         // Bool
-        XCTAssertEqual(Array("?1;x".utf8), try encoder.encodeItemField(KeyedItem(item: true, parameters: ["x": true])))
-        XCTAssertEqual(Array("?0;x=?0".utf8), try encoder.encodeItemField(KeyedItem(item: false, parameters: ["x": false])))
+        XCTAssertEqual(Array("?1;x".utf8), try encoder.encode(KeyedItem(item: true, parameters: ["x": true])))
+        XCTAssertEqual(Array("?0;x=?0".utf8), try encoder.encode(KeyedItem(item: false, parameters: ["x": false])))
 
         // String and token
-        XCTAssertEqual(Array("\"hello, world\"".utf8), try encoder.encodeItemField(KeyedItem(item: "hello, world", parameters: [:])))
-        XCTAssertEqual(Array("gzip;x".utf8), try encoder.encodeItemField(KeyedItem(item: "gzip", parameters: ["x": true])))
+        XCTAssertEqual(Array("\"hello, world\"".utf8), try encoder.encode(KeyedItem(item: "hello, world", parameters: [:])))
+        XCTAssertEqual(Array("gzip;x".utf8), try encoder.encode(KeyedItem(item: "gzip", parameters: ["x": true])))
 
         // Integer
-        XCTAssertEqual(Array("10;x".utf8), try encoder.encodeItemField(KeyedItem(item: UInt16(10), parameters: ["x": true])))
-        XCTAssertEqual(Array("-10".utf8), try encoder.encodeItemField(KeyedItem(item: Int32(-10), parameters: [:])))
+        XCTAssertEqual(Array("10;x".utf8), try encoder.encode(KeyedItem(item: UInt16(10), parameters: ["x": true])))
+        XCTAssertEqual(Array("-10".utf8), try encoder.encode(KeyedItem(item: Int32(-10), parameters: [:])))
 
         // Decimal
-        XCTAssertEqual(Array("102.2;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Float(102.2), parameters: ["y": false])))
-        XCTAssertEqual(Array("-166.66".utf8), try encoder.encodeItemField(KeyedItem(item: Double(-166.66), parameters: [:])))
-        XCTAssertEqual(Array("987654321.123;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Decimal(string: "987654321.123")!, parameters: ["y": false])))
-        XCTAssertEqual(Array("-123456789.321".utf8), try encoder.encodeItemField(KeyedItem(item: Decimal(string: "-123456789.321")!, parameters: [:])))
+        XCTAssertEqual(Array("102.2;y=?0".utf8), try encoder.encode(KeyedItem(item: Float(102.2), parameters: ["y": false])))
+        XCTAssertEqual(Array("-166.66".utf8), try encoder.encode(KeyedItem(item: Double(-166.66), parameters: [:])))
+        XCTAssertEqual(Array("987654321.123;y=?0".utf8), try encoder.encode(KeyedItem(item: Decimal(string: "987654321.123")!, parameters: ["y": false])))
+        XCTAssertEqual(Array("-123456789.321".utf8), try encoder.encode(KeyedItem(item: Decimal(string: "-123456789.321")!, parameters: [:])))
 
         // Binary
-        XCTAssertEqual(Array(":AQIDBA==:;y=?0".utf8), try encoder.encodeItemField(KeyedItem(item: Data([1, 2, 3, 4]), parameters: ["y": false])))
-        XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encodeItemField(KeyedItem(item: Data([1, 2, 3, 4]), parameters: [:])))
+        XCTAssertEqual(Array(":AQIDBA==:;y=?0".utf8), try encoder.encode(KeyedItem(item: Data([1, 2, 3, 4]), parameters: ["y": false])))
+        XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encode(KeyedItem(item: Data([1, 2, 3, 4]), parameters: [:])))
     }
 
     func testEncodeKeyedItemHeaderWithParamsAsStruct() throws {
-        struct Parameters: Equatable, Encodable {
+        struct Parameters: Equatable, Codable {
             var x: Bool?
             var q: Float?
         }
 
-        struct Field: Equatable, Encodable {
+        struct Field: Equatable, StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: String
             var parameters: Parameters
         }
 
         let encoder = StructuredFieldEncoder()
 
-        XCTAssertEqual(Array("gzip;x;q=0.8".utf8), try encoder.encodeItemField(Field(item: "gzip", parameters: Parameters(x: true, q: 0.8))))
-        XCTAssertEqual(Array("deflate;q=0.6".utf8), try encoder.encodeItemField(Field(item: "deflate", parameters: Parameters(x: nil, q: 0.6))))
-        XCTAssertEqual(Array("zlib".utf8), try encoder.encodeItemField(Field(item: "zlib", parameters: Parameters(x: nil, q: nil))))
+        XCTAssertEqual(Array("gzip;x;q=0.8".utf8), try encoder.encode(Field(item: "gzip", parameters: Parameters(x: true, q: 0.8))))
+        XCTAssertEqual(Array("deflate;q=0.6".utf8), try encoder.encode(Field(item: "deflate", parameters: Parameters(x: nil, q: 0.6))))
+        XCTAssertEqual(Array("zlib".utf8), try encoder.encode(Field(item: "zlib", parameters: Parameters(x: nil, q: nil))))
     }
 
     func testEncodeSimpleDictionary() throws {
         let encoder = StructuredFieldEncoder()
 
-        let result = try encoder.encodeDictionaryField(["x": true, "y": false])
+        struct DictionaryField: StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+            var x: Bool
+            var y: Bool
+        }
+
+        let result = try encoder.encode(DictionaryField(x: true, y: false))
         let possibilities = [Array("x, y=?0".utf8), Array("y=?0, x".utf8)]
         XCTAssertTrue(possibilities.contains(result), "\(possibilities) does not contain \(result)")
     }
 
     func testEncodeDictionaryOfParameterisedItems() throws {
-        struct Field: Equatable, Encodable {
+        struct Field: Equatable, Codable {
             var item: Int
             var parameters: [String: Float]
+        }
+
+        struct DictionaryField: StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+            var x: Field
         }
 
         let encoder = StructuredFieldEncoder()
 
         XCTAssertEqual(Array("x=66;q=0.8".utf8),
-                       try encoder.encodeDictionaryField(["x": Field(item: 66, parameters: ["q": 0.8])]))
+                       try encoder.encode(DictionaryField(x: Field(item: 66, parameters: ["q": 0.8]))))
     }
 
     func testSimpleListField() throws {
@@ -118,26 +133,26 @@ final class StructuredFieldEncoderTests: XCTestCase {
 
         // Bool
         XCTAssertEqual(Array("?1, ?0, ?1".utf8),
-                       try encoder.encodeListField([true, false, true]))
+                       try encoder.encode(List([true, false, true])))
 
         // String and token
         XCTAssertEqual(Array("\"hello, world\", gzip".utf8),
-                       try encoder.encodeListField(["hello, world", "gzip"]))
+                       try encoder.encode(List(["hello, world", "gzip"])))
 
         // Integer
-        XCTAssertEqual(Array("10, -10".utf8), try encoder.encodeListField([Int16(10), Int16(-10)]))
+        XCTAssertEqual(Array("10, -10".utf8), try encoder.encode(List([Int16(10), Int16(-10)])))
 
         // Decimal
-        XCTAssertEqual(Array("102.2, -166.66".utf8), try encoder.encodeListField([Float(102.2), Float(-166.66)]))
-        XCTAssertEqual(Array("123456789.321, -987654321.123".utf8), try encoder.encodeListField([Decimal(string: "123456789.321")!, Decimal(string: "-987654321.123")!]))
+        XCTAssertEqual(Array("102.2, -166.66".utf8), try encoder.encode(List([Float(102.2), Float(-166.66)])))
+        XCTAssertEqual(Array("123456789.321, -987654321.123".utf8), try encoder.encode(List([Decimal(string: "123456789.321")!, Decimal(string: "-987654321.123")!])))
 
         // Binary
         XCTAssertEqual(Array(":AQIDBA==:, :BQYHCA==:".utf8),
-                       try encoder.encodeListField([Data([1, 2, 3, 4]), Data([5, 6, 7, 8])]))
+                       try encoder.encode(List([Data([1, 2, 3, 4]), Data([5, 6, 7, 8])])))
     }
 
     func testListFieldInnerItemsWithDict() throws {
-        struct Item: Equatable, Encodable {
+        struct Item: Equatable, Codable {
             var parameters: [String: Float]
             var item: String
         }
@@ -147,15 +162,15 @@ final class StructuredFieldEncoderTests: XCTestCase {
                       Item(parameters: ["q": 0.6], item: "deflate")]
 
         XCTAssertEqual(Array("gzip;q=0.8, deflate;q=0.6".utf8),
-                       try encoder.encodeListField(header))
+                       try encoder.encode(List(header)))
     }
 
     func testListFieldInnerItemsWithObject() throws {
-        struct Parameters: Equatable, Encodable {
+        struct Parameters: Equatable, Codable {
             var q: Float?
         }
 
-        struct Item: Equatable, Encodable {
+        struct Item: Equatable, Codable {
             var item: String
             var parameters: Parameters
         }
@@ -165,17 +180,17 @@ final class StructuredFieldEncoderTests: XCTestCase {
                       Item(item: "deflate", parameters: Parameters(q: nil))]
 
         XCTAssertEqual(Array("gzip;q=0.8, deflate".utf8),
-                       try encoder.encodeListField(header))
+                       try encoder.encode(List(header)))
     }
 
     func testListFieldInnerListsBare() throws {
         let encoder = StructuredFieldEncoder()
         let header = [[1, 2, 3], [4, 5, 6]]
-        XCTAssertEqual(Array("(1 2 3), (4 5 6)".utf8), try encoder.encodeListField(header))
+        XCTAssertEqual(Array("(1 2 3), (4 5 6)".utf8), try encoder.encode(List(header)))
     }
 
     func testListFieldInnerListsParameters() throws {
-        struct Integers: Equatable, Encodable {
+        struct Integers: Equatable, Codable {
             var items: [Int]
             var parameters: [String: String]
         }
@@ -183,11 +198,11 @@ final class StructuredFieldEncoderTests: XCTestCase {
         let encoder = StructuredFieldEncoder()
         let header = [Integers(items: [1, 2, 3], parameters: ["early": "yes"]),
                       Integers(items: [4, 5, 6], parameters: ["early": "no"])]
-        XCTAssertEqual(Array("(1 2 3);early=yes, (4 5 6);early=no".utf8), try encoder.encodeListField(header))
+        XCTAssertEqual(Array("(1 2 3);early=yes, (4 5 6);early=no".utf8), try encoder.encode(List(header)))
     }
 
     func testListFieldInnerListElementsWithParameters() throws {
-        struct Item: Equatable, Encodable {
+        struct Item: Equatable, Codable {
             var item: Int
             var parameters: [String: Bool]
         }
@@ -204,24 +219,24 @@ final class StructuredFieldEncoderTests: XCTestCase {
             ],
         ]
         XCTAssertEqual(Array("(1;odd 2;odd=?0), (3;odd 4;odd=?0)".utf8),
-                       try encoder.encodeListField(header))
+                       try encoder.encode(List(header)))
     }
 
     func testListFieldExplicitInnerListsWithItemsWithParameters() throws {
-        struct ItemParams: Equatable, Encodable {
+        struct ItemParams: Equatable, Codable {
             var q: Float
         }
 
-        struct Item: Equatable, Encodable {
+        struct Item: Equatable, Codable {
             var item: String
             var parameters: ItemParams
         }
 
-        struct FieldParams: Equatable, Encodable {
+        struct FieldParams: Equatable, Codable {
             var sorted: Bool
         }
 
-        struct Fields: Equatable, Encodable {
+        struct Fields: Equatable, Codable {
             var items: [Item]
             var parameters: FieldParams
         }
@@ -244,11 +259,12 @@ final class StructuredFieldEncoderTests: XCTestCase {
             ),
         ]
         XCTAssertEqual(Array("(gzip;q=0.8 deflate;q=0.6);sorted, (zlib;q=0.4 br;q=1.0);sorted=?0".utf8),
-                       try encoder.encodeListField(header))
+                       try encoder.encode(List(header)))
     }
 
     func testDictionaryFieldWithSimpleInnerLists() throws {
-        struct Field: Encodable, Equatable {
+        struct Field: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
             var name: String
             var color: String?
             var intensity: [Float]
@@ -256,62 +272,73 @@ final class StructuredFieldEncoderTests: XCTestCase {
 
         let encoder = StructuredFieldEncoder()
         XCTAssertEqual(Array("name=red, intensity=(1.0 0.0 0.0)".utf8),
-                       try encoder.encodeDictionaryField(Field(name: "red", color: nil, intensity: [1.0, 0.0, 0.0])))
+                       try encoder.encode(Field(name: "red", color: nil, intensity: [1.0, 0.0, 0.0])))
     }
 
     func testDictionaryFieldWithComplexInnerLists() throws {
-        struct ColorParameters: Encodable, Equatable {
+        struct ColorParameters: Codable, Equatable {
             var name: String?
         }
 
-        struct Color: Encodable, Equatable {
+        struct Color: Codable, Equatable {
             var items: [Float]
             var parameters: ColorParameters
         }
 
+        struct Field: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+            var green: Color
+        }
+
         let encoder = StructuredFieldEncoder()
-        let field = [
-            "green": Color(items: [0.0, 1.0, 0.0], parameters: ColorParameters(name: "green")),
-        ]
+        let field = Field(
+            green: Color(items: [0.0, 1.0, 0.0], parameters: ColorParameters(name: "green"))
+        )
         XCTAssertEqual(Array("green=(0.0 1.0 0.0);name=green".utf8),
-                       try encoder.encodeDictionaryField(field))
+                       try encoder.encode(field))
     }
 
     func testEmptyListField() throws {
         let encoder = StructuredFieldEncoder()
-        XCTAssertEqual([], try encoder.encodeListField([] as [Int]))
+        XCTAssertEqual([], try encoder.encode(List([] as [Int])))
     }
 
     func testEmptyDictionaryField() throws {
+        struct Field: StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
+        }
         let encoder = StructuredFieldEncoder()
-        XCTAssertEqual([], try encoder.encodeDictionaryField([:] as [String: Int]))
+        XCTAssertEqual([], try encoder.encode(Field()))
     }
 
     func testEmptyItemField() throws {
-        struct Field: Encodable {
+        struct Field: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Int?
         }
         let encoder = StructuredFieldEncoder()
-        XCTAssertEqual([], try encoder.encodeItemField(Field(item: nil)))
-        XCTAssertThrowsError(try encoder.encodeListField([Field(item: nil)]))
-        XCTAssertThrowsError(try encoder.encodeDictionaryField(["x": Field(item: nil)]))
+        XCTAssertEqual([], try encoder.encode(Field(item: nil)))
+        XCTAssertThrowsError(try encoder.encode(List([Field(item: nil)])))
+        XCTAssertThrowsError(try encoder.encode(DictionaryField(["x": Field(item: nil)])))
     }
 
     func testForbidEmptyItemWithActualParameters() throws {
-        struct Field: Encodable {
+        struct Field: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Int?
             var parameters: [String: Int]
         }
 
         let encoder = StructuredFieldEncoder()
         let badField = Field(item: nil, parameters: ["x": 0])
-        XCTAssertThrowsError(try encoder.encodeItemField(badField))
-        XCTAssertThrowsError(try encoder.encodeListField([badField]))
-        XCTAssertThrowsError(try encoder.encodeDictionaryField(["x": badField]))
+        XCTAssertThrowsError(try encoder.encode(badField))
+        XCTAssertThrowsError(try encoder.encode(List([badField])))
+        XCTAssertThrowsError(try encoder.encode(DictionaryField(["x": badField])))
     }
 
     func testForbidItemWithExtraField() throws {
-        struct Field: Encodable {
+        struct Field: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Int
             var parameters: [String: Int]
             var other: Bool
@@ -319,57 +346,61 @@ final class StructuredFieldEncoderTests: XCTestCase {
 
         let encoder = StructuredFieldEncoder()
         let badField = Field(item: 1, parameters: ["x": 0], other: true)
-        XCTAssertThrowsError(try encoder.encodeItemField(badField))
-        XCTAssertThrowsError(try encoder.encodeListField([badField]))
-        XCTAssertThrowsError(try encoder.encodeDictionaryField(["x": badField]))
+        XCTAssertThrowsError(try encoder.encode(badField))
+        XCTAssertThrowsError(try encoder.encode(List([badField])))
+        XCTAssertThrowsError(try encoder.encode(DictionaryField(["x": badField])))
     }
 
     func testForbidJustParameters() throws {
-        struct Field: Encodable {
+        struct Field: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var parameters: [String: Int]
         }
 
         let encoder = StructuredFieldEncoder()
         let badField = Field(parameters: ["x": 0])
-        XCTAssertThrowsError(try encoder.encodeItemField(badField))
-        XCTAssertThrowsError(try encoder.encodeListField([badField]))
-        XCTAssertThrowsError(try encoder.encodeDictionaryField(["x": badField]))
+        XCTAssertThrowsError(try encoder.encode(badField))
+        XCTAssertThrowsError(try encoder.encode(List([badField])))
+        XCTAssertThrowsError(try encoder.encode(DictionaryField(["x": badField])))
     }
 
     func testForbidNullInnerList() throws {
-        struct Field: Encodable {
+        struct Field: Codable, Equatable {
             var items: Int?
         }
         let encoder = StructuredFieldEncoder()
-        XCTAssertThrowsError(try encoder.encodeListField([Field(items: nil)]))
-        XCTAssertThrowsError(try encoder.encodeDictionaryField(["x": Field(items: nil)]))
+        XCTAssertThrowsError(try encoder.encode(List([Field(items: nil)])))
+        XCTAssertThrowsError(try encoder.encode(DictionaryField(["x": Field(items: nil)])))
     }
 
     func testLowercaseKeysOnDictionaries() throws {
-        struct DictionaryField: Encodable {
+        struct DictionaryField: StructuredHeaderField {
+            static let structuredFieldType: StructuredHeaderFieldType = .dictionary
             var allowAll: Bool
         }
 
         let noStrategyEncoder = StructuredFieldEncoder()
-        XCTAssertThrowsError(try noStrategyEncoder.encodeDictionaryField(DictionaryField(allowAll: false)))
+        XCTAssertThrowsError(try noStrategyEncoder.encode(DictionaryField(allowAll: false)))
 
         var lowercaseEncoder = noStrategyEncoder
         lowercaseEncoder.keyEncodingStrategy = .lowercase
         XCTAssertEqual(Array("allowall".utf8),
-                       try lowercaseEncoder.encodeDictionaryField(DictionaryField(allowAll: true)))
+                       try lowercaseEncoder.encode(DictionaryField(allowAll: true)))
     }
 
     func testLowercaseKeysOnParameters() throws {
-        struct Parameters: Encodable {
+        struct Parameters: Codable, Equatable {
             var allowAll: Bool
         }
 
-        struct ItemField: Encodable {
+        struct ItemField: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .item
             var item: Int
             var parameters: Parameters
         }
 
-        struct ListField: Encodable {
+        struct ListField: StructuredHeaderField, Equatable {
+            static let structuredFieldType: StructuredHeaderFieldType = .list
             var items: [Int]
             var parameters: Parameters
         }
@@ -381,23 +412,23 @@ final class StructuredFieldEncoderTests: XCTestCase {
         let item = ItemField(item: 1, parameters: Parameters(allowAll: true))
         let list = ListField(items: [1, 2], parameters: Parameters(allowAll: true))
 
-        XCTAssertThrowsError(try noStrategyEncoder.encodeItemField(item))
-        XCTAssertEqual(Array("1;allowall".utf8), try lowercaseEncoder.encodeItemField(item))
+        XCTAssertThrowsError(try noStrategyEncoder.encode(item))
+        XCTAssertEqual(Array("1;allowall".utf8), try lowercaseEncoder.encode(item))
 
-        XCTAssertThrowsError(try noStrategyEncoder.encodeListField([item, item]))
+        XCTAssertThrowsError(try noStrategyEncoder.encode(List([item, item])))
         XCTAssertEqual(Array("1;allowall, 1;allowall".utf8),
-                       try lowercaseEncoder.encodeListField([item, item]))
+                       try lowercaseEncoder.encode(List([item, item])))
 
-        XCTAssertThrowsError(try noStrategyEncoder.encodeListField([list]))
+        XCTAssertThrowsError(try noStrategyEncoder.encode(List([list])))
         XCTAssertEqual(Array("(1 2);allowall".utf8),
-                       try lowercaseEncoder.encodeListField([list]))
+                       try lowercaseEncoder.encode(List([list])))
 
-        XCTAssertThrowsError(try noStrategyEncoder.encodeDictionaryField(["item": item]))
+        XCTAssertThrowsError(try noStrategyEncoder.encode(DictionaryField(["item": item])))
         XCTAssertEqual(Array("item=1;allowall".utf8),
-                       try lowercaseEncoder.encodeDictionaryField(["item": item]))
+                       try lowercaseEncoder.encode(DictionaryField(["item": item])))
 
-        XCTAssertThrowsError(try noStrategyEncoder.encodeDictionaryField(["list": list]))
+        XCTAssertThrowsError(try noStrategyEncoder.encode(DictionaryField(["list": list])))
         XCTAssertEqual(Array("list=(1 2);allowall".utf8),
-                       try lowercaseEncoder.encodeDictionaryField(["list": list]))
+                       try lowercaseEncoder.encode(DictionaryField(["list": list])))
     }
 }

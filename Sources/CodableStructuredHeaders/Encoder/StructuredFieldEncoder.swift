@@ -38,13 +38,30 @@ extension StructuredFieldEncoder {
 }
 
 extension StructuredFieldEncoder {
+    /// Attempt to encode an object into a structured header field.
+    ///
+    /// - parameters:
+    ///     - data: The object to encode.
+    /// - throws: If the header field could not be encoded, or could not be serialized.
+    /// - returns: The bytes representing the HTTP structured header field.
+    public func encode<StructuredField: StructuredHeaderField>(_ data: StructuredField) throws -> [UInt8] {
+        switch StructuredField.structuredFieldType {
+        case .item:
+            return try self.encodeItemField(data)
+        case .list:
+            return try self.encodeListField(data)
+        case .dictionary:
+            return try self.encodeDictionaryField(data)
+        }
+    }
+
     /// Attempt to encode an object into a structured header dictionary field.
     ///
     /// - parameters:
     ///     - data: The object to encode.
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
-    public func encodeDictionaryField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
+    private func encodeDictionaryField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         let serializer = StructuredFieldSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeDictionaryField(data)
@@ -56,7 +73,7 @@ extension StructuredFieldEncoder {
     ///     - data: The object to encode.
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
-    public func encodeListField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
+    private func encodeListField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         let serializer = StructuredFieldSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeListField(data)
@@ -68,7 +85,7 @@ extension StructuredFieldEncoder {
     ///     - data: The object to encode.
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
-    public func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
+    private func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         let serializer = StructuredFieldSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeItemField(data)
@@ -635,7 +652,7 @@ extension _StructuredFieldEncoder {
             try self.encode(value, forKey: key)
         default:
             // Ok, we don't know what this is. This can only happen for a dictionary, or
-            // for anything with parameters, or for inner lists.
+            // for anything with parameters, or for lists, or for inner lists.
             switch self.currentStackEntry.storage {
             case .dictionaryHeader:
                 // Ah, this is a dictionary, good to know. Initialize the storage, keep going.
@@ -686,7 +703,18 @@ extension _StructuredFieldEncoder {
                     throw StructuredHeaderError.invalidTypeForItem
                 }
 
-            case .listHeader, .list, .itemHeader, .bareInnerList,
+            case .listHeader:
+                switch key {
+                case "items":
+                    // Ok, we're a list. Good to know.
+                    self.push(key: .init(stringValue: key), newStorage: .list([]))
+                    try value.encode(to: self)
+                    try self.pop()
+                default:
+                    throw StructuredHeaderError.invalidTypeForItem
+                }
+
+            case .list, .itemHeader, .bareInnerList,
                  .parameters:
                 throw StructuredHeaderError.invalidTypeForItem
             }
@@ -793,6 +821,9 @@ extension _StructuredFieldEncoder {
             case (.dictionary(var map), .item(let item)):
                 map[key.stringValue] = .item(Item(item))
                 self = .dictionary(map)
+
+            case (.listHeader, .list(let list)) where key.stringValue == "items":
+                self = .list(list)
 
             case (.listHeader, .innerList(let innerList)) where key.intValue != nil:
                 self = .list([.innerList(innerList)])

@@ -41,19 +41,25 @@ In most cases users should prefer to use `CodableStructuredHeaders` unless they 
 ```swift
 let field = Array("Sec-CH-Example, Sec-CH-Example-2".utf8)
 
+struct AcceptCH: StructuredHeaderField {
+    static let structuredFiedType: StructuredHeaderFieldType = .list
+    
+    var items: [String]
+}
+
 // Decoding
 let decoder = StructuredFieldDecoder()
-let parsed = try decoder.decodeListField([String].self, from: field)
+let parsed = try decoder.decode(AcceptCH.self, from: field)
 
 // Encoding
 let encoder = StructuredFieldEncoder()
-let serialized = try encoder.encodeListField(["Sec-CH-Example", "Sec-CH-Example-2"])
+let serialized = try encoder.encode(AcceptCH(items: ["Sec-CH-Example", "Sec-CH-Example-2"]))
 ```
 
 However, structured header fields can be substantially more complex. Structured header fields can make use of 4 containers and 6 base item types. The containers are:
 
-1. Dictionaries. These are top-level elements and associate token keys with values. The values may be items, or may be inner lists, and each value may also have parameters associated with them. `CodableStructuredHeaders` can model dictionaries as either Swift objects (where the property names are dictionary keys), or as Swift dictionaries.
-2. Lists. These are top-level elements, providing a sequence of items or inner lists. Each item or inner list may have parameters associated with them. `CodableStructuredHeaders` models these as Swift `Array`s where the entries are items of some kind.
+1. Dictionaries. These are top-level elements and associate token keys with values. The values may be items, or may be inner lists, and each value may also have parameters associated with them. `CodableStructuredHeaders` can model dictionaries as either Swift objects (where the property names are dictionary keys).
+2. Lists. These are top-level elements, providing a sequence of items or inner lists. Each item or inner list may have parameters associated with them. `CodableStructuredHeaders` models these as Swift objects with one key, `items`, that must be a collection of entries.
 3. Inner Lists. These are lists that may be sub-entries of a dictionary or a list. The list entries are items, which may have parameters associated with them: additionally, an inner list may have parameters associated with itself as well. `CodableStructuredHeaders` models these as either Swift `Array`s _or_, if it's important to extract parameters, as a two-field Swift `struct` where one field is called `items` and contains an `Array`, and other field is called `parameters` and contains a dictionary.
 4. Parameters. Parameters associated token keys with items without parameters. These are used to store metadata about objects within a field. `CodableStructuredHeaders` models these as either Swift objects (where the property names are the parameter keys) or as Swift dictionaries.
 
@@ -67,6 +73,8 @@ The base types are:
 6. Binary data. `CodableStructuredHeaders` models this as Foundation's `Data` type.
 
 For any Structured Header Field Item, the item may either be represented directly by the appropriate type, or by a Swift struct with two properties: `item` and `parameters`. This latter mode is how parameters on a given item may be captured.
+
+The top-level structured header field must identify what kind of header field it corresponds to: `.item`, `.list`, or `.dictionary`. This is inherent in the type of the field and will be specified in the relevant field specification.
 
 ## Lower Levels
 
