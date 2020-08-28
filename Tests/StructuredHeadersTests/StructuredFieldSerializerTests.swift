@@ -16,10 +16,10 @@ import StructuredHeaders
 import XCTest
 
 final class StructuredFieldSerializerTests: XCTestCase {
-    enum TestResult<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-        case dictionary(OrderedMap<String, ItemOrInnerList<BaseData>>)
-        case list([ItemOrInnerList<BaseData>])
-        case item(Item<BaseData>)
+    enum TestResult {
+        case dictionary(OrderedMap<String, ItemOrInnerList>)
+        case list([ItemOrInnerList])
+        case item(Item)
     }
 
     private func _runSerializationTest(_ fixture: StructuredHeaderTestFixture) {
@@ -28,9 +28,9 @@ final class StructuredFieldSerializerTests: XCTestCase {
         }
 
         do {
-            let toSerialize: TestResult<ArraySlice<UInt8>>
+            let toSerialize: TestResult
             do {
-                toSerialize = try TestResult<ArraySlice<UInt8>>(expected)
+                toSerialize = try TestResult(expected)
             } catch let error as StructuredHeaderError where error == .invalidIntegerOrDecimal {
                 // We expect this error, it's fine
                 return
@@ -71,7 +71,7 @@ final class StructuredFieldSerializerTests: XCTestCase {
         do {
             var parser = StructuredFieldParser(joinedHeaders)
 
-            let testResult: TestResult<ArraySlice<UInt8>>
+            let testResult: TestResult
             switch fixture.headerType {
             case "dictionary":
                 testResult = try .dictionary(parser.parseDictionaryField())
@@ -126,12 +126,12 @@ final class StructuredFieldSerializerTests: XCTestCase {
     }
 }
 
-extension StructuredFieldSerializerTests.TestResult where BaseData == ArraySlice<UInt8> {
+extension StructuredFieldSerializerTests.TestResult {
     init(_ schema: JSONSchema) throws {
         switch schema {
         case .dictionary(let dictionary):
             // Top level JSON objects are encoding dictionaries.
-            var dict = OrderedMap<String, ItemOrInnerList<BaseData>>()
+            var dict = OrderedMap<String, ItemOrInnerList>()
 
             for (name, value) in dictionary {
                 dict[name] = try ItemOrInnerList(value)
@@ -154,7 +154,7 @@ extension StructuredFieldSerializerTests.TestResult where BaseData == ArraySlice
     }
 }
 
-extension ItemOrInnerList where BaseData == ArraySlice<UInt8> {
+extension ItemOrInnerList {
     init(_ schema: JSONSchema) throws {
         // We need to detect the difference between an item or inner list. Both will be JSON arrays, but
         // in the case of inner list the first element will be an array, while for an item it will not.
@@ -170,7 +170,7 @@ extension ItemOrInnerList where BaseData == ArraySlice<UInt8> {
     }
 }
 
-extension Item where BaseData == ArraySlice<UInt8> {
+extension Item {
     init(_ schema: JSONSchema) throws {
         guard case .array(let arrayElements) = schema, arrayElements.count == 2, let first = arrayElements.first, let last = arrayElements.last else {
             fatalError("Invalid item: \(schema)")
@@ -180,7 +180,7 @@ extension Item where BaseData == ArraySlice<UInt8> {
     }
 }
 
-extension BareItem where BaseData == ArraySlice<UInt8> {
+extension BareItem {
     init(_ schema: JSONSchema) throws {
         switch schema {
         case .integer(let int):
@@ -195,8 +195,8 @@ extension BareItem where BaseData == ArraySlice<UInt8> {
                 self = .token(value)
 
             case (.some(.string("binary")), .some(.string(let value))):
-                let expectedBase64Bytes = Data(base32Encoded: Data(value.utf8)).base64EncodedData()
-                self = .undecodedByteSequence(ArraySlice(expectedBase64Bytes))
+                let expectedBase64Bytes = Data(base32Encoded: Data(value.utf8)).base64EncodedString()
+                self = .undecodedByteSequence(expectedBase64Bytes)
 
             default:
                 preconditionFailure("Unexpected type object \(typeObject)")
@@ -209,7 +209,7 @@ extension BareItem where BaseData == ArraySlice<UInt8> {
     }
 }
 
-extension InnerList where BaseData == ArraySlice<UInt8> {
+extension InnerList {
     init(_ schema: JSONSchema) throws {
         guard case .array(let arrayElements) = schema, arrayElements.count == 2, let first = arrayElements.first, let last = arrayElements.last else {
             fatalError("Invalid item: \(schema)")
@@ -219,7 +219,7 @@ extension InnerList where BaseData == ArraySlice<UInt8> {
     }
 }
 
-extension BareInnerList where BaseData == ArraySlice<UInt8> {
+extension BareInnerList {
     init(_ schema: JSONSchema) throws {
         guard case .array(let items) = schema else {
             fatalError("Unexpected bare inner list object \(schema)")
@@ -233,7 +233,7 @@ extension BareInnerList where BaseData == ArraySlice<UInt8> {
     }
 }
 
-extension OrderedMap where Key == String, Value == BareItem<ArraySlice<UInt8>> {
+extension OrderedMap where Key == String, Value == BareItem {
     init(parameters: JSONSchema) throws {
         guard case .dictionary(let jsonDict) = parameters else {
             fatalError("Invalid format for parameters: \(parameters)")

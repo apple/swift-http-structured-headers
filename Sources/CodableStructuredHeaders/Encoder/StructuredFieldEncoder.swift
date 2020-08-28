@@ -276,7 +276,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ data: Data) throws {
-        let encoded = data.base64EncodedData()
+        let encoded = data.base64EncodedString()
         try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(encoded))
     }
 
@@ -434,7 +434,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: Data) throws {
-        try self.currentStackEntry.storage.appendBareItem(.undecodedByteSequence(value.base64EncodedData()))
+        try self.currentStackEntry.storage.appendBareItem(.undecodedByteSequence(value.base64EncodedString()))
     }
 
     func append(_ value: Decimal) throws {
@@ -601,7 +601,7 @@ extension _StructuredFieldEncoder {
 
     func encode(_ value: Data, forKey key: String) throws {
         let key = self.sanitizeKey(key)
-        try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(value.base64EncodedData()), atKey: key)
+        try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(value.base64EncodedString()), atKey: key)
     }
 
     func encode(_ value: Decimal, forKey key: String) throws {
@@ -758,24 +758,22 @@ extension _StructuredFieldEncoder {
     /// Note that we never have a bare item here. This is deliberate: bare items
     /// are not a container for anything else, and so can never appear.
     internal enum NodeType {
-        typealias DataType = Data
-
         case dictionaryHeader
         case listHeader
         case itemHeader
-        case dictionary(OrderedMap<String, ItemOrInnerList<DataType>>)
-        case list([ItemOrInnerList<DataType>])
-        case innerList(InnerList<DataType>)
+        case dictionary(OrderedMap<String, ItemOrInnerList>)
+        case list([ItemOrInnerList])
+        case innerList(InnerList)
         case item(PartialItem)
-        case bareInnerList(BareInnerList<DataType>)
-        case parameters(OrderedMap<String, BareItem<DataType>>)
-        case itemOrInnerList(OrderedMap<String, BareItem<DataType>>)
+        case bareInnerList(BareInnerList)
+        case parameters(OrderedMap<String, BareItem>)
+        case itemOrInnerList(OrderedMap<String, BareItem>)
 
         /// A helper struct used to tolerate the fact that we need partial items,
         /// but our `Item` struct doesn't like that much.
         struct PartialItem {
-            var bareItem: BareItem<DataType>?
-            var parameters: OrderedMap<String, BareItem<DataType>>
+            var bareItem: BareItem?
+            var parameters: OrderedMap<String, BareItem>
         }
 
         /// This is called when a complete object has been built.
@@ -848,7 +846,7 @@ extension _StructuredFieldEncoder {
         ///
         /// If the key is missing we will require the type to be `item`, in which case
         /// this will be for the "item" key.
-        mutating func insertBareItem(_ bareItem: BareItem<DataType>, atKey key: String? = nil) throws {
+        mutating func insertBareItem(_ bareItem: BareItem, atKey key: String? = nil) throws {
             switch self {
             case .itemHeader:
                 guard key == nil || key == "item" else {
@@ -875,7 +873,7 @@ extension _StructuredFieldEncoder {
 
             case .dictionaryHeader:
                 // Ok cool, this is a dictionary.
-                var map = OrderedMap<String, ItemOrInnerList<DataType>>()
+                var map = OrderedMap<String, ItemOrInnerList>()
 
                 // Bare item here means item, no parameters.
                 map[key!] = .item(.init(bareItem: bareItem, parameters: [:]))
@@ -897,7 +895,7 @@ extension _StructuredFieldEncoder {
 
         /// Appends a bare item to the given container. This must be a list-type
         /// container that stores either bare items, or items.
-        mutating func appendBareItem(_ bareItem: BareItem<DataType>) throws {
+        mutating func appendBareItem(_ bareItem: BareItem) throws {
             switch self {
             case .listHeader:
                 self = .list([.item(Item(bareItem: bareItem, parameters: [:]))])
@@ -926,7 +924,7 @@ extension _StructuredFieldEncoder {
     }
 }
 
-extension Item where BaseData == _StructuredFieldEncoder.NodeType.DataType {
+extension Item {
     fileprivate init(_ partialItem: _StructuredFieldEncoder.NodeType.PartialItem) {
         self.init(bareItem: partialItem.bareItem!, parameters: partialItem.parameters)
     }

@@ -20,13 +20,13 @@ enum FixtureTestError: Error {
 }
 
 final class StructuredFieldParserTests: XCTestCase {
-    enum TestResult<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-        case dictionary(OrderedMap<String, ItemOrInnerList<BaseData>>)
-        case list([ItemOrInnerList<BaseData>])
-        case item(Item<BaseData>)
+    enum TestResult {
+        case dictionary(OrderedMap<String, ItemOrInnerList>)
+        case list([ItemOrInnerList])
+        case item(Item)
     }
 
-    private func _validateBareItem<BaseData: RandomAccessCollection>(_ bareItem: BareItem<BaseData>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateBareItem(_ bareItem: BareItem, against schema: JSONSchema, fixtureName: String) throws {
         switch (bareItem, schema) {
         case (.integer(let baseInt), .integer(let jsonInt)):
             XCTAssertEqual(baseInt, jsonInt, "\(fixtureName): Got \(bareItem), expected \(schema)")
@@ -53,7 +53,7 @@ final class StructuredFieldParserTests: XCTestCase {
             }
 
             XCTAssertEqual(typeName, "binary", "\(fixtureName): Expected type binary, got type \(typeName)")
-            guard let decodedValue = Data(base64Encoded: Data(binary)) else {
+            guard let decodedValue = Data(base64Encoded: binary) else {
                 throw FixtureTestError.base64DecodingFailed
             }
             let decodedExpected = Data(base32Encoded: Data(typeValue.utf8))
@@ -65,7 +65,7 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateParameters<BaseData: RandomAccessCollection>(_ parameters: OrderedMap<String, BareItem<BaseData>>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateParameters(_ parameters: OrderedMap<String, BareItem>, against schema: JSONSchema, fixtureName: String) throws {
         guard case .dictionary(let expectedParameters) = schema else {
             XCTFail("\(fixtureName): Expected parameters to be a JSON dictionary, but got \(schema)")
             return
@@ -80,7 +80,7 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateItem<BaseData: RandomAccessCollection>(_ item: Item<BaseData>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateItem(_ item: Item, against schema: JSONSchema, fixtureName: String) throws {
         // Item: JSON array with two elements, the Bare-Item and Parameters
         guard case .array(let arrayElements) = schema, arrayElements.count == 2 else {
             XCTFail("\(fixtureName): Unexpected item: got \(item), expected \(schema)")
@@ -94,7 +94,7 @@ final class StructuredFieldParserTests: XCTestCase {
         try self._validateParameters(item.parameters, against: arrayElements.last!, fixtureName: fixtureName)
     }
 
-    private func _validateInnerList<BaseData: RandomAccessCollection>(_ innerList: InnerList<BaseData>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateInnerList(_ innerList: InnerList, against schema: JSONSchema, fixtureName: String) throws {
         guard case .array(let arrayElements) = schema,
             arrayElements.count == 2,
             case .some(.array(let expectedItems)) = arrayElements.first,
@@ -111,7 +111,7 @@ final class StructuredFieldParserTests: XCTestCase {
         try self._validateParameters(innerList.parameters, against: expectedParameters, fixtureName: fixtureName)
     }
 
-    private func _validateList<BaseData: RandomAccessCollection>(_ result: [ItemOrInnerList<BaseData>], against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateList(_ result: [ItemOrInnerList], against schema: JSONSchema, fixtureName: String) throws {
         guard case .array(let arrayElements) = schema else {
             XCTFail("\(fixtureName): Unexpected list: got \(result), expected \(schema)")
             return
@@ -128,7 +128,7 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateDictionary<BaseData: RandomAccessCollection>(_ result: OrderedMap<String, ItemOrInnerList<BaseData>>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateDictionary(_ result: OrderedMap<String, ItemOrInnerList>, against schema: JSONSchema, fixtureName: String) throws {
         guard case .dictionary(let expectedElements) = schema else {
             XCTFail("\(fixtureName): Unexpected dictionary: got \(result), expected \(schema)")
             return
@@ -149,7 +149,7 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateFixtureResult<BaseData: RandomAccessCollection>(_ result: TestResult<BaseData>, against schema: JSONSchema, fixtureName: String) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private func _validateFixtureResult(_ result: TestResult, against schema: JSONSchema, fixtureName: String) throws {
         // We want to recursively validate the result here.
         switch result {
         case .list(let resultItems):
@@ -173,7 +173,7 @@ final class StructuredFieldParserTests: XCTestCase {
         do {
             var parser = StructuredFieldParser(joinedHeaders)
 
-            let testResult: TestResult<ArraySlice<UInt8>>
+            let testResult: TestResult
             switch fixture.headerType {
             case "dictionary":
                 testResult = try .dictionary(parser.parseDictionaryField())

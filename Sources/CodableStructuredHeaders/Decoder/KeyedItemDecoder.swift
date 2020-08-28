@@ -19,12 +19,12 @@ private let keyedItemDecoderSupportedKeys = ["item", "parameters"]
 /// Used when someone has requested a keyed decoder for a property of item type.
 ///
 /// There are only two valid keys for this: "item" and "parameters".
-struct KeyedItemDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var item: Item<BaseData.SubSequence>
+struct KeyedItemDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var item: Item
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ item: Item<BaseData.SubSequence>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ item: Item, decoder: _StructuredFieldDecoder<BaseData>) {
         self.item = item
         self.decoder = decoder
     }

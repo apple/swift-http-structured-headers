@@ -19,12 +19,12 @@ private let keyedInnerListDecoderSupportedKeys = ["items", "parameters"]
 /// Used when someone has requested a keyed decoder for a property of inner list type.
 ///
 /// There are only two valid keys for this: "items" and "parameters".
-struct KeyedInnerListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var innerList: InnerList<BaseData.SubSequence>
+struct KeyedInnerListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var innerList: InnerList
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ innerList: InnerList<BaseData.SubSequence>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ innerList: InnerList, decoder: _StructuredFieldDecoder<BaseData>) {
         self.innerList = innerList
         self.decoder = decoder
     }

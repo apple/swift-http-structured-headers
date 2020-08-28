@@ -14,12 +14,12 @@
 import Foundation
 import StructuredHeaders
 
-struct BareItemDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-    private var item: BareItem<BaseData>
+struct BareItemDecoder {
+    private var item: BareItem
 
     private var _codingPath: [_StructuredHeaderCodingKey]
 
-    init(_ item: BareItem<BaseData>, codingPath: [_StructuredHeaderCodingKey]) {
+    init(_ item: BareItem, codingPath: [_StructuredHeaderCodingKey]) {
         self.item = item
         self._codingPath = codingPath
     }
@@ -102,7 +102,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
             throw StructuredHeaderError.invalidTypeForItem
         }
 
-        guard let decoded = Data(base64Encoded: Data(data)) else {
+        guard let decoded = Data(base64Encoded: data) else {
             throw StructuredHeaderError.invalidByteSequence
         }
 
