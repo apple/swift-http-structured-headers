@@ -30,7 +30,7 @@ extension StructuredFieldSerializer {
     ///     - root: The dictionary object.
     /// - throws: If the dictionary could not be serialized.
     /// - returns: The bytes of the serialized header field.
-    public mutating func writeDictionaryHeader<BaseData: RandomAccessCollection>(_ root: OrderedMap<String, ItemOrInnerList<BaseData>>) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    public mutating func writeDictionaryHeader(_ root: OrderedMap<String, ItemOrInnerList>) throws -> [UInt8] {
         guard root.count > 0 else {
             return []
         }
@@ -48,7 +48,7 @@ extension StructuredFieldSerializer {
     ///     - root: The list object.
     /// - throws: If the list could not be serialized.
     /// - returns: The bytes of the serialized header field.
-    public mutating func writeListHeader<BaseData: RandomAccessCollection>(_ list: [ItemOrInnerList<BaseData>]) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    public mutating func writeListHeader(_ list: [ItemOrInnerList]) throws -> [UInt8] {
         guard list.count > 0 else {
             return []
         }
@@ -66,7 +66,7 @@ extension StructuredFieldSerializer {
     ///     - root: The item.
     /// - throws: If the item could not be serialized.
     /// - returns: The bytes of the serialized header field.
-    public mutating func writeItemHeader<BaseData: RandomAccessCollection>(_ item: Item<BaseData>) throws -> [UInt8] where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    public mutating func writeItemHeader(_ item: Item) throws -> [UInt8] {
         defer {
             self.data.removeAll(keepingCapacity: true)
         }
@@ -76,7 +76,7 @@ extension StructuredFieldSerializer {
 }
 
 extension StructuredFieldSerializer {
-    private mutating func serializeADictionary<BaseData: RandomAccessCollection>(_ dictionary: OrderedMap<String, ItemOrInnerList<BaseData>>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeADictionary(_ dictionary: OrderedMap<String, ItemOrInnerList>) throws {
         for (name, value) in dictionary {
             try self.serializeAKey(name)
 
@@ -100,7 +100,7 @@ extension StructuredFieldSerializer {
         self.data.removeLast(2)
     }
 
-    private mutating func serializeAList<BaseData: RandomAccessCollection>(_ list: [ItemOrInnerList<BaseData>]) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeAList(_ list: [ItemOrInnerList]) throws {
         for element in list.dropLast() {
             switch element {
             case .innerList(let innerList):
@@ -123,7 +123,7 @@ extension StructuredFieldSerializer {
         }
     }
 
-    private mutating func serializeAnInnerList<BaseData: RandomAccessCollection>(_ innerList: InnerList<BaseData>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeAnInnerList(_ innerList: InnerList) throws {
         self.data.append(asciiOpenParenthesis)
 
         for item in innerList.bareInnerList.dropLast() {
@@ -140,12 +140,12 @@ extension StructuredFieldSerializer {
         try self.serializeParameters(innerList.parameters)
     }
 
-    private mutating func serializeAnItem<BaseData: RandomAccessCollection>(_ item: Item<BaseData>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeAnItem(_ item: Item) throws {
         try self.serializeABareItem(item.bareItem)
         try self.serializeParameters(item.parameters)
     }
 
-    private mutating func serializeParameters<BaseData: RandomAccessCollection>(_ parameters: OrderedMap<String, BareItem<BaseData>>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeParameters(_ parameters: OrderedMap<String, BareItem>) throws {
         for (key, value) in parameters {
             self.data.append(asciiSemicolon)
             try self.serializeAKey(key)
@@ -166,7 +166,7 @@ extension StructuredFieldSerializer {
         self.data.append(contentsOf: key.utf8)
     }
 
-    private mutating func serializeABareItem<BaseData: RandomAccessCollection>(_ item: BareItem<BaseData>) throws where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+    private mutating func serializeABareItem(_ item: BareItem) throws{
         switch item {
         case .integer(let int):
             guard let wideInt = Int64(exactly: int), validIntegerRange.contains(wideInt) else {
@@ -198,7 +198,7 @@ extension StructuredFieldSerializer {
         case .undecodedByteSequence(let bytes):
             // We require the user to have gotten this right.
             self.data.append(asciiColon)
-            self.data.append(contentsOf: bytes)
+            self.data.append(contentsOf: bytes.utf8)
             self.data.append(asciiColon)
         case .bool(let bool):
             self.data.append(asciiQuestionMark)

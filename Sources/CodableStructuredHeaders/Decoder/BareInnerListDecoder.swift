@@ -14,14 +14,14 @@
 import Foundation
 import StructuredHeaders
 
-struct BareInnerListDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var list: BareInnerList<BaseData.SubSequence>
+struct BareInnerListDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var list: BareInnerList
 
     private var currentOffset: Int
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ list: BareInnerList<BaseData.SubSequence>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ list: BareInnerList, decoder: _StructuredFieldDecoder<BaseData>) {
         self.list = list
         self.currentOffset = 0
         self.decoder = decoder

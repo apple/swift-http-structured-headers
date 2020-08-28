@@ -14,12 +14,12 @@
 import Foundation
 import StructuredHeaders
 
-struct DictionaryKeyedContainer<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var dictionary: OrderedMap<String, ItemOrInnerList<BaseData.SubSequence>>
+struct DictionaryKeyedContainer<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var dictionary: OrderedMap<String, ItemOrInnerList>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ dictionary: OrderedMap<String, ItemOrInnerList<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ dictionary: OrderedMap<String, ItemOrInnerList>, decoder: _StructuredFieldDecoder<BaseData>) {
         self.dictionary = dictionary
         self.decoder = decoder
     }

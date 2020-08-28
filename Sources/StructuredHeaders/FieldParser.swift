@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 /// A `StructuredFieldParser` is the basic parsing object for structured header fields.
-public struct StructuredFieldParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+public struct StructuredFieldParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
     // Right now I'm on the fence about whether this should be generic. It's convenient,
     // and makes it really easy for us to express the parsing over a wide range of data types.
     // But it risks code size in a really nasty way! We should validate that we don't pay too
@@ -27,11 +27,11 @@ public struct StructuredFieldParser<BaseData: RandomAccessCollection> where Base
 
 extension StructuredFieldParser {
     // Helper typealiases to avoid the explosion of generic parameters
-    public typealias BareItem = StructuredHeaders.BareItem<BaseData.SubSequence>
-    public typealias Item = StructuredHeaders.Item<BaseData.SubSequence>
-    public typealias BareInnerList = StructuredHeaders.BareInnerList<BaseData.SubSequence>
-    public typealias InnerList = StructuredHeaders.InnerList<BaseData.SubSequence>
-    public typealias ItemOrInnerList = StructuredHeaders.ItemOrInnerList<BaseData.SubSequence>
+    public typealias BareItem = StructuredHeaders.BareItem
+    public typealias Item = StructuredHeaders.Item
+    public typealias BareInnerList = StructuredHeaders.BareInnerList
+    public typealias InnerList = StructuredHeaders.InnerList
+    public typealias ItemOrInnerList = StructuredHeaders.ItemOrInnerList
     public typealias Key = String
 
     /// Parse the HTTP structured field as a list.
@@ -389,7 +389,7 @@ extension StructuredFieldParser {
                 self.underlyingData.formIndex(after: &index)
                 self.underlyingData = self.underlyingData[index...]
 
-                return .undecodedByteSequence(consumedSlice)
+                return .undecodedByteSequence(String(decoding: consumedSlice, as: UTF8.self))
 
             case asciiCapitals, asciiLowercases, asciiDigits, asciiPlus, asciiSlash, asciiEqual:
                 // All valid characters for Base64 here.

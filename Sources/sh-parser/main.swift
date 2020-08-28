@@ -58,9 +58,9 @@ extension Flags {
 }
 
 enum Header {
-    case dictionary(OrderedMap<String, ItemOrInnerList<Data>>)
-    case list([ItemOrInnerList<Data>])
-    case item(Item<Data>)
+    case dictionary(OrderedMap<String, ItemOrInnerList>)
+    case list([ItemOrInnerList])
+    case item(Item)
 
     func prettyPrint() {
         switch self {
@@ -77,7 +77,7 @@ enum Header {
     }
 }
 
-extension Array where Element == ItemOrInnerList<Data> {
+extension Array where Element == ItemOrInnerList {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
         for (offset, element) in self.enumerated() {
@@ -87,7 +87,7 @@ extension Array where Element == ItemOrInnerList<Data> {
     }
 }
 
-extension OrderedMap where Key == String, Value == ItemOrInnerList<Data> {
+extension OrderedMap where Key == String, Value == ItemOrInnerList {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
         for (key, value) in self {
@@ -97,7 +97,7 @@ extension OrderedMap where Key == String, Value == ItemOrInnerList<Data> {
     }
 }
 
-extension OrderedMap where Key == String, Value == BareItem<Data> {
+extension OrderedMap where Key == String, Value == BareItem {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
 
@@ -107,7 +107,7 @@ extension OrderedMap where Key == String, Value == BareItem<Data> {
     }
 }
 
-extension ItemOrInnerList where BaseData == Data {
+extension ItemOrInnerList {
     func prettyPrint(depth: Int) {
         switch self {
         case .item(let item):
@@ -118,7 +118,7 @@ extension ItemOrInnerList where BaseData == Data {
     }
 }
 
-extension Item where BaseData == Data {
+extension Item {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
 
@@ -128,7 +128,7 @@ extension Item where BaseData == Data {
     }
 }
 
-extension InnerList where BaseData == Data {
+extension InnerList {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
 
@@ -139,7 +139,7 @@ extension InnerList where BaseData == Data {
     }
 }
 
-extension BareInnerList where BaseData == Data {
+extension BareInnerList {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
         for (offset, element) in self.enumerated() {
@@ -149,7 +149,7 @@ extension BareInnerList where BaseData == Data {
     }
 }
 
-extension BareItem where BaseData == Data {
+extension BareItem {
     func prettyFormat() -> String {
         switch self {
         case .bool(let bool):

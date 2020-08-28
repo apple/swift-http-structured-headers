@@ -19,12 +19,12 @@ private let keyedTopLevelListDecoderSupportedKeys = ["items"]
 /// Used when someone has requested a keyed decoder for a property of list type.
 ///
 /// There is only one valid key for this: "items".
-struct KeyedTopLevelListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var list: [ItemOrInnerList<BaseData.SubSequence>]
+struct KeyedTopLevelListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var list: [ItemOrInnerList]
 
     private var decoder: _StructuredFieldDecoder<BaseData>
-
-    init(_ list: [ItemOrInnerList<BaseData.SubSequence>], decoder: _StructuredFieldDecoder<BaseData>) {
+    
+    init(_ list: [ItemOrInnerList], decoder: _StructuredFieldDecoder<BaseData>) {
         self.list = list
         self.decoder = decoder
     }

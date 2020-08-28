@@ -46,7 +46,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decode<StructuredField: StructuredHeaderField, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    public func decode<StructuredField: StructuredHeaderField, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
         switch StructuredField.structuredFieldType {
         case .item:
             return try self.decodeItemField(from: data)
@@ -64,7 +64,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    private func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseDictionaryField()
@@ -78,7 +78,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    private func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseListField()
@@ -92,7 +92,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    private func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+    private func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
         let parser = StructuredFieldParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseItemField()
@@ -111,7 +111,7 @@ extension StructuredFieldDecoder {
     }
 }
 
-class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
+class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
     private var parser: StructuredFieldParser<BaseData>
 
     // For now we use a stack here because the CoW operations on Array would suck. Ideally I'd just have us decode
@@ -220,13 +220,13 @@ extension _StructuredFieldDecoder: Decoder {
 extension _StructuredFieldDecoder {
     /// The basic elements that make up a Structured Header
     fileprivate enum Element {
-        case dictionary(OrderedMap<String, ItemOrInnerList<BaseData.SubSequence>>)
-        case list([ItemOrInnerList<BaseData.SubSequence>])
-        case item(Item<BaseData.SubSequence>)
-        case innerList(InnerList<BaseData.SubSequence>)
-        case bareItem(BareItem<BaseData.SubSequence>)
-        case bareInnerList(BareInnerList<BaseData.SubSequence>)
-        case parameters(OrderedMap<String, BareItem<BaseData.SubSequence>>)
+        case dictionary(OrderedMap<String, ItemOrInnerList>)
+        case list([ItemOrInnerList])
+        case item(Item)
+        case innerList(InnerList)
+        case bareItem(BareItem)
+        case bareInnerList(BareInnerList)
+        case parameters(OrderedMap<String, BareItem>)
 
         func innerElement(for key: _StructuredHeaderCodingKey) throws -> Element {
             switch self {

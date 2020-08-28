@@ -14,12 +14,12 @@
 import Foundation
 import StructuredHeaders
 
-struct ParametersDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence: Hashable {
-    private var parameters: OrderedMap<String, BareItem<BaseData.SubSequence>>
+struct ParametersDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var parameters: OrderedMap<String, BareItem>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ parameters: OrderedMap<String, BareItem<BaseData.SubSequence>>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ parameters: OrderedMap<String, BareItem>, decoder: _StructuredFieldDecoder<BaseData>) {
         self.parameters = parameters
         self.decoder = decoder
     }

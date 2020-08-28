@@ -21,9 +21,9 @@
 
 /// `ItemOrInnerList` represents the values in a structured header dictionary, or the
 /// entries in a structured header list.
-public enum ItemOrInnerList<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-    case item(Item<BaseData>)
-    case innerList(InnerList<BaseData>)
+public enum ItemOrInnerList {
+    case item(Item)
+    case innerList(InnerList)
 }
 
 extension ItemOrInnerList: Hashable {}
@@ -32,7 +32,7 @@ extension ItemOrInnerList: Hashable {}
 
 /// `BareItem` is a representation of the base data types at the bottom of a structured
 /// header field. These types are not parameterised: they are raw data.
-public enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+public enum BareItem {
     /// A boolean item.
     case bool(Bool)
 
@@ -47,7 +47,7 @@ public enum BareItem<BaseData: RandomAccessCollection> where BaseData.Element ==
 
     /// A byte sequence. This case must contain base64-encoded data, as
     /// `StructuredHeaders` does not do base64 encoding or decoding.
-    case undecodedByteSequence(BaseData)
+    case undecodedByteSequence(String)
 
     /// A token item.
     case token(String)
@@ -87,14 +87,14 @@ extension BareItem: Hashable {}
 
 /// `Item` represents a structured header field item: a combination of a `bareItem`
 /// and some parameters.
-public struct Item<BaseData: RandomAccessCollection> where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+public struct Item {
     /// The `BareItem` that this `Item` contains.
-    public var bareItem: BareItem<BaseData>
+    public var bareItem: BareItem
 
     /// The parameters associated with `bareItem`
-    public var parameters: OrderedMap<String, BareItem<BaseData>>
+    public var parameters: OrderedMap<String, BareItem>
 
-    public init(bareItem: BareItem<BaseData>, parameters: OrderedMap<String, BareItem<BaseData>>) {
+    public init(bareItem: BareItem, parameters: OrderedMap<String, BareItem>) {
         self.bareItem = bareItem
         self.parameters = parameters
     }
@@ -106,20 +106,20 @@ extension Item: Hashable {}
 
 /// A `BareInnerList` represents the items contained within an `InnerList`, without
 /// the associated parameters.
-public struct BareInnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
-    private var items: [Item<BaseData>]
+public struct BareInnerList: Hashable {
+    private var items: [Item]
 
     public init() {
         self.items = []
     }
 
-    public mutating func append(_ item: Item<BaseData>) {
+    public mutating func append(_ item: Item) {
         self.items.append(item)
     }
 }
 
 extension BareInnerList: ExpressibleByArrayLiteral {
-    public init(arrayLiteral elements: Item<BaseData>...) {
+    public init(arrayLiteral elements: Item...) {
         self.items = elements
     }
 }
@@ -127,9 +127,9 @@ extension BareInnerList: ExpressibleByArrayLiteral {
 // TODO: RangeReplaceableCollection I guess
 extension BareInnerList: RandomAccessCollection, MutableCollection {
     public struct Index {
-        fileprivate var baseIndex: Array<Item<BaseData>>.Index
+        fileprivate var baseIndex: Array<Item>.Index
 
-        init(_ baseIndex: Array<Item<BaseData>>.Index) {
+        init(_ baseIndex: Array<Item>.Index) {
             self.baseIndex = baseIndex
         }
     }
@@ -158,7 +158,7 @@ extension BareInnerList: RandomAccessCollection, MutableCollection {
         Index(self.items.index(i.baseIndex, offsetBy: offset))
     }
 
-    public subscript(index: Index) -> Item<BaseData> {
+    public subscript(index: Index) -> Item {
         get {
             self.items[index.baseIndex]
         }
@@ -179,14 +179,14 @@ extension BareInnerList.Index: Comparable {
 // MARK: - InnerList
 
 /// An `InnerList` is a list of items, with some associated parameters.
-public struct InnerList<BaseData: RandomAccessCollection>: Hashable where BaseData.Element == UInt8, BaseData.SubSequence == BaseData, BaseData: Hashable {
+public struct InnerList: Hashable {
     /// The items contained within this inner list.
-    public var bareInnerList: BareInnerList<BaseData>
+    public var bareInnerList: BareInnerList
 
     /// The parameters associated with the `bareInnerList`.
-    public var parameters: OrderedMap<String, BareItem<BaseData>>
+    public var parameters: OrderedMap<String, BareItem>
 
-    public init(bareInnerList: BareInnerList<BaseData>, parameters: OrderedMap<String, BareItem<BaseData>>) {
+    public init(bareInnerList: BareInnerList, parameters: OrderedMap<String, BareItem>) {
         self.bareInnerList = bareInnerList
         self.parameters = parameters
     }
