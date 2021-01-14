@@ -47,8 +47,9 @@ final class StructuredFieldEncoderTests: XCTestCase {
     func testEncodeKeyedItemHeader() throws {
         struct KeyedItem<ItemType: Codable & Equatable>: Equatable, StructuredHeaderField {
             static var structuredFieldType: StructuredHeaderFieldType {
-                return .item
+                .item
             }
+
             var item: ItemType
             var parameters: [String: Bool]
         }
