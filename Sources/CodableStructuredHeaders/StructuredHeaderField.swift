@@ -21,7 +21,6 @@ public protocol StructuredHeaderField: Codable {
     static var structuredFieldType: StructuredHeaderFieldType { get }
 }
 
-
 /// The kinds of header fields used in HTTP Structured Headers.
 public enum StructuredHeaderFieldType {
     /// An item field consists of a single item, optionally with parameters.

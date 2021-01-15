@@ -14,8 +14,6 @@ services:
 
   test:
     image: swift-http-structured-headers:18.04-5.3
-    environment:
-      - SANITIZER_ARG=--sanitize=thread
 
   shell:
     image: swift-http-structured-headers:18.04-5.3

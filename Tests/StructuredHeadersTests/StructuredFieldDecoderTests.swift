@@ -33,7 +33,7 @@ struct ListyDictionaryParameterisedList: Codable, Equatable {
 
 struct ItemField<Base: Codable & Equatable>: StructuredHeaderField, Equatable {
     static var structuredFieldType: StructuredHeaderFieldType {
-        return .item
+        .item
     }
 
     var item: Base
@@ -45,7 +45,7 @@ struct ItemField<Base: Codable & Equatable>: StructuredHeaderField, Equatable {
 
 struct List<Base: Codable & Equatable>: StructuredHeaderField, Equatable {
     static var structuredFieldType: StructuredHeaderFieldType {
-        return .list
+        .list
     }
 
     var items: [Base]
@@ -57,7 +57,7 @@ struct List<Base: Codable & Equatable>: StructuredHeaderField, Equatable {
 
 struct DictionaryField<Key: Codable & Hashable, Value: Codable & Equatable>: StructuredHeaderField, Equatable {
     static var structuredFieldType: StructuredHeaderFieldType {
-        return .dictionary
+        .dictionary
     }
 
     var items: [Key: Value]

@@ -23,7 +23,7 @@ struct KeyedTopLevelListDecoder<Key: CodingKey, BaseData: RandomAccessCollection
     private var list: [ItemOrInnerList]
 
     private var decoder: _StructuredFieldDecoder<BaseData>
-    
+
     init(_ list: [ItemOrInnerList], decoder: _StructuredFieldDecoder<BaseData>) {
         self.list = list
         self.decoder = decoder

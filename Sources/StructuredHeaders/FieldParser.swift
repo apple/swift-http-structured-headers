@@ -523,24 +523,24 @@ extension String {
         // `StrippingStringEscapesCollection` for more details on what we're doing here.
         let unescapedBytes = StrippingStringEscapesCollection(bytes, escapes: escapes)
         #if canImport(Darwin)
-            if #available(macOS 10.16, macCatalyst 10.16, iOS 14.0, watchOS 7.0, tvOS 14.0, *) {
-                return String(unsafeUninitializedCapacity: unescapedBytes.count) { innerPtr in
-                    let (_, endIndex) = innerPtr.initialize(from: unescapedBytes)
-                    return endIndex
-                }
-            } else {
-                return String(decoding: unescapedBytes, as: UTF8.self)
+        if #available(macOS 10.16, macCatalyst 10.16, iOS 14.0, watchOS 7.0, tvOS 14.0, *) {
+            return String(unsafeUninitializedCapacity: unescapedBytes.count) { innerPtr in
+                let (_, endIndex) = innerPtr.initialize(from: unescapedBytes)
+                return endIndex
             }
-         #else
-             #if compiler(>=5.3)
-                return String(unsafeUninitializedCapacity: unescapedBytes.count) { innerPtr in
-                    let (_, endIndex) = innerPtr.initialize(from: unescapedBytes)
-                    return endIndex
-                }
-             #else
-                return String(decoding: unescapedBytes, as: UTF8.self)
-             #endif
-         #endif
+        } else {
+            return String(decoding: unescapedBytes, as: UTF8.self)
+        }
+        #else
+        #if compiler(>=5.3)
+        return String(unsafeUninitializedCapacity: unescapedBytes.count) { innerPtr in
+            let (_, endIndex) = innerPtr.initialize(from: unescapedBytes)
+            return endIndex
+        }
+        #else
+        return String(decoding: unescapedBytes, as: UTF8.self)
+        #endif
+        #endif
     }
 }
 

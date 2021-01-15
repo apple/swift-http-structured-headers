@@ -166,7 +166,7 @@ extension StructuredFieldSerializer {
         self.data.append(contentsOf: key.utf8)
     }
 
-    private mutating func serializeABareItem(_ item: BareItem) throws{
+    private mutating func serializeABareItem(_ item: BareItem) throws {
         switch item {
         case .integer(let int):
             guard let wideInt = Int64(exactly: int), validIntegerRange.contains(wideInt) else {
