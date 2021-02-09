@@ -36,7 +36,7 @@ extension StructuredFieldParser {
 
     /// Parse the HTTP structured field as a list.
     ///
-    /// This is a straightforward implementation of the parser in the draft spec.
+    /// This is a straightforward implementation of the parser in the spec.
     ///
     /// - throws: If the field could not be parsed.
     /// - returns: An array of items or inner lists.

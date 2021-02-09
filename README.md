@@ -6,11 +6,11 @@ Provides parsing and serialization facilities for structured header fields, as w
 
 ## About Structured Header Fields
 
-HTTP Structured Header fields are [a draft specification](https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19) being worked on by the IETF. They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
+HTTP Structured Header fields are a HTTP extension recorded in [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941.html) . They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
 
 ## Swift HTTP Structured Header Fields
 
-This package provides a parser and serializer that match draft 19 of the working group's draft specification. They are entirely complete, able to handle all valid HTTP structured header fields. This package also provides `Encoder` and `Decoder` objects for working with Codable in Swift. This allows rapid prototyping and experimentation with HTTP structured header fields, as well as interaction with the wider Swift Codable community.
+This package provides a parser and serializer that implement RFC 8941. They are entirely complete, able to handle all valid HTTP structured header fields. This package also provides `Encoder` and `Decoder` objects for working with Codable in Swift. This allows rapid prototyping and experimentation with HTTP structured header fields, as well as interaction with the wider Swift Codable community.
 
 This package provides two top-level modules: `StructuredHeaders` and `CodableStructuredHeaders`.
 
@@ -24,7 +24,7 @@ In most cases users should prefer to use `CodableStructuredHeaders` unless they 
 
 ## Working with Structured Header Fields
 
-`swift-http-structured-headers` has a simply, easy-to-use high-level API for working with structured header fields. To begin with, let's consider the [HTTP Client Hints draft specification](https://tools.ietf.org/html/draft-ietf-httpbis-client-hints-15). This defines the following new header field:
+`swift-http-structured-headers` has a simply, easy-to-use high-level API for working with structured header fields. To begin with, let's consider the [HTTP Client Hints specification](https://www.rfc-editor.org/rfc/rfc8942.html). This defines the following new header field:
 
 >    The Accept-CH response header field indicates server support for the hints indicated in its value.  Servers wishing to receive user agent information through Client Hints SHOULD add Accept-CH response header to their responses as early as possible.
 >
