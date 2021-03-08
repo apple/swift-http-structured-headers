@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+@testable import StructuredHeaders
 import XCTest
 
 enum FixtureTestError: Error {
@@ -168,10 +168,10 @@ final class StructuredFieldParserTests: XCTestCase {
             // Serialization only test, skip.
             return
         }
-        let joinedHeaders = Array(raw.joined(separator: ", ").utf8)
 
         do {
-            var parser = StructuredFieldParser(joinedHeaders)
+            let sf = try RawStructuredField(fragments: raw)
+            var parser = StructuredFieldParser(sf)
 
             let testResult: TestResult
             switch fixture.headerType {
