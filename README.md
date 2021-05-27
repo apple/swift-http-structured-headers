@@ -106,3 +106,7 @@ let serialized = serializer.writeListFieldValue(parsed)
 Notice the substantially more verbose types involved in this operation. These types are highly generic, giving the opportunity for parsing and serializing that greatly reduces the runtime overhead. They also make it easier to distinguish between tokens and strings, and to observe the order of objects in dictionaries or parameters, which can be lost at the Codable level.
 
 In general, users should consider this API only when they are confident they need either the flexibility or the performance. This may be valuable for header fields that do not evolve often, or that are highly dynamic.
+
+## Security
+
+swift-http-structured-headers has a security policy outlined in [SECURITY.md](SECURITY.md).
