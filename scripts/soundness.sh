@@ -3,7 +3,7 @@
 ##
 ## This source file is part of the SwiftNIO open source project
 ##
-## Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+## Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
@@ -17,7 +17,7 @@ set -eu
 here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 function replace_acceptable_years() {
     # this needs to replace all acceptable forms with 'YEARS'
-    sed -e 's/2020/YEARS/'
+    sed  -e 's/2020-2021/YEARS/' -e 's/202[01]/YEARS/'
 }
 
 

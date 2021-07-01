@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 import XCTest
 
 final class StructuredFieldSerializerTests: XCTestCase {
@@ -36,16 +36,16 @@ final class StructuredFieldSerializerTests: XCTestCase {
                 return
             }
 
-            var serializer = StructuredFieldSerializer()
+            var serializer = StructuredFieldValueSerializer()
 
             let result: [UInt8]
             switch toSerialize {
             case .dictionary(let dictionary):
-                result = try serializer.writeDictionaryHeader(dictionary)
+                result = try serializer.writeDictionaryFieldValue(dictionary)
             case .list(let list):
-                result = try serializer.writeListHeader(list)
+                result = try serializer.writeListFieldValue(list)
             case .item(let item):
-                result = try serializer.writeItemHeader(item)
+                result = try serializer.writeItemFieldValue(item)
             }
 
             if fixture.mustFail == true || fixture.canFail == true {
@@ -69,22 +69,22 @@ final class StructuredFieldSerializerTests: XCTestCase {
         let joinedHeaders = Array(raw.joined(separator: ", ").utf8)
 
         do {
-            var parser = StructuredFieldParser(joinedHeaders)
+            var parser = StructuredFieldValueParser(joinedHeaders)
 
             let testResult: TestResult
             switch fixture.headerType {
             case "dictionary":
-                testResult = try .dictionary(parser.parseDictionaryField())
+                testResult = try .dictionary(parser.parseDictionaryFieldValue())
             case "list":
-                testResult = try .list(parser.parseListField())
+                testResult = try .list(parser.parseListFieldValue())
             case "item":
-                testResult = try .item(parser.parseItemField())
+                testResult = try .item(parser.parseItemFieldValue())
             default:
                 XCTFail("\(fixture.name): Unexpected header type \(fixture.headerType)")
                 return
             }
 
-            var serializer = StructuredFieldSerializer()
+            var serializer = StructuredFieldValueSerializer()
             let serialized: [UInt8]
 
             let canonicalJoinedHeaders: [UInt8]
@@ -96,11 +96,11 @@ final class StructuredFieldSerializerTests: XCTestCase {
 
             switch testResult {
             case .dictionary(let result):
-                serialized = try serializer.writeDictionaryHeader(result)
+                serialized = try serializer.writeDictionaryFieldValue(result)
             case .list(let list):
-                serialized = try serializer.writeListHeader(list)
+                serialized = try serializer.writeListFieldValue(list)
             case .item(let item):
-                serialized = try serializer.writeItemHeader(item)
+                serialized = try serializer.writeItemFieldValue(item)
             }
 
             XCTAssertEqual(canonicalJoinedHeaders, serialized, "\(fixture.name): Header serialization mismatch: expected \(String(decoding: canonicalJoinedHeaders, as: UTF8.self)), got \(String(decoding: serialized, as: UTF8.self))")

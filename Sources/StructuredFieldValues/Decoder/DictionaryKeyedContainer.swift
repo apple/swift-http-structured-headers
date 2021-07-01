@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,40 +12,35 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 
-private let keyedTopLevelListDecoderSupportedKeys = ["items"]
-
-/// Used when someone has requested a keyed decoder for a property of list type.
-///
-/// There is only one valid key for this: "items".
-struct KeyedTopLevelListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
-    private var list: [ItemOrInnerList]
+struct DictionaryKeyedContainer<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var dictionary: OrderedMap<String, ItemOrInnerList>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ list: [ItemOrInnerList], decoder: _StructuredFieldDecoder<BaseData>) {
-        self.list = list
+    init(_ dictionary: OrderedMap<String, ItemOrInnerList>, decoder: _StructuredFieldDecoder<BaseData>) {
+        self.dictionary = dictionary
         self.decoder = decoder
     }
 }
 
-extension KeyedTopLevelListDecoder: KeyedDecodingContainerProtocol {
+extension DictionaryKeyedContainer: KeyedDecodingContainerProtocol {
     var codingPath: [CodingKey] {
         self.decoder.codingPath
     }
 
     var allKeys: [Key] {
-        keyedTopLevelListDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
+        self.dictionary.compactMap { Key(stringValue: $0.0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        keyedTopLevelListDecoderSupportedKeys.contains(key.stringValue)
+        self.dictionary.contains(where: { $0.0 == key.stringValue })
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {
-        // Keys are never nil for this type.
-        false
+        // We will decode nil if the key is not present.
+        !self.contains(key)
     }
 
     func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T: Decodable {
@@ -82,12 +77,12 @@ extension KeyedTopLevelListDecoder: KeyedDecodingContainerProtocol {
     }
 
     func superDecoder() throws -> Decoder {
-        // Items never support inherited types.
+        // Dictionary headers never support inherited types.
         throw StructuredHeaderError.invalidTypeForItem
     }
 
     func superDecoder(forKey key: Key) throws -> Decoder {
-        // Items never support inherited types.
+        // Dictionary headers never support inherited types.
         throw StructuredHeaderError.invalidTypeForItem
     }
 }

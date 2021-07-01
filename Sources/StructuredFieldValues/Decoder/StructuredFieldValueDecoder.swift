@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,18 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 
-/// A `StructuredFieldDecoder` allows decoding `Decodable` objects from a HTTP
+/// A `StructuredFieldValueDecoder` allows decoding `Decodable` objects from a HTTP
 /// structured header field.
-public struct StructuredFieldDecoder {
+public struct StructuredFieldValueDecoder {
     /// A strategy that should be used to map coding keys to wire format keys.
     public var keyDecodingStrategy: KeyDecodingStrategy?
 
     public init() {}
 }
 
-extension StructuredFieldDecoder {
+extension StructuredFieldValueDecoder {
     /// A strategy that should be used to map coding keys to wire format keys.
     public struct KeyDecodingStrategy: Hashable {
         fileprivate enum Base: Hashable {
@@ -38,7 +38,7 @@ extension StructuredFieldDecoder {
     }
 }
 
-extension StructuredFieldDecoder {
+extension StructuredFieldValueDecoder {
     /// Attempt to decode an object from a structured header field.
     ///
     /// - parameters:
@@ -46,7 +46,7 @@ extension StructuredFieldDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decode<StructuredField: StructuredHeaderField, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
+    public func decode<StructuredField: StructuredFieldValue, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
         switch StructuredField.structuredFieldType {
         case .item:
             return try self.decodeItemField(from: data)
@@ -65,7 +65,7 @@ extension StructuredFieldDecoder {
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
     private func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
-        let parser = StructuredFieldParser(data)
+        let parser = StructuredFieldValueParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseDictionaryField()
         return try type.init(from: decoder)
@@ -79,7 +79,7 @@ extension StructuredFieldDecoder {
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
     private func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
-        let parser = StructuredFieldParser(data)
+        let parser = StructuredFieldValueParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseListField()
         return try type.init(from: decoder)
@@ -93,7 +93,7 @@ extension StructuredFieldDecoder {
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
     private func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
-        let parser = StructuredFieldParser(data)
+        let parser = StructuredFieldValueParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseItemField()
 
@@ -112,15 +112,15 @@ extension StructuredFieldDecoder {
 }
 
 class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
-    private var parser: StructuredFieldParser<BaseData>
+    private var parser: StructuredFieldValueParser<BaseData>
 
     // For now we use a stack here because the CoW operations on Array would suck. Ideally I'd just have us decode
     // our way down with values, but doing that is a CoWy nightmare from which we cannot escape.
     private var _codingStack: [CodingStackEntry]
 
-    var keyDecodingStrategy: StructuredFieldDecoder.KeyDecodingStrategy?
+    var keyDecodingStrategy: StructuredFieldValueDecoder.KeyDecodingStrategy?
 
-    init(_ parser: StructuredFieldParser<BaseData>, keyDecodingStrategy: StructuredFieldDecoder.KeyDecodingStrategy?) {
+    init(_ parser: StructuredFieldValueParser<BaseData>, keyDecodingStrategy: StructuredFieldValueDecoder.KeyDecodingStrategy?) {
         self.parser = parser
         self._codingStack = []
         self.keyDecodingStrategy = keyDecodingStrategy
@@ -194,7 +194,7 @@ extension _StructuredFieldDecoder: Decoder {
 
     func parseDictionaryField() throws {
         precondition(self._codingStack.isEmpty)
-        let parsed = try self.parser.parseDictionaryField()
+        let parsed = try self.parser.parseDictionaryFieldValue()
 
         // We unconditionally add to the base of the coding stack here. This element is never popped off.
         self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .dictionary(parsed)))
@@ -202,7 +202,7 @@ extension _StructuredFieldDecoder: Decoder {
 
     func parseListField() throws {
         precondition(self._codingStack.isEmpty)
-        let parsed = try self.parser.parseListField()
+        let parsed = try self.parser.parseListFieldValue()
 
         // We unconditionally add to the base of the coding stack here. This element is never popped off.
         self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .list(parsed)))
@@ -210,7 +210,7 @@ extension _StructuredFieldDecoder: Decoder {
 
     func parseItemField() throws {
         precondition(self._codingStack.isEmpty)
-        let parsed = try self.parser.parseItemField()
+        let parsed = try self.parser.parseItemFieldValue()
 
         // We unconditionally add to the base of the coding stack here. This element is never popped off.
         self._codingStack.append(CodingStackEntry(key: .init(stringValue: ""), element: .item(parsed)))
