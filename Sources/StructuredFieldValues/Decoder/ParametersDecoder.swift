@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,40 +12,35 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 
-private let keyedInnerListDecoderSupportedKeys = ["items", "parameters"]
-
-/// Used when someone has requested a keyed decoder for a property of inner list type.
-///
-/// There are only two valid keys for this: "items" and "parameters".
-struct KeyedInnerListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
-    private var innerList: InnerList
+struct ParametersDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var parameters: OrderedMap<String, BareItem>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ innerList: InnerList, decoder: _StructuredFieldDecoder<BaseData>) {
-        self.innerList = innerList
+    init(_ parameters: OrderedMap<String, BareItem>, decoder: _StructuredFieldDecoder<BaseData>) {
+        self.parameters = parameters
         self.decoder = decoder
     }
 }
 
-extension KeyedInnerListDecoder: KeyedDecodingContainerProtocol {
+extension ParametersDecoder: KeyedDecodingContainerProtocol {
     var codingPath: [CodingKey] {
         self.decoder.codingPath
     }
 
     var allKeys: [Key] {
-        keyedInnerListDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
+        self.parameters.compactMap { Key(stringValue: $0.0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        keyedInnerListDecoderSupportedKeys.contains(key.stringValue)
+        self.parameters.contains(where: { $0.0 == key.stringValue })
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {
-        // Keys are never nil for this type.
-        false
+        // We will decode nil if the key is not present.
+        !self.contains(key)
     }
 
     func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T: Decodable {
@@ -82,12 +77,12 @@ extension KeyedInnerListDecoder: KeyedDecodingContainerProtocol {
     }
 
     func superDecoder() throws -> Decoder {
-        // Items never support inherited types.
+        // Parameters never support inherited types.
         throw StructuredHeaderError.invalidTypeForItem
     }
 
     func superDecoder(forKey key: Key) throws -> Decoder {
-        // Items never support inherited types.
+        // Parameters never support inherited types.
         throw StructuredHeaderError.invalidTypeForItem
     }
 }

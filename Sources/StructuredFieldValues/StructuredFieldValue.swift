@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,17 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// A `StructuredHeaderField` is a `Codable` representation of a HTTP Structured
+/// A `StructuredFieldValue` is a `Codable` representation of a HTTP Structured
 /// Header Field.
 ///
 /// This protocol is a helper protocol that refines `Codable` to indicate what kind
 /// of header field a given field uses.
-public protocol StructuredHeaderField: Codable {
-    static var structuredFieldType: StructuredHeaderFieldType { get }
+public protocol StructuredFieldValue: Codable {
+    static var structuredFieldType: StructuredFieldType { get }
 }
 
 /// The kinds of header fields used in HTTP Structured Headers.
-public enum StructuredHeaderFieldType {
+public enum StructuredFieldType {
     /// An item field consists of a single item, optionally with parameters.
     case item
 

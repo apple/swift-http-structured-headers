@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -14,8 +14,8 @@
 
 private let validIntegerRange = Int64(-999_999_999_999_999) ... Int64(999_999_999_999_999)
 
-/// A `StructuredFieldSerializer` is the basic parsing object for structured header fields.
-public struct StructuredFieldSerializer {
+/// A `StructuredFieldValueSerializer` is the basic parsing object for structured header field values.
+public struct StructuredFieldValueSerializer {
     private var data: [UInt8]
 
     public init() {
@@ -23,14 +23,14 @@ public struct StructuredFieldSerializer {
     }
 }
 
-extension StructuredFieldSerializer {
-    /// Writes a structured headers dictionary header field.
+extension StructuredFieldValueSerializer {
+    /// Writes a structured dictionary header field value.
     ///
     /// - parameters:
     ///     - root: The dictionary object.
     /// - throws: If the dictionary could not be serialized.
-    /// - returns: The bytes of the serialized header field.
-    public mutating func writeDictionaryHeader(_ root: OrderedMap<String, ItemOrInnerList>) throws -> [UInt8] {
+    /// - returns: The bytes of the serialized header field value.
+    public mutating func writeDictionaryFieldValue(_ root: OrderedMap<String, ItemOrInnerList>) throws -> [UInt8] {
         guard root.count > 0 else {
             return []
         }
@@ -42,13 +42,13 @@ extension StructuredFieldSerializer {
         return self.data
     }
 
-    /// Writes a structured headers list header field.
+    /// Writes a structured list header field value.
     ///
     /// - parameters:
     ///     - root: The list object.
     /// - throws: If the list could not be serialized.
-    /// - returns: The bytes of the serialized header field.
-    public mutating func writeListHeader(_ list: [ItemOrInnerList]) throws -> [UInt8] {
+    /// - returns: The bytes of the serialized header field value.
+    public mutating func writeListFieldValue(_ list: [ItemOrInnerList]) throws -> [UInt8] {
         guard list.count > 0 else {
             return []
         }
@@ -60,13 +60,13 @@ extension StructuredFieldSerializer {
         return self.data
     }
 
-    /// Writes a structured headers item header field.
+    /// Writes a structured item header field value.
     ///
     /// - parameters:
     ///     - root: The item.
     /// - throws: If the item could not be serialized.
-    /// - returns: The bytes of the serialized header field.
-    public mutating func writeItemHeader(_ item: Item) throws -> [UInt8] {
+    /// - returns: The bytes of the serialized header field value.
+    public mutating func writeItemFieldValue(_ item: Item) throws -> [UInt8] {
         defer {
             self.data.removeAll(keepingCapacity: true)
         }
@@ -75,7 +75,7 @@ extension StructuredFieldSerializer {
     }
 }
 
-extension StructuredFieldSerializer {
+extension StructuredFieldValueSerializer {
     private mutating func serializeADictionary(_ dictionary: OrderedMap<String, ItemOrInnerList>) throws {
         for (name, value) in dictionary {
             try self.serializeAKey(name)

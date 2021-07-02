@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,17 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 
-/// A `StructuredFieldEncoder` allows encoding `Encodable` objects to the format of a HTTP
+/// A `StructuredFieldValueEncoder` allows encoding `Encodable` objects to the format of a HTTP
 /// structured header field.
-public struct StructuredFieldEncoder {
+public struct StructuredFieldValueEncoder {
     public var keyEncodingStrategy: KeyEncodingStrategy?
 
     public init() {}
 }
 
-extension StructuredFieldEncoder {
+extension StructuredFieldValueEncoder {
     /// A strategy that should be used to map coding keys to wire format keys.
     public struct KeyEncodingStrategy: Hashable {
         fileprivate enum Base: Hashable {
@@ -37,14 +37,14 @@ extension StructuredFieldEncoder {
     }
 }
 
-extension StructuredFieldEncoder {
+extension StructuredFieldValueEncoder {
     /// Attempt to encode an object into a structured header field.
     ///
     /// - parameters:
     ///     - data: The object to encode.
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
-    public func encode<StructuredField: StructuredHeaderField>(_ data: StructuredField) throws -> [UInt8] {
+    public func encode<StructuredField: StructuredFieldValue>(_ data: StructuredField) throws -> [UInt8] {
         switch StructuredField.structuredFieldType {
         case .item:
             return try self.encodeItemField(data)
@@ -62,7 +62,7 @@ extension StructuredFieldEncoder {
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
     private func encodeDictionaryField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
-        let serializer = StructuredFieldSerializer()
+        let serializer = StructuredFieldValueSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeDictionaryField(data)
     }
@@ -74,7 +74,7 @@ extension StructuredFieldEncoder {
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
     private func encodeListField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
-        let serializer = StructuredFieldSerializer()
+        let serializer = StructuredFieldValueSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeListField(data)
     }
@@ -86,14 +86,14 @@ extension StructuredFieldEncoder {
     /// - throws: If the header field could not be encoded, or could not be serialized.
     /// - returns: The bytes representing the HTTP structured header field.
     private func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
-        let serializer = StructuredFieldSerializer()
+        let serializer = StructuredFieldValueSerializer()
         let encoder = _StructuredFieldEncoder(serializer, keyEncodingStrategy: self.keyEncodingStrategy)
         return try encoder.encodeItemField(data)
     }
 }
 
 class _StructuredFieldEncoder {
-    private var serializer: StructuredFieldSerializer
+    private var serializer: StructuredFieldValueSerializer
 
     // For now we use a stack here because the CoW operations on Array would stuck. Ideally I'd just have us decode
     // our way down with values, but doing that is a CoWy nightmare from which we cannot escape.
@@ -101,9 +101,9 @@ class _StructuredFieldEncoder {
 
     private var currentStackEntry: CodingStackEntry
 
-    internal var keyEncodingStrategy: StructuredFieldEncoder.KeyEncodingStrategy?
+    internal var keyEncodingStrategy: StructuredFieldValueEncoder.KeyEncodingStrategy?
 
-    init(_ serializer: StructuredFieldSerializer, keyEncodingStrategy: StructuredFieldEncoder.KeyEncodingStrategy?) {
+    init(_ serializer: StructuredFieldValueSerializer, keyEncodingStrategy: StructuredFieldValueEncoder.KeyEncodingStrategy?) {
         self.serializer = serializer
         self._codingPath = []
         self.keyEncodingStrategy = keyEncodingStrategy
@@ -116,7 +116,7 @@ class _StructuredFieldEncoder {
 
         switch self.currentStackEntry.storage {
         case .dictionary(let map):
-            return try self.serializer.writeDictionaryHeader(map)
+            return try self.serializer.writeDictionaryFieldValue(map)
         case .dictionaryHeader:
             // No encoding happened.
             return []
@@ -132,7 +132,7 @@ class _StructuredFieldEncoder {
 
         switch self.currentStackEntry.storage {
         case .list(let list):
-            return try self.serializer.writeListHeader(list)
+            return try self.serializer.writeListFieldValue(list)
         case .listHeader:
             // No encoding happened
             return []
@@ -161,7 +161,7 @@ class _StructuredFieldEncoder {
 
         switch self.currentStackEntry.storage {
         case .item(let item):
-            return try self.serializer.writeItemHeader(Item(item))
+            return try self.serializer.writeItemFieldValue(Item(item))
         case .itemHeader:
             // No encoding happened
             return []

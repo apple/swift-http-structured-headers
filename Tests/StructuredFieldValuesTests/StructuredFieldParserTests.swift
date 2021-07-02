@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 import XCTest
 
 enum FixtureTestError: Error {
@@ -171,16 +171,16 @@ final class StructuredFieldParserTests: XCTestCase {
         let joinedHeaders = Array(raw.joined(separator: ", ").utf8)
 
         do {
-            var parser = StructuredFieldParser(joinedHeaders)
+            var parser = StructuredFieldValueParser(joinedHeaders)
 
             let testResult: TestResult
             switch fixture.headerType {
             case "dictionary":
-                testResult = try .dictionary(parser.parseDictionaryField())
+                testResult = try .dictionary(parser.parseDictionaryFieldValue())
             case "list":
-                testResult = try .list(parser.parseListField())
+                testResult = try .list(parser.parseListFieldValue())
             case "item":
-                testResult = try .item(parser.parseItemField())
+                testResult = try .item(parser.parseItemFieldValue())
             default:
                 XCTFail("\(fixture.name): Unexpected header type \(fixture.headerType)")
                 return

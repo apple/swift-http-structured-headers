@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// A `StructuredFieldParser` is the basic parsing object for structured header fields.
-public struct StructuredFieldParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+/// A `StructuredFieldValueParser` is the basic parsing object for structured header field values.
+public struct StructuredFieldValueParser<BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
     // Right now I'm on the fence about whether this should be generic. It's convenient,
     // and makes it really easy for us to express the parsing over a wide range of data types.
     // But it risks code size in a really nasty way! We should validate that we don't pay too
@@ -25,22 +25,22 @@ public struct StructuredFieldParser<BaseData: RandomAccessCollection> where Base
     }
 }
 
-extension StructuredFieldParser {
+extension StructuredFieldValueParser {
     // Helper typealiases to avoid the explosion of generic parameters
-    public typealias BareItem = StructuredHeaders.BareItem
-    public typealias Item = StructuredHeaders.Item
-    public typealias BareInnerList = StructuredHeaders.BareInnerList
-    public typealias InnerList = StructuredHeaders.InnerList
-    public typealias ItemOrInnerList = StructuredHeaders.ItemOrInnerList
+    public typealias BareItem = RawStructuredFieldValues.BareItem
+    public typealias Item = RawStructuredFieldValues.Item
+    public typealias BareInnerList = RawStructuredFieldValues.BareInnerList
+    public typealias InnerList = RawStructuredFieldValues.InnerList
+    public typealias ItemOrInnerList = RawStructuredFieldValues.ItemOrInnerList
     public typealias Key = String
 
-    /// Parse the HTTP structured field as a list.
+    /// Parse the HTTP structured field value as a list.
     ///
     /// This is a straightforward implementation of the parser in the spec.
     ///
-    /// - throws: If the field could not be parsed.
+    /// - throws: If the field value could not be parsed.
     /// - returns: An array of items or inner lists.
-    public mutating func parseListField() throws -> [ItemOrInnerList] {
+    public mutating func parseListFieldValue() throws -> [ItemOrInnerList] {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()
 
@@ -58,11 +58,11 @@ extension StructuredFieldParser {
         return members
     }
 
-    /// Parse the HTTP structured header field as a dictionary.
+    /// Parse the HTTP structured header field value as a dictionary.
     ///
-    /// - throws: If the field could not be parsed.
+    /// - throws: If the field value could not be parsed.
     /// - returns: An `OrderedMap` corresponding to the entries in the dictionary.
-    public mutating func parseDictionaryField() throws -> OrderedMap<Key, ItemOrInnerList> {
+    public mutating func parseDictionaryFieldValue() throws -> OrderedMap<Key, ItemOrInnerList> {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()
 
@@ -80,11 +80,11 @@ extension StructuredFieldParser {
         return map
     }
 
-    /// Parse the HTTP structured header field as an item.
+    /// Parse the HTTP structured header field value as an item.
     ///
-    /// - throws: If the field could not be parsed.
+    /// - throws: If the field value could not be parsed.
     /// - returns: The `Item` in the field.
-    public mutating func parseItemField() throws -> Item {
+    public mutating func parseItemFieldValue() throws -> Item {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()
 

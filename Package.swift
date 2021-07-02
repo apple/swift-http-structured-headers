@@ -18,30 +18,30 @@ let package = Package(
     name: "swift-http-structured-headers",
     products: [
         .library(
-            name: "StructuredHeaders",
-            targets: ["StructuredHeaders"]
+            name: "StructuredFieldValues",
+            targets: ["StructuredFieldValues"]
         ),
         .library(
-            name: "CodableStructuredHeaders",
-            targets: ["CodableStructuredHeaders"]
+            name: "RawStructuredFieldValues",
+            targets: ["RawStructuredFieldValues"]
         ),
     ],
     targets: [
         .target(
-            name: "StructuredHeaders",
+            name: "RawStructuredFieldValues",
             dependencies: []
         ),
         .target(
-            name: "CodableStructuredHeaders",
-            dependencies: ["StructuredHeaders"]
+            name: "StructuredFieldValues",
+            dependencies: ["RawStructuredFieldValues"]
         ),
         .target(
             name: "sh-parser",
-            dependencies: ["StructuredHeaders"]
+            dependencies: ["RawStructuredFieldValues"]
         ),
         .testTarget(
-            name: "StructuredHeadersTests",
-            dependencies: ["StructuredHeaders", "CodableStructuredHeaders"]
+            name: "StructuredFieldValuesTests",
+            dependencies: ["RawStructuredFieldValues", "StructuredFieldValues"]
         ),
     ]
 )

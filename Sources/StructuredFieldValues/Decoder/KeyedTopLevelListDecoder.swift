@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,35 +12,35 @@
 //
 //===----------------------------------------------------------------------===//
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 
-private let keyedItemDecoderSupportedKeys = ["item", "parameters"]
+private let keyedTopLevelListDecoderSupportedKeys = ["items"]
 
-/// Used when someone has requested a keyed decoder for a property of item type.
+/// Used when someone has requested a keyed decoder for a property of list type.
 ///
-/// There are only two valid keys for this: "item" and "parameters".
-struct KeyedItemDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
-    private var item: Item
+/// There is only one valid key for this: "items".
+struct KeyedTopLevelListDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
+    private var list: [ItemOrInnerList]
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ item: Item, decoder: _StructuredFieldDecoder<BaseData>) {
-        self.item = item
+    init(_ list: [ItemOrInnerList], decoder: _StructuredFieldDecoder<BaseData>) {
+        self.list = list
         self.decoder = decoder
     }
 }
 
-extension KeyedItemDecoder: KeyedDecodingContainerProtocol {
+extension KeyedTopLevelListDecoder: KeyedDecodingContainerProtocol {
     var codingPath: [CodingKey] {
         self.decoder.codingPath
     }
 
     var allKeys: [Key] {
-        keyedItemDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
+        keyedTopLevelListDecoderSupportedKeys.compactMap { Key(stringValue: $0) }
     }
 
     func contains(_ key: Key) -> Bool {
-        keyedItemDecoderSupportedKeys.contains(key.stringValue)
+        keyedTopLevelListDecoderSupportedKeys.contains(key.stringValue)
     }
 
     func decodeNil(forKey key: Key) throws -> Bool {

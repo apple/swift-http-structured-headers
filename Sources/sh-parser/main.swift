@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-import StructuredHeaders
+import RawStructuredFieldValues
 
 struct Flags {
     var headerType: HeaderType
@@ -184,16 +184,16 @@ func main() {
             }
         }
         data = data[...index]
-        var parser = StructuredFieldParser(data)
+        var parser = StructuredFieldValueParser(data)
 
         let result: Header
         switch flags.headerType {
         case .dictionary:
-            result = .dictionary(try parser.parseDictionaryField())
+            result = .dictionary(try parser.parseDictionaryFieldValue())
         case .list:
-            result = .list(try parser.parseListField())
+            result = .list(try parser.parseListFieldValue())
         case .item:
-            result = .item(try parser.parseItemField())
+            result = .item(try parser.parseItemFieldValue())
         }
 
         result.prettyPrint()
