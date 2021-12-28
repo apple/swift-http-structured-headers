@@ -116,7 +116,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
 
         return Decimal(sign: pseudoDecimal.mantissa > 0 ? .plus : .minus,
                        exponent: Int(pseudoDecimal.exponent),
-                       significand: Decimal(pseudoDecimal.mantissa))
+                       significand: Decimal(pseudoDecimal.mantissa.magnitude))
     }
 
     func decodeNil() -> Bool {
