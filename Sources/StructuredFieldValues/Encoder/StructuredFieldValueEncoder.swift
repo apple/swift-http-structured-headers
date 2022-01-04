@@ -443,7 +443,7 @@ extension _StructuredFieldEncoder {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
 
-        let pd = PseudoDecimal(mantissa: significand * (data.isSignMinus ? -1 : 1), exponent: Int(exponent))
+        let pd = PseudoDecimal(mantissa: significand * (value.isSignMinus ? -1 : 1), exponent: Int(exponent))
         try self.currentStackEntry.storage.appendBareItem(.decimal(pd))
     }
 
@@ -610,7 +610,7 @@ extension _StructuredFieldEncoder {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
 
-        let pd = PseudoDecimal(mantissa: significand * (data.isSignMinus ? -1 : 1), exponent: Int(exponent))
+        let pd = PseudoDecimal(mantissa: significand * (value.isSignMinus ? -1 : 1), exponent: Int(exponent))
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd), atKey: key)
     }
 
