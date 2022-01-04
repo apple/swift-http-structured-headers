@@ -281,12 +281,12 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ data: Decimal) throws {
-        let significand = (data.significand as NSNumber).intValue // Yes, really.
+        let significand = (data.significand.magnitude as NSNumber).intValue // Yes, really.
         guard let exponent = Int8(exactly: data.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
 
-        let pd = PseudoDecimal(mantissa: significand, exponent: Int(exponent))
+        let pd = PseudoDecimal(mantissa: significand * (data.isSignMinus ? -1 : 1), exponent: Int(exponent))
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd))
     }
 
@@ -438,12 +438,12 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: Decimal) throws {
-        let significand = (value.significand as NSNumber).intValue // Yes, really.
+        let significand = (value.significand.magnitude as NSNumber).intValue // Yes, really.
         guard let exponent = Int8(exactly: value.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
 
-        let pd = PseudoDecimal(mantissa: significand, exponent: Int(exponent))
+        let pd = PseudoDecimal(mantissa: significand * (value.isSignMinus ? -1 : 1), exponent: Int(exponent))
         try self.currentStackEntry.storage.appendBareItem(.decimal(pd))
     }
 
@@ -605,12 +605,12 @@ extension _StructuredFieldEncoder {
     }
 
     func encode(_ value: Decimal, forKey key: String) throws {
-        let significand = (value.significand as NSNumber).intValue // Yes, really.
+        let significand = (value.significand.magnitude as NSNumber).intValue // Yes, really.
         guard let exponent = Int8(exactly: value.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
 
-        let pd = PseudoDecimal(mantissa: significand, exponent: Int(exponent))
+        let pd = PseudoDecimal(mantissa: significand * (value.isSignMinus ? -1 : 1), exponent: Int(exponent))
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd), atKey: key)
     }
 
