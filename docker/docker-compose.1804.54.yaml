@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+
+  runtime-setup:
+    image: swift-http-structured-headers:18.04-5.4
+    build:
+      args:
+        ubuntu_version: "bionic"
+        swift_version: "5.4"
+
+  unit-tests:
+    image: swift-http-structured-headers:18.04-5.4
+
+  test:
+    image: swift-http-structured-headers:18.04-5.4
+
+  shell:
+    image: swift-http-structured-headers:18.04-5.4
+
