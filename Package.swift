@@ -35,7 +35,7 @@ let package = Package(
             name: "StructuredFieldValues",
             dependencies: ["RawStructuredFieldValues"]
         ),
-        .target(
+        .executableTarget(
             name: "sh-parser",
             dependencies: ["RawStructuredFieldValues"]
         ),
