@@ -148,7 +148,7 @@ extension OrderedMap: CustomDebugStringConvertible {
 
 // MARK: - Conditional conformances
 
-extension OrderedMap.Entry: Equatable where Key: Equatable, Value: Equatable {}
-extension OrderedMap: Equatable where Key: Equatable, Value: Equatable {}
-extension OrderedMap.Entry: Hashable where Key: Hashable, Value: Hashable {}
-extension OrderedMap: Hashable where Key: Hashable, Value: Hashable {}
+extension OrderedMap.Entry: Equatable where Value: Equatable {}
+extension OrderedMap: Equatable where Value: Equatable {}
+extension OrderedMap.Entry: Hashable where Value: Hashable {}
+extension OrderedMap: Hashable where Value: Hashable {}
