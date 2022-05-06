@@ -23,7 +23,7 @@
 /// Note that this preserves _original_ insertion order: if you overwrite a key's value, the
 /// key does not move to "last". This is a specific requirement for Structured Headers and may
 /// harm the generality of this implementation.
-public struct OrderedMap<Key, Value>: SHSendable where Key: Hashable {
+public struct OrderedMap<Key, Value> where Key: Hashable {
     private var backing: [Entry]
 
     public init() {
@@ -66,6 +66,10 @@ extension OrderedMap {
         var value: Value
     }
 }
+
+extension OrderedMap: SHSendable where Key: SHSendable, Value: SHSendable {}
+
+extension OrderedMap.Entry: SHSendable where Key: SHSendable, Value: SHSendable {}
 
 // MARK: - Collection conformances
 
