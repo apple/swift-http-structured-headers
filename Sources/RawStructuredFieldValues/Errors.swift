@@ -15,7 +15,7 @@
 // MARK: - StructuredHeaderError
 
 /// Errors that may be encountered when working with structured headers.
-public struct StructuredHeaderError: Error, _Sendable {
+public struct StructuredHeaderError: Error, SHSendable {
     private enum _BaseError: Hashable {
         case invalidTrailingBytes
         case invalidInnerList

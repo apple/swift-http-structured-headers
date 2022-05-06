@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #if swift(>=5.5) && canImport(_Concurrency)
-public typealias _Sendable = Sendable
+public typealias SHSendable = Sendable
 #else
-public typealias _Sendable = Any
+public typealias SHSendable = Any
 #endif

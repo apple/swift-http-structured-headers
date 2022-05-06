@@ -25,7 +25,7 @@ public struct StructuredFieldValueParser<BaseData: RandomAccessCollection> where
     }
 }
 
-extension StructuredFieldValueParser: _Sendable where BaseData: _Sendable, BaseData.SubSequence: _Sendable {
+extension StructuredFieldValueParser: SHSendable where BaseData: SHSendable, BaseData.SubSequence: SHSendable {
 
 }
 
