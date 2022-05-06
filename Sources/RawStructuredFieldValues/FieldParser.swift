@@ -25,6 +25,10 @@ public struct StructuredFieldValueParser<BaseData: RandomAccessCollection> where
     }
 }
 
+extension StructuredFieldValueParser: _Sendable where BaseData: _Sendable, BaseData.SubSequence: _Sendable {
+
+}
+
 extension StructuredFieldValueParser {
     // Helper typealiases to avoid the explosion of generic parameters
     public typealias BareItem = RawStructuredFieldValues.BareItem

@@ -23,7 +23,7 @@
 /// Note that this preserves _original_ insertion order: if you overwrite a key's value, the
 /// key does not move to "last". This is a specific requirement for Structured Headers and may
 /// harm the generality of this implementation.
-public struct OrderedMap<Key, Value> where Key: Hashable {
+public struct OrderedMap<Key, Value>: _Sendable where Key: Hashable {
     private var backing: [Entry]
 
     public init() {
@@ -70,7 +70,7 @@ extension OrderedMap {
 // MARK: - Collection conformances
 
 extension OrderedMap: RandomAccessCollection, MutableCollection {
-    public struct Index {
+    public struct Index: _Sendable {
         fileprivate var baseIndex: Array<(Key, Value)>.Index
 
         fileprivate init(_ baseIndex: Array<(Key, Value)>.Index) {
