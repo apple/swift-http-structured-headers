@@ -67,10 +67,14 @@ extension OrderedMap {
     }
 }
 
+extension OrderedMap: SHSendable where Key: SHSendable, Value: SHSendable {}
+
+extension OrderedMap.Entry: SHSendable where Key: SHSendable, Value: SHSendable {}
+
 // MARK: - Collection conformances
 
 extension OrderedMap: RandomAccessCollection, MutableCollection {
-    public struct Index {
+    public struct Index: SHSendable {
         fileprivate var baseIndex: Array<(Key, Value)>.Index
 
         fileprivate init(_ baseIndex: Array<(Key, Value)>.Index) {

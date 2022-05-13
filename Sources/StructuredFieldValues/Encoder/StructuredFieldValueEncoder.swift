@@ -16,7 +16,7 @@ import RawStructuredFieldValues
 
 /// A `StructuredFieldValueEncoder` allows encoding `Encodable` objects to the format of a HTTP
 /// structured header field.
-public struct StructuredFieldValueEncoder {
+public struct StructuredFieldValueEncoder: SHSendable {
     public var keyEncodingStrategy: KeyEncodingStrategy?
 
     public init() {}
@@ -24,7 +24,7 @@ public struct StructuredFieldValueEncoder {
 
 extension StructuredFieldValueEncoder {
     /// A strategy that should be used to map coding keys to wire format keys.
-    public struct KeyEncodingStrategy: Hashable {
+    public struct KeyEncodingStrategy: Hashable, SHSendable {
         fileprivate enum Base: Hashable {
             case lowercase
         }

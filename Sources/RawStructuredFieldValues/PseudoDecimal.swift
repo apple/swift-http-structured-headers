@@ -34,7 +34,7 @@ import Glibc
 /// is 999,999,999,999,999. The exponent ranges from -3 to 0. Additionally, there may be no more than 12 decimal digits before
 /// the decimal place, so while the maximum value of the significand is 999,999,999,999,999, that is only acceptable if the
 /// exponent is -3.
-public struct PseudoDecimal: Hashable {
+public struct PseudoDecimal: Hashable, SHSendable {
     private var _mantissa: Int64
 
     private var _exponent: Int8
