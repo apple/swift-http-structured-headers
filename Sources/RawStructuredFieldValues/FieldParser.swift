@@ -63,7 +63,7 @@ extension StructuredFieldValueParser {
     /// Parse the HTTP structured header field value as a dictionary.
     ///
     /// - throws: If the field value could not be parsed.
-    /// - returns: An `OrderedMap` corresponding to the entries in the dictionary.
+    /// - returns: An ``OrderedMap`` corresponding to the entries in the dictionary.
     public mutating func parseDictionaryFieldValue() throws -> OrderedMap<Key, ItemOrInnerList> {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()
@@ -85,7 +85,7 @@ extension StructuredFieldValueParser {
     /// Parse the HTTP structured header field value as an item.
     ///
     /// - throws: If the field value could not be parsed.
-    /// - returns: The `Item` in the field.
+    /// - returns: The ``Item`` in the field.
     public mutating func parseItemFieldValue() throws -> Item {
         // Step one, strip leading spaces.
         self.underlyingData.stripLeadingSpaces()

@@ -104,7 +104,7 @@ extension Item: Hashable {}
 
 // MARK: - BareInnerList
 
-/// A `BareInnerList` represents the items contained within an `InnerList`, without
+/// A `BareInnerList` represents the items contained within an ``InnerList``, without
 /// the associated parameters.
 public struct BareInnerList: Hashable, SHSendable {
     private var items: [Item]
