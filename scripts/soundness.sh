@@ -3,7 +3,7 @@
 ##
 ## This source file is part of the SwiftNIO open source project
 ##
-## Copyright (c) 2020-2021 Apple Inc. and the SwiftNIO project authors
+## Copyright (c) 2020-2022 Apple Inc. and the SwiftNIO project authors
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
@@ -60,7 +60,7 @@ for language in swift-or-c bash dtrace; do
   matching_files=( -name '*' )
   case "$language" in
       swift-or-c)
-        exceptions=( -name 'Package.swift' )
+        exceptions=( -name 'Package.swift' -o -name 'Package@swift*.swift' )
         matching_files=( -name '*.swift' -o -name '*.c' -o -name '*.h' )
         cat > "$tmp" <<"EOF"
 //===----------------------------------------------------------------------===//

@@ -1,9 +1,9 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.4
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
 //
-// Copyright (c) 2020-2022 Apple Inc. and the SwiftNIO project authors
+// Copyright (c) 2020 Apple Inc. and the SwiftNIO project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -25,9 +25,6 @@ let package = Package(
             name: "RawStructuredFieldValues",
             targets: ["RawStructuredFieldValues"]
         ),
-    ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
         .target(
