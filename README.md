@@ -43,7 +43,7 @@ let field = Array("Sec-CH-Example, Sec-CH-Example-2".utf8)
 
 struct AcceptCH: StructuredFieldValue {
     static let structuredFieldType: StructuredFieldType = .list
-    
+
     var items: [String]
 }
 

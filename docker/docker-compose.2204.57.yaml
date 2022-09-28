@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+
+  runtime-setup:
+    image: swift-http-structured-headers:22.04-5.7
+    build:
+      args:
+        ubuntu_version: "jammy"
+        swift_version: "5.7"
+
+  unit-tests:
+    image: swift-http-structured-headers:22.04-5.7
+
+  test:
+    image: swift-http-structured-headers:22.04-5.7
+
+  shell:
+    image: swift-http-structured-headers:22.04-5.7
+
