@@ -15,7 +15,7 @@ import Foundation
 
 enum FixturesLoader {
     private static var fixturesDirectory: URL {
-        let myURL = URL(fileURLWithPath: #file, isDirectory: false)
+        let myURL = URL(fileURLWithPath: #filePath, isDirectory: false)
         return URL(string: "../TestFixtures/", relativeTo: myURL)!.absoluteURL
     }
 
