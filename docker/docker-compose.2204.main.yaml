@@ -7,7 +7,7 @@ services:
     build:
       args:
         base_image: "swiftlang/swift:nightly-main-jammy"
-        ubuntu_version: "focal"
+        ubuntu_version: "jammy"
 
   unit-tests:
     image: swift-http-structured-headers:22.04-main
