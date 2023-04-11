@@ -12,6 +12,9 @@ services:
   unit-tests:
     image: swift-http-structured-headers:22.04-5.7
 
+  documentation-check:
+    image: swift-http-structured-headers:22.04-5.7
+
   test:
     image: swift-http-structured-headers:22.04-5.7
 

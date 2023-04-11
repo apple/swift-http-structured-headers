@@ -12,6 +12,9 @@ services:
   unit-tests:
     image: swift-http-structured-headers:20.04-5.5
 
+  documentation-check:
+    image: swift-http-structured-headers:20.04-5.5
+
   test:
     image: swift-http-structured-headers:20.04-5.5
 

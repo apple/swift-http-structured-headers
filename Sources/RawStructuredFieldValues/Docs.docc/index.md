@@ -4,11 +4,13 @@ A Swift implementation of the HTTP Structured Header Field Value specification.
 
 Provides parsing and serialization facilities for structured header field values.
 
-## About Structured Header Field Values
+## Overview
+
+### About Structured Header Field Values
 
 HTTP Structured Header Field Values are a HTTP extension recorded in [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941.html). They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
 
-## Swift HTTP Structured Header Field Values
+### Swift HTTP Structured Header Field Values
 
 This package provides a parser and serializer that implement RFC 8941. They are entirely complete, able to handle all valid HTTP structured header field values.
 
@@ -22,7 +24,7 @@ The upper-level module, `StructuredFieldValues`, brings along the `Encoder` and 
 
 In most cases users should prefer to use `StructuredFieldValues` unless they know they need the performance advantages of `RawStructuredFieldValues`. The experience will be much better.
 
-## Working with Structured Header Field Values
+### Working with Structured Header Field Values
 
 `RawStructuredFieldValues` has a powerful API for working with structured header field values.
 

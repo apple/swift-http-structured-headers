@@ -4,11 +4,13 @@ A Swift implementation of the HTTP Structured Header Field Value specification.
 
 Provides parsing and serialization facilities for structured header field values, as well as implementations of `Encoder` and `Decoder` to allow using `Codable` data types as the payloads of HTTP structured header fields.
 
-## About Structured Header Field Values
+## Overview
+
+### About Structured Header Field Values
 
 HTTP Structured Header Field Values are a HTTP extension recorded in [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941.html). They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
 
-## Swift HTTP Structured Header Field Values
+### Swift HTTP Structured Header Field Values
 
 This package provides a parser and serializer that implement RFC 8941. They are entirely complete, able to handle all valid HTTP structured header field values. This package also provides `Encoder` and `Decoder` objects for working with Codable in Swift. This allows rapid prototyping and experimentation with HTTP structured header field values, as well as interaction with the wider Swift Codable community.
 
@@ -18,7 +20,7 @@ This module, `StructuredFieldValues`, use the related module `RawStructuredField
 
 Users who have performance problems with this solution or have specific representational needs should investigate `RawStructuredFieldValues`.
 
-## Working with Structured Header Field Values
+### Working with Structured Header Field Values
 
 `StructuredFieldValues` has a simple, easy-to-use high-level API for working with structured header field values. To begin with, let's consider the [HTTP Client Hints specification](https://www.rfc-editor.org/rfc/rfc8942.html). This defines the following new header field:
 
