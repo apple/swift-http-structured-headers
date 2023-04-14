@@ -15,7 +15,7 @@
 private let validIntegerRange = Int64(-999_999_999_999_999) ... Int64(999_999_999_999_999)
 
 /// A `StructuredFieldValueSerializer` is the basic parsing object for structured header field values.
-public struct StructuredFieldValueSerializer: SHSendable {
+public struct StructuredFieldValueSerializer: Sendable {
     private var data: [UInt8]
 
     public init() {

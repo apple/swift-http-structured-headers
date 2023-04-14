@@ -21,7 +21,7 @@
 
 /// `ItemOrInnerList` represents the values in a structured header dictionary, or the
 /// entries in a structured header list.
-public enum ItemOrInnerList: SHSendable {
+public enum ItemOrInnerList: Sendable {
     case item(Item)
     case innerList(InnerList)
 }
@@ -32,7 +32,7 @@ extension ItemOrInnerList: Hashable {}
 
 /// `BareItem` is a representation of the base data types at the bottom of a structured
 /// header field. These types are not parameterised: they are raw data.
-public enum BareItem: SHSendable {
+public enum BareItem: Sendable {
     /// A boolean item.
     case bool(Bool)
 
@@ -87,7 +87,7 @@ extension BareItem: Hashable {}
 
 /// `Item` represents a structured header field item: a combination of a `bareItem`
 /// and some parameters.
-public struct Item: SHSendable {
+public struct Item: Sendable {
     /// The `BareItem` that this `Item` contains.
     public var bareItem: BareItem
 
@@ -106,7 +106,7 @@ extension Item: Hashable {}
 
 /// A `BareInnerList` represents the items contained within an ``InnerList``, without
 /// the associated parameters.
-public struct BareInnerList: Hashable, SHSendable {
+public struct BareInnerList: Hashable, Sendable {
     private var items: [Item]
 
     public init() {
@@ -179,7 +179,7 @@ extension BareInnerList.Index: Comparable {
 // MARK: - InnerList
 
 /// An `InnerList` is a list of items, with some associated parameters.
-public struct InnerList: Hashable, SHSendable {
+public struct InnerList: Hashable, Sendable {
     /// The items contained within this inner list.
     public var bareInnerList: BareInnerList
 
