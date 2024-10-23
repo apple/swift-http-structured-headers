@@ -15,11 +15,11 @@ import Foundation
 import RawStructuredFieldValues
 
 struct ParametersDecoder<Key: CodingKey, BaseData: RandomAccessCollection> where BaseData.Element == UInt8 {
-    private var parameters: OrderedMap<String, BareItem>
+    private var parameters: OrderedMap<String, RFC9651BareItem>
 
     private var decoder: _StructuredFieldDecoder<BaseData>
 
-    init(_ parameters: OrderedMap<String, BareItem>, decoder: _StructuredFieldDecoder<BaseData>) {
+    init(_ parameters: OrderedMap<String, RFC9651BareItem>, decoder: _StructuredFieldDecoder<BaseData>) {
         self.parameters = parameters
         self.decoder = decoder
     }

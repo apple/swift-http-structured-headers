@@ -15,11 +15,11 @@ import Foundation
 import RawStructuredFieldValues
 
 struct BareItemDecoder {
-    private var item: BareItem
+    private var item: RFC9651BareItem
 
     private var _codingPath: [_StructuredHeaderCodingKey]
 
-    init(_ item: BareItem, codingPath: [_StructuredHeaderCodingKey]) {
+    init(_ item: RFC9651BareItem, codingPath: [_StructuredHeaderCodingKey]) {
         self.item = item
         self._codingPath = codingPath
     }

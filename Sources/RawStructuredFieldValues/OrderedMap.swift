@@ -49,6 +49,12 @@ public struct OrderedMap<Key, Value> where Key: Hashable {
             }
         }
     }
+
+    func mapValues<NewValue>(_ body: (Value) throws -> NewValue) rethrows -> OrderedMap<Key, NewValue> {
+        var returnValue = OrderedMap<Key, NewValue>()
+        returnValue.backing = try self.backing.map { try .init(key: $0.key, value: body($0.value)) }
+        return returnValue
+    }
 }
 
 // MARK: - Helper struct for storing elements

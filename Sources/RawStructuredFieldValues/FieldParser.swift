@@ -29,7 +29,9 @@ extension StructuredFieldValueParser: Sendable where BaseData: Sendable, BaseDat
 
 extension StructuredFieldValueParser {
     // Helper typealiases to avoid the explosion of generic parameters
+    @available(*, deprecated, renamed: "RFC9651BareItem")
     public typealias BareItem = RawStructuredFieldValues.BareItem
+    public typealias RFC9651BareItem = RawStructuredFieldValues.RFC9651BareItem
     public typealias Item = RawStructuredFieldValues.Item
     public typealias BareInnerList = RawStructuredFieldValues.BareInnerList
     public typealias InnerList = RawStructuredFieldValues.InnerList
@@ -204,7 +206,7 @@ extension StructuredFieldValueParser {
         return Item(bareItem: bareItem, parameters: parameters)
     }
 
-    private mutating func _parseABareItem() throws -> BareItem {
+    private mutating func _parseABareItem() throws -> RFC9651BareItem {
         guard let first = self.underlyingData.first else {
             throw StructuredHeaderError.invalidItem
         }
@@ -225,7 +227,7 @@ extension StructuredFieldValueParser {
         }
     }
 
-    private mutating func _parseAnIntegerOrDecimal() throws -> BareItem {
+    private mutating func _parseAnIntegerOrDecimal() throws -> RFC9651BareItem {
         var sign = 1
         var type = IntegerOrDecimal.integer
 
@@ -301,7 +303,7 @@ extension StructuredFieldValueParser {
         }
     }
 
-    private mutating func _parseAString() throws -> BareItem {
+    private mutating func _parseAString() throws -> RFC9651BareItem {
         assert(self.underlyingData.first == asciiDquote)
         self.underlyingData.consumeFirst()
 
@@ -376,7 +378,7 @@ extension StructuredFieldValueParser {
         }
     }
 
-    private mutating func _parseAByteSequence() throws -> BareItem {
+    private mutating func _parseAByteSequence() throws -> RFC9651BareItem {
         assert(self.underlyingData.first == asciiColon)
         self.underlyingData.consumeFirst()
 
@@ -406,7 +408,7 @@ extension StructuredFieldValueParser {
         throw StructuredHeaderError.invalidByteSequence
     }
 
-    private mutating func _parseABoolean() throws -> BareItem {
+    private mutating func _parseABoolean() throws -> RFC9651BareItem {
         assert(self.underlyingData.first == asciiQuestionMark)
         self.underlyingData.consumeFirst()
 
@@ -423,7 +425,7 @@ extension StructuredFieldValueParser {
         }
     }
 
-    private mutating func _parseAToken() throws -> BareItem {
+    private mutating func _parseAToken() throws -> RFC9651BareItem {
         assert(asciiCapitals.contains(self.underlyingData.first!) || asciiLowercases.contains(self.underlyingData.first!) || self.underlyingData.first! == asciiAsterisk)
 
         var index = self.underlyingData.startIndex
@@ -457,8 +459,8 @@ extension StructuredFieldValueParser {
         return .token(String(decoding: tokenSlice, as: UTF8.self))
     }
 
-    private mutating func _parseParameters() throws -> OrderedMap<Key, BareItem> {
-        var parameters = OrderedMap<Key, BareItem>()
+    private mutating func _parseParameters() throws -> OrderedMap<Key, RFC9651BareItem> {
+        var parameters = OrderedMap<Key, RFC9651BareItem>()
 
         // We want to loop while we still have bytes _and_ while the first character is asciiSemicolon.
         // This covers both.
@@ -467,7 +469,7 @@ extension StructuredFieldValueParser {
             self.underlyingData.consumeFirst()
             self.underlyingData.stripLeadingSpaces()
             let paramName = try self._parseAKey()
-            var paramValue: BareItem = true
+            var paramValue: RFC9651BareItem = true
 
             if self.underlyingData.first == asciiEqual {
                 self.underlyingData.consumeFirst()

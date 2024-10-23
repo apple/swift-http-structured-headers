@@ -176,11 +176,11 @@ extension Item {
             fatalError("Invalid item: \(schema)")
         }
 
-        self.init(bareItem: try BareItem(first), parameters: try OrderedMap(parameters: last))
+        self.init(bareItem: try RFC9651BareItem(first), parameters: try OrderedMap(parameters: last))
     }
 }
 
-extension BareItem {
+extension RFC9651BareItem {
     init(_ schema: JSONSchema) throws {
         switch schema {
         case .integer(let int):
@@ -233,7 +233,7 @@ extension BareInnerList {
     }
 }
 
-extension OrderedMap where Key == String, Value == BareItem {
+extension OrderedMap where Key == String, Value == RFC9651BareItem {
     init(parameters: JSONSchema) throws {
         guard case .dictionary(let jsonDict) = parameters else {
             fatalError("Invalid format for parameters: \(parameters)")
@@ -242,7 +242,7 @@ extension OrderedMap where Key == String, Value == BareItem {
         self.init()
 
         for (name, value) in jsonDict {
-            self[name] = try BareItem(value)
+            self[name] = try RFC9651BareItem(value)
         }
     }
 }

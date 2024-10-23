@@ -32,6 +32,7 @@ extension ItemOrInnerList: Hashable {}
 
 /// `BareItem` is a representation of the base data types at the bottom of a structured
 /// header field. These types are not parameterised: they are raw data.
+@available(*, deprecated, renamed: "RFC9651BareItem")
 public enum BareItem: Sendable {
     /// A boolean item.
     case bool(Bool)
@@ -53,24 +54,28 @@ public enum BareItem: Sendable {
     case token(String)
 }
 
+@available(*, deprecated)
 extension BareItem: ExpressibleByBooleanLiteral {
     public init(booleanLiteral value: Bool) {
         self = .bool(value)
     }
 }
 
+@available(*, deprecated)
 extension BareItem: ExpressibleByIntegerLiteral {
     public init(integerLiteral value: Int) {
         self = .integer(value)
     }
 }
 
+@available(*, deprecated)
 extension BareItem: ExpressibleByFloatLiteral {
     public init(floatLiteral value: Float64) {
         self = .decimal(.init(floatLiteral: value))
     }
 }
 
+@available(*, deprecated)
 extension BareItem: ExpressibleByStringLiteral {
     public init(stringLiteral value: StringLiteralType) {
         if value.structuredHeadersIsValidToken {
@@ -81,7 +86,111 @@ extension BareItem: ExpressibleByStringLiteral {
     }
 }
 
+@available(*, deprecated)
+extension BareItem {
+    init(transforming newItem: RFC9651BareItem) throws {
+        switch newItem {
+        case .bool(let b):
+            self = .bool(b)
+
+        case .integer(let i):
+            self = .integer(i)
+
+        case .decimal(let d):
+            self = .decimal(d)
+
+        case .string(let s):
+            self = .string(s)
+
+        case .undecodedByteSequence(let s):
+            self = .undecodedByteSequence(s)
+
+        case .token(let t):
+            self = .token(t)
+        }
+    }
+}
+
+@available(*, deprecated)
 extension BareItem: Hashable {}
+
+/// `RFC9651BareItem` is a representation of the base data types at the bottom of a structured
+/// header field. These types are not parameterised: they are raw data.
+public enum RFC9651BareItem: Sendable {
+    /// A boolean item.
+    case bool(Bool)
+
+    /// An integer item.
+    case integer(Int)
+
+    /// A decimal item.
+    case decimal(PseudoDecimal)
+
+    /// A string item.
+    case string(String)
+
+    /// A byte sequence. This case must contain base64-encoded data, as
+    /// `StructuredHeaders` does not do base64 encoding or decoding.
+    case undecodedByteSequence(String)
+
+    /// A token item.
+    case token(String)
+}
+
+extension RFC9651BareItem: ExpressibleByBooleanLiteral {
+    public init(booleanLiteral value: Bool) {
+        self = .bool(value)
+    }
+}
+
+extension RFC9651BareItem: ExpressibleByIntegerLiteral {
+    public init(integerLiteral value: Int) {
+        self = .integer(value)
+    }
+}
+
+extension RFC9651BareItem: ExpressibleByFloatLiteral {
+    public init(floatLiteral value: Float64) {
+        self = .decimal(.init(floatLiteral: value))
+    }
+}
+
+extension RFC9651BareItem: ExpressibleByStringLiteral {
+    public init(stringLiteral value: StringLiteralType) {
+        if value.structuredHeadersIsValidToken {
+            self = .token(value)
+        } else {
+            self = .string(value)
+        }
+    }
+}
+
+extension RFC9651BareItem {
+    @available(*, deprecated)
+    init(transforming oldItem: BareItem) throws {
+        switch oldItem {
+        case .bool(let b):
+            self = .bool(b)
+
+        case .integer(let i):
+            self = .integer(i)
+
+        case .decimal(let d):
+            self = .decimal(d)
+
+        case .string(let s):
+            self = .string(s)
+
+        case .undecodedByteSequence(let s):
+            self = .undecodedByteSequence(s)
+
+        case .token(let t):
+            self = .token(t)
+        }
+    }
+}
+
+extension RFC9651BareItem: Hashable {}
 
 // MARK: - Item
 
@@ -89,14 +198,43 @@ extension BareItem: Hashable {}
 /// and some parameters.
 public struct Item: Sendable {
     /// The `BareItem` that this `Item` contains.
-    public var bareItem: BareItem
+    @available(*, deprecated, renamed: "rfc9651BareItem")
+    public var bareItem: BareItem {
+        get {
+            try! .init(transforming: self.rfc9651BareItem)
+        }
+        set {
+            try! self.rfc9651BareItem = .init(transforming: newValue)
+        }
+    }
 
     /// The parameters associated with `bareItem`
-    public var parameters: OrderedMap<String, BareItem>
+    @available(*, deprecated, renamed: "rfc9651Parameters")
+    public var parameters: OrderedMap<String, BareItem> {
+        get {
+            try! self.rfc9651Parameters.mapValues { try .init(transforming: $0) }
+        }
+        set {
+            try! self.rfc9651Parameters = newValue.mapValues { try .init(transforming: $0) }
+        }
+    }
+    /// The `BareItem` that this `Item` contains.
+    public var rfc9651BareItem: RFC9651BareItem
 
+    /// The parameters associated with `rfc9651BareItem`
+    public var rfc9651Parameters: OrderedMap<String, RFC9651BareItem>
+
+    @available(*, deprecated)
     public init(bareItem: BareItem, parameters: OrderedMap<String, BareItem>) {
+        self.rfc9651BareItem = .integer(1)
+        self.rfc9651Parameters = OrderedMap()
         self.bareItem = bareItem
         self.parameters = parameters
+    }
+
+    public init(bareItem: RFC9651BareItem, parameters: OrderedMap<String, RFC9651BareItem>) {
+        self.rfc9651BareItem = bareItem
+        self.rfc9651Parameters = parameters
     }
 }
 
@@ -184,11 +322,29 @@ public struct InnerList: Hashable, Sendable {
     public var bareInnerList: BareInnerList
 
     /// The parameters associated with the `bareInnerList`.
-    public var parameters: OrderedMap<String, BareItem>
+    @available(*, deprecated, renamed: "rfc9651Parameters")
+    public var parameters: OrderedMap<String, BareItem> {
+        get {
+            try! self.rfc9651Parameters.mapValues { try .init(transforming: $0) }
+        }
+        set {
+            try! self.rfc9651Parameters = newValue.mapValues { try .init(transforming: $0) }
+        }
+    }
 
+    /// The parameters associated with the `bareInnerList`.
+    public var rfc9651Parameters: OrderedMap<String, RFC9651BareItem>
+
+    @available(*, deprecated)
     public init(bareInnerList: BareInnerList, parameters: OrderedMap<String, BareItem>) {
+        self.rfc9651Parameters = OrderedMap()
         self.bareInnerList = bareInnerList
         self.parameters = parameters
+    }
+
+    public init(bareInnerList: BareInnerList, parameters: OrderedMap<String, RFC9651BareItem>) {
+        self.bareInnerList = bareInnerList
+        self.rfc9651Parameters = parameters
     }
 }
 
