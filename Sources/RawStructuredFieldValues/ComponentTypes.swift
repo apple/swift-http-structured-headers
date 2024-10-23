@@ -218,6 +218,7 @@ public struct Item: Sendable {
             try! self.rfc9651Parameters = newValue.mapValues { try .init(transforming: $0) }
         }
     }
+
     /// The `BareItem` that this `Item` contains.
     public var rfc9651BareItem: RFC9651BareItem
 
