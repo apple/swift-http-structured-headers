@@ -766,14 +766,14 @@ extension _StructuredFieldEncoder {
         case innerList(InnerList)
         case item(PartialItem)
         case bareInnerList(BareInnerList)
-        case parameters(OrderedMap<String, BareItem>)
-        case itemOrInnerList(OrderedMap<String, BareItem>)
+        case parameters(OrderedMap<String, RFC9651BareItem>)
+        case itemOrInnerList(OrderedMap<String, RFC9651BareItem>)
 
         /// A helper struct used to tolerate the fact that we need partial items,
         /// but our `Item` struct doesn't like that much.
         struct PartialItem {
-            var bareItem: BareItem?
-            var parameters: OrderedMap<String, BareItem>
+            var bareItem: RFC9651BareItem?
+            var parameters: OrderedMap<String, RFC9651BareItem>
         }
 
         /// This is called when a complete object has been built.
@@ -787,7 +787,7 @@ extension _StructuredFieldEncoder {
                 self = .item(item)
 
             case (.innerList(var list), .parameters(let params)) where key.stringValue == "parameters":
-                list.parameters = params
+                list.rfc9651Parameters = params
                 self = .innerList(list)
 
             case (.innerList(var list), .bareInnerList(let bare)) where key.stringValue == "items":
@@ -846,7 +846,7 @@ extension _StructuredFieldEncoder {
         ///
         /// If the key is missing we will require the type to be `item`, in which case
         /// this will be for the "item" key.
-        mutating func insertBareItem(_ bareItem: BareItem, atKey key: String? = nil) throws {
+        mutating func insertBareItem(_ bareItem: RFC9651BareItem, atKey key: String? = nil) throws {
             switch self {
             case .itemHeader:
                 guard key == nil || key == "item" else {
@@ -895,7 +895,7 @@ extension _StructuredFieldEncoder {
 
         /// Appends a bare item to the given container. This must be a list-type
         /// container that stores either bare items, or items.
-        mutating func appendBareItem(_ bareItem: BareItem) throws {
+        mutating func appendBareItem(_ bareItem: RFC9651BareItem) throws {
             switch self {
             case .listHeader:
                 self = .list([.item(Item(bareItem: bareItem, parameters: [:]))])

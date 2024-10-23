@@ -184,7 +184,7 @@ extension _StructuredFieldDecoder: Decoder {
         // We have single value containers for items and bareItems.
         switch self.currentElement! {
         case .item(let item):
-            return BareItemDecoder(item.bareItem, codingPath: self._codingStack.map { $0.key })
+            return BareItemDecoder(item.rfc9651BareItem, codingPath: self._codingStack.map { $0.key })
         case .bareItem(let bareItem):
             return BareItemDecoder(bareItem, codingPath: self._codingStack.map { $0.key })
         case .dictionary, .list, .innerList, .bareInnerList, .parameters:
@@ -224,9 +224,9 @@ extension _StructuredFieldDecoder {
         case list([ItemOrInnerList])
         case item(Item)
         case innerList(InnerList)
-        case bareItem(BareItem)
+        case bareItem(RFC9651BareItem)
         case bareInnerList(BareInnerList)
-        case parameters(OrderedMap<String, BareItem>)
+        case parameters(OrderedMap<String, RFC9651BareItem>)
 
         func innerElement(for key: _StructuredHeaderCodingKey) throws -> Element {
             switch self {
@@ -263,9 +263,9 @@ extension _StructuredFieldDecoder {
                 // Two keys, "item" and "parameters".
                 switch key.stringValue {
                 case "item":
-                    return .bareItem(item.bareItem)
+                    return .bareItem(item.rfc9651BareItem)
                 case "parameters":
-                    return .parameters(item.parameters)
+                    return .parameters(item.rfc9651Parameters)
                 default:
                     throw StructuredHeaderError.invalidTypeForItem
                 }
@@ -280,7 +280,7 @@ extension _StructuredFieldDecoder {
                 case "items":
                     return .bareInnerList(innerList.bareInnerList)
                 case "parameters":
-                    return .parameters(innerList.parameters)
+                    return .parameters(innerList.rfc9651Parameters)
                 default:
                     throw StructuredHeaderError.invalidTypeForItem
                 }

@@ -26,7 +26,7 @@ final class StructuredFieldParserTests: XCTestCase {
         case item(Item)
     }
 
-    private func _validateBareItem(_ bareItem: BareItem, against schema: JSONSchema, fixtureName: String) throws {
+    private func _validateBareItem(_ bareItem: RFC9651BareItem, against schema: JSONSchema, fixtureName: String) throws {
         switch (bareItem, schema) {
         case (.integer(let baseInt), .integer(let jsonInt)):
             XCTAssertEqual(baseInt, jsonInt, "\(fixtureName): Got \(bareItem), expected \(schema)")
@@ -65,7 +65,7 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateParameters(_ parameters: OrderedMap<String, BareItem>, against schema: JSONSchema, fixtureName: String) throws {
+    private func _validateParameters(_ parameters: OrderedMap<String, RFC9651BareItem>, against schema: JSONSchema, fixtureName: String) throws {
         guard case .dictionary(let expectedParameters) = schema else {
             XCTFail("\(fixtureName): Expected parameters to be a JSON dictionary, but got \(schema)")
             return
@@ -88,10 +88,10 @@ final class StructuredFieldParserTests: XCTestCase {
         }
 
         // First, match the item.
-        try self._validateBareItem(item.bareItem, against: arrayElements.first!, fixtureName: fixtureName)
+        try self._validateBareItem(item.rfc9651BareItem, against: arrayElements.first!, fixtureName: fixtureName)
 
         // Now the parameters.
-        try self._validateParameters(item.parameters, against: arrayElements.last!, fixtureName: fixtureName)
+        try self._validateParameters(item.rfc9651Parameters, against: arrayElements.last!, fixtureName: fixtureName)
     }
 
     private func _validateInnerList(_ innerList: InnerList, against schema: JSONSchema, fixtureName: String) throws {
@@ -108,7 +108,7 @@ final class StructuredFieldParserTests: XCTestCase {
             try self._validateItem(actualItem, against: expectedItem, fixtureName: fixtureName)
         }
 
-        try self._validateParameters(innerList.parameters, against: expectedParameters, fixtureName: fixtureName)
+        try self._validateParameters(innerList.rfc9651Parameters, against: expectedParameters, fixtureName: fixtureName)
     }
 
     private func _validateList(_ result: [ItemOrInnerList], against schema: JSONSchema, fixtureName: String) throws {

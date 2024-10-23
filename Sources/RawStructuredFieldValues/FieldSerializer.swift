@@ -80,8 +80,8 @@ extension StructuredFieldValueSerializer {
         for (name, value) in dictionary {
             try self.serializeAKey(name)
 
-            if case .item(let item) = value, case .bool(true) = item.bareItem {
-                try self.serializeParameters(item.parameters)
+            if case .item(let item) = value, case .bool(true) = item.rfc9651BareItem {
+                try self.serializeParameters(item.rfc9651Parameters)
             } else {
                 self.data.append(asciiEqual)
 
@@ -137,15 +137,15 @@ extension StructuredFieldValueSerializer {
 
         self.data.append(asciiCloseParenthesis)
 
-        try self.serializeParameters(innerList.parameters)
+        try self.serializeParameters(innerList.rfc9651Parameters)
     }
 
     private mutating func serializeAnItem(_ item: Item) throws {
-        try self.serializeABareItem(item.bareItem)
-        try self.serializeParameters(item.parameters)
+        try self.serializeABareItem(item.rfc9651BareItem)
+        try self.serializeParameters(item.rfc9651Parameters)
     }
 
-    private mutating func serializeParameters(_ parameters: OrderedMap<String, BareItem>) throws {
+    private mutating func serializeParameters(_ parameters: OrderedMap<String, RFC9651BareItem>) throws {
         for (key, value) in parameters {
             self.data.append(asciiSemicolon)
             try self.serializeAKey(key)
@@ -166,7 +166,7 @@ extension StructuredFieldValueSerializer {
         self.data.append(contentsOf: key.utf8)
     }
 
-    private mutating func serializeABareItem(_ item: BareItem) throws {
+    private mutating func serializeABareItem(_ item: RFC9651BareItem) throws {
         switch item {
         case .integer(let int):
             guard let wideInt = Int64(exactly: int), validIntegerRange.contains(wideInt) else {

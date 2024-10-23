@@ -97,7 +97,7 @@ extension OrderedMap where Key == String, Value == ItemOrInnerList {
     }
 }
 
-extension OrderedMap where Key == String, Value == BareItem {
+extension OrderedMap where Key == String, Value == RFC9651BareItem {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
 
@@ -122,9 +122,9 @@ extension Item {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
 
-        print("\(tabs)- item: \(self.bareItem.prettyFormat())")
-        print("\(tabs)- parameters (\(parameters.count) entries):")
-        self.parameters.prettyPrint(depth: depth + 1)
+        print("\(tabs)- item: \(self.rfc9651BareItem.prettyFormat())")
+        print("\(tabs)- parameters (\(rfc9651Parameters.count) entries):")
+        self.rfc9651Parameters.prettyPrint(depth: depth + 1)
     }
 }
 
@@ -132,10 +132,10 @@ extension InnerList {
     func prettyPrint(depth: Int) {
         let tabs = String(repeating: "\t", count: depth)
 
-        print("\(tabs)- innerList (\(parameters.count) entries):")
+        print("\(tabs)- innerList (\(rfc9651Parameters.count) entries):")
         self.bareInnerList.prettyPrint(depth: depth + 1)
-        print("\(tabs)- parameters (\(parameters.count) entries):")
-        self.parameters.prettyPrint(depth: depth + 1)
+        print("\(tabs)- parameters (\(rfc9651Parameters.count) entries):")
+        self.rfc9651Parameters.prettyPrint(depth: depth + 1)
     }
 }
 
@@ -149,7 +149,7 @@ extension BareInnerList {
     }
 }
 
-extension BareItem {
+extension RFC9651BareItem {
     func prettyFormat() -> String {
         switch self {
         case .bool(let bool):
