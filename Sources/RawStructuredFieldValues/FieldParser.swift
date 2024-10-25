@@ -222,12 +222,14 @@ extension StructuredFieldValueParser {
             return try self._parseABoolean()
         case asciiCapitals, asciiLowercases, asciiAsterisk:
             return try self._parseAToken()
+        case asciiAt:
+            return try self._parseADate()
         default:
             throw StructuredHeaderError.invalidItem
         }
     }
 
-    private mutating func _parseAnIntegerOrDecimal() throws -> RFC9651BareItem {
+    private mutating func _parseAnIntegerOrDecimal(isDate: Bool = false) throws -> RFC9651BareItem {
         var sign = 1
         var type = IntegerOrDecimal.integer
 
@@ -248,10 +250,19 @@ extension StructuredFieldValueParser {
                 // Do nothing
                 ()
             case asciiPeriod where type == .integer:
+                // If output_date is decimal, fail parsing.
+                if isDate {
+                    throw StructuredHeaderError.invalidDate
+                }
+
                 // If input_number contains more than 12 characters, fail parsing. Otherwise,
                 // set type to decimal and consume.
                 if self.underlyingData.distance(from: self.underlyingData.startIndex, to: index) > 12 {
-                    throw StructuredHeaderError.invalidIntegerOrDecimal
+                    if isDate {
+                        throw StructuredHeaderError.invalidDate
+                    } else {
+                        throw StructuredHeaderError.invalidIntegerOrDecimal
+                    }
                 }
                 type = .decimal
             default:
@@ -268,9 +279,15 @@ extension StructuredFieldValueParser {
             switch type {
             case .integer:
                 if count > 15 {
-                    throw StructuredHeaderError.invalidIntegerOrDecimal
+                    if isDate {
+                        throw StructuredHeaderError.invalidDate
+                    } else {
+                        throw StructuredHeaderError.invalidIntegerOrDecimal
+                    }
                 }
             case .decimal:
+                assert(isDate == false)
+
                 if count > 16 {
                     throw StructuredHeaderError.invalidIntegerOrDecimal
                 }
@@ -286,7 +303,13 @@ extension StructuredFieldValueParser {
             // This intermediate string is sad, we should rewrite this manually to avoid it.
             // This force-unwrap is safe, as we have validated that all characters are ascii digits.
             let baseInt = Int(String(decoding: integerBytes, as: UTF8.self), radix: 10)!
-            return .integer(baseInt * sign)
+            let resultingInt = baseInt * sign
+
+            if isDate {
+                return .date(resultingInt)
+            } else {
+                return .integer(resultingInt)
+            }
         case .decimal:
             // This must be non-nil, otherwise we couldn't have flipped to the decimal type.
             let periodIndex = integerBytes.firstIndex(of: asciiPeriod)!
@@ -457,6 +480,12 @@ extension StructuredFieldValueParser {
         let tokenSlice = self.underlyingData[..<index]
         self.underlyingData = self.underlyingData[index...]
         return .token(String(decoding: tokenSlice, as: UTF8.self))
+    }
+
+    private mutating func _parseADate() throws -> RFC9651BareItem {
+        assert(self.underlyingData.first == asciiAt)
+        self.underlyingData.consumeFirst()
+        return try self._parseAnIntegerOrDecimal(isDate: true)
     }
 
     private mutating func _parseParameters() throws -> OrderedMap<Key, RFC9651BareItem> {

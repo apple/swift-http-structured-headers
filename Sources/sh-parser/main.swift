@@ -166,6 +166,8 @@ extension RFC9651BareItem {
             let d = Decimal(sign: decimal.mantissa > 0 ? .plus : .minus,
                             exponent: Int(decimal.exponent), significand: Decimal(decimal.mantissa))
             return "decimal \(d)"
+        case .date(let date):
+            return "date \(date)"
         }
     }
 }

@@ -60,6 +60,14 @@ final class StructuredFieldParserTests: XCTestCase {
             XCTAssertEqual(decodedValue, decodedExpected, "\(fixtureName): Got \(Array(decodedValue)), expected \(Array(decodedExpected))")
         case (.bool(let baseBool), .bool(let expectedBool)):
             XCTAssertEqual(baseBool, expectedBool, "\(fixtureName): Got \(baseBool), expected \(expectedBool)")
+        case(.date(let baseDate), .dictionary(let typeDictionary)):
+            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"], case .integer(let typeValue) = typeDictionary["value"] else {
+                XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")
+                return
+            }
+
+            XCTAssertEqual(typeName, "date", "\(fixtureName): Expected type date, got type \(typeName)")
+            XCTAssertEqual(typeValue, baseDate, "\(fixtureName): Got \(baseDate), expected \(typeValue)")
         default:
             XCTFail("\(fixtureName): Got \(bareItem), expected \(schema)")
         }
