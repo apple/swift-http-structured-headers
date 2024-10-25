@@ -213,7 +213,7 @@ extension StructuredFieldValueParser {
 
         switch first {
         case asciiDash, asciiDigits:
-            return try self._parseAnIntegerOrDecimal()
+            return try self._parseAnIntegerOrDecimal(isDate: false)
         case asciiDquote:
             return try self._parseAString()
         case asciiColon:
@@ -229,7 +229,7 @@ extension StructuredFieldValueParser {
         }
     }
 
-    private mutating func _parseAnIntegerOrDecimal(isDate: Bool = false) throws -> RFC9651BareItem {
+    private mutating func _parseAnIntegerOrDecimal(isDate: Bool) throws -> RFC9651BareItem {
         var sign = 1
         var type = IntegerOrDecimal.integer
 

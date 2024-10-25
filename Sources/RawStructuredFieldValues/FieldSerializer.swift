@@ -209,7 +209,7 @@ extension StructuredFieldValueSerializer {
 
             // Then, serialize as integer.
             guard let wideInt = Int64(exactly: date), validIntegerRange.contains(wideInt) else {
-                throw StructuredHeaderError.invalidIntegerOrDecimal
+                throw StructuredHeaderError.invalidDate
             }
 
             self.data.append(contentsOf: String(date, radix: 10).utf8)
