@@ -198,6 +198,9 @@ extension RFC9651BareItem {
                 let expectedBase64Bytes = Data(base32Encoded: Data(value.utf8)).base64EncodedString()
                 self = .undecodedByteSequence(expectedBase64Bytes)
 
+            case (.some(.string("date")), .some(.integer(let value))):
+                self = .date(value)
+
             default:
                 preconditionFailure("Unexpected type object \(typeObject)")
             }

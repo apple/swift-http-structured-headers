@@ -26,6 +26,7 @@ public struct StructuredHeaderError: Error, Sendable {
         case invalidByteSequence
         case invalidBoolean
         case invalidToken
+        case invalidDate
         case invalidList
         case invalidDictionary
         case missingKey
@@ -51,6 +52,7 @@ extension StructuredHeaderError {
     public static let invalidByteSequence = StructuredHeaderError(.invalidByteSequence)
     public static let invalidBoolean = StructuredHeaderError(.invalidBoolean)
     public static let invalidToken = StructuredHeaderError(.invalidToken)
+    public static let invalidDate = StructuredHeaderError(.invalidDate)
     public static let invalidList = StructuredHeaderError(.invalidList)
     public static let invalidDictionary = StructuredHeaderError(.invalidDictionary)
     public static let missingKey = StructuredHeaderError(.missingKey)

@@ -107,6 +107,9 @@ extension BareItem {
 
         case .token(let t):
             self = .token(t)
+
+        case .date:
+            throw StructuredHeaderError.invalidItem
         }
     }
 }
@@ -135,6 +138,9 @@ public enum RFC9651BareItem: Sendable {
 
     /// A token item.
     case token(String)
+
+    /// A date item.
+    case date(Int)
 }
 
 extension RFC9651BareItem: ExpressibleByBooleanLiteral {
