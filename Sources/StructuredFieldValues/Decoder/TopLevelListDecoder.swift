@@ -77,7 +77,8 @@ extension TopLevelListDecoder: UnkeyedDecodingContainer {
         }
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey> where NestedKey: CodingKey {
+    mutating func nestedContainer<NestedKey>(keyedBy type: NestedKey.Type) throws -> KeyedDecodingContainer<NestedKey>
+    where NestedKey: CodingKey {
         // This is a request to decode a full item. We decode the next entry and increment the index.
         guard !self.isAtEnd else {
             throw StructuredHeaderError.indexOutOfRange

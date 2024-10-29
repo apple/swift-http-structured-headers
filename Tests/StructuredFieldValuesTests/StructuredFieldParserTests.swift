@@ -26,20 +26,31 @@ final class StructuredFieldParserTests: XCTestCase {
         case item(Item)
     }
 
-    private func _validateBareItem(_ bareItem: RFC9651BareItem, against schema: JSONSchema, fixtureName: String) throws {
+    private func _validateBareItem(_ bareItem: RFC9651BareItem, against schema: JSONSchema, fixtureName: String) throws
+    {
         switch (bareItem, schema) {
         case (.integer(let baseInt), .integer(let jsonInt)):
             XCTAssertEqual(baseInt, jsonInt, "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.decimal(let baseDecimal), .double(let jsonDouble)):
-            XCTAssertEqual(String(baseDecimal), String(jsonDouble), "\(fixtureName): Got \(bareItem), expected \(schema)")
+            XCTAssertEqual(
+                String(baseDecimal),
+                String(jsonDouble),
+                "\(fixtureName): Got \(bareItem), expected \(schema)"
+            )
         case (.decimal(let baseDecimal), .integer(let jsonInteger)):
             // Due to limits of Foundation's JSONSerialization, we can get types that decode as integers but are actually decimals.
             // We just cannot tell the difference here, so we tolerate this flexibility.
-            XCTAssertEqual(Double(baseDecimal), Double(jsonInteger), "\(fixtureName): Got \(bareItem), expected \(schema)")
+            XCTAssertEqual(
+                Double(baseDecimal),
+                Double(jsonInteger),
+                "\(fixtureName): Got \(bareItem), expected \(schema)"
+            )
         case (.string(let baseString), .string(let jsonString)):
             XCTAssertEqual(baseString, jsonString, "\(fixtureName): Got \(bareItem), expected \(schema)")
         case (.token(let token), .dictionary(let typeDictionary)):
-            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"], case .string(let typeValue) = typeDictionary["value"] else {
+            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"],
+                case .string(let typeValue) = typeDictionary["value"]
+            else {
                 XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")
                 return
             }
@@ -47,7 +58,9 @@ final class StructuredFieldParserTests: XCTestCase {
             XCTAssertEqual(typeName, "token", "\(fixtureName): Expected type token, got type \(typeName)")
             XCTAssertEqual(typeValue, token, "\(fixtureName): Got \(token), expected \(typeValue)")
         case (.undecodedByteSequence(let binary), .dictionary(let typeDictionary)):
-            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"], case .string(let typeValue) = typeDictionary["value"] else {
+            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"],
+                case .string(let typeValue) = typeDictionary["value"]
+            else {
                 XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")
                 return
             }
@@ -57,11 +70,17 @@ final class StructuredFieldParserTests: XCTestCase {
                 throw FixtureTestError.base64DecodingFailed
             }
             let decodedExpected = Data(base32Encoded: Data(typeValue.utf8))
-            XCTAssertEqual(decodedValue, decodedExpected, "\(fixtureName): Got \(Array(decodedValue)), expected \(Array(decodedExpected))")
+            XCTAssertEqual(
+                decodedValue,
+                decodedExpected,
+                "\(fixtureName): Got \(Array(decodedValue)), expected \(Array(decodedExpected))"
+            )
         case (.bool(let baseBool), .bool(let expectedBool)):
             XCTAssertEqual(baseBool, expectedBool, "\(fixtureName): Got \(baseBool), expected \(expectedBool)")
-        case(.date(let baseDate), .dictionary(let typeDictionary)):
-            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"], case .integer(let typeValue) = typeDictionary["value"] else {
+        case (.date(let baseDate), .dictionary(let typeDictionary)):
+            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"],
+                case .integer(let typeValue) = typeDictionary["value"]
+            else {
                 XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")
                 return
             }
@@ -73,12 +92,20 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateParameters(_ parameters: OrderedMap<String, RFC9651BareItem>, against schema: JSONSchema, fixtureName: String) throws {
+    private func _validateParameters(
+        _ parameters: OrderedMap<String, RFC9651BareItem>,
+        against schema: JSONSchema,
+        fixtureName: String
+    ) throws {
         guard case .dictionary(let expectedParameters) = schema else {
             XCTFail("\(fixtureName): Expected parameters to be a JSON dictionary, but got \(schema)")
             return
         }
-        XCTAssertEqual(expectedParameters.count, parameters.count, "\(fixtureName): Different numbers of parameters: expected \(expectedParameters), got \(parameters)")
+        XCTAssertEqual(
+            expectedParameters.count,
+            parameters.count,
+            "\(fixtureName): Different numbers of parameters: expected \(expectedParameters), got \(parameters)"
+        )
         for (name, value) in parameters {
             guard let expectedValue = expectedParameters[name] else {
                 XCTFail("\(fixtureName): Did not contain parameter for \(name)")
@@ -106,12 +133,17 @@ final class StructuredFieldParserTests: XCTestCase {
         guard case .array(let arrayElements) = schema,
             arrayElements.count == 2,
             case .some(.array(let expectedItems)) = arrayElements.first,
-            let expectedParameters = arrayElements.last else {
+            let expectedParameters = arrayElements.last
+        else {
             XCTFail("\(fixtureName): Unexpected inner list: got \(innerList), expected \(schema)")
             return
         }
 
-        XCTAssertEqual(expectedItems.count, innerList.bareInnerList.count, "\(fixtureName): Unexpected inner list items: expected \(expectedItems), got \(innerList.bareInnerList)")
+        XCTAssertEqual(
+            expectedItems.count,
+            innerList.bareInnerList.count,
+            "\(fixtureName): Unexpected inner list items: expected \(expectedItems), got \(innerList.bareInnerList)"
+        )
         for (actualItem, expectedItem) in zip(innerList.bareInnerList, expectedItems) {
             try self._validateItem(actualItem, against: expectedItem, fixtureName: fixtureName)
         }
@@ -125,7 +157,11 @@ final class StructuredFieldParserTests: XCTestCase {
             return
         }
 
-        XCTAssertEqual(arrayElements.count, result.count, "\(fixtureName): Different counts in list: got \(result), expected \(arrayElements)")
+        XCTAssertEqual(
+            arrayElements.count,
+            result.count,
+            "\(fixtureName): Different counts in list: got \(result), expected \(arrayElements)"
+        )
         for (innerResult, expectedElement) in zip(result, arrayElements) {
             switch innerResult {
             case .innerList(let innerList):
@@ -136,13 +172,21 @@ final class StructuredFieldParserTests: XCTestCase {
         }
     }
 
-    private func _validateDictionary(_ result: OrderedMap<String, ItemOrInnerList>, against schema: JSONSchema, fixtureName: String) throws {
+    private func _validateDictionary(
+        _ result: OrderedMap<String, ItemOrInnerList>,
+        against schema: JSONSchema,
+        fixtureName: String
+    ) throws {
         guard case .dictionary(let expectedElements) = schema else {
             XCTFail("\(fixtureName): Unexpected dictionary: got \(result), expected \(schema)")
             return
         }
 
-        XCTAssertEqual(expectedElements.count, result.count, "\(fixtureName): Different counts in dictionary: got \(result), expected \(expectedElements)")
+        XCTAssertEqual(
+            expectedElements.count,
+            result.count,
+            "\(fixtureName): Different counts in dictionary: got \(result), expected \(expectedElements)"
+        )
         for (key, value) in result {
             guard let expectedEntry = expectedElements[key] else {
                 XCTFail("\(fixtureName): Could not find \(key) in \(expectedElements)")

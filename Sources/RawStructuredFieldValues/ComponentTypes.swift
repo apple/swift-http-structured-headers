@@ -378,12 +378,12 @@ extension String {
             //                / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
             //                / DIGIT / ALPHA
             //
-            // The following insane case statement covers this. Tokens suck.
+            // The following unfortunate case statement covers this. Tokens; not even once.
             case asciiExclamationMark, asciiOctothorpe, asciiDollar, asciiPercent,
-                 asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
-                 asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
-                 asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
-                 asciiColon, asciiSlash:
+                asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
+                asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
+                asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
+                asciiColon, asciiSlash:
                 // Good
                 ()
             default:

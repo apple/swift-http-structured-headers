@@ -373,7 +373,7 @@ extension StructuredFieldValueParser {
                 // Unquoted dquote, this is the end of the string.
                 endIndex = index
                 break loop
-            case 0x00 ... 0x1F, 0x7F...:
+            case 0x00...0x1F, 0x7F...:
                 // Forbidden bytes in string: string must be VCHAR and SP.
                 throw StructuredHeaderError.invalidString
             default:
@@ -388,7 +388,7 @@ extension StructuredFieldValueParser {
         if endIndex == self.underlyingData.endIndex {
             throw StructuredHeaderError.invalidString
         }
-        let stringSlice = self.underlyingData[self.underlyingData.startIndex ..< index]
+        let stringSlice = self.underlyingData[self.underlyingData.startIndex..<index]
         self.underlyingData.formIndex(after: &index)
         self.underlyingData = self.underlyingData[index...]
 
@@ -449,7 +449,10 @@ extension StructuredFieldValueParser {
     }
 
     private mutating func _parseAToken() throws -> RFC9651BareItem {
-        assert(asciiCapitals.contains(self.underlyingData.first!) || asciiLowercases.contains(self.underlyingData.first!) || self.underlyingData.first! == asciiAsterisk)
+        assert(
+            asciiCapitals.contains(self.underlyingData.first!) || asciiLowercases.contains(self.underlyingData.first!)
+                || self.underlyingData.first! == asciiAsterisk
+        )
 
         var index = self.underlyingData.startIndex
         loop: while index < self.underlyingData.endIndex {
@@ -461,12 +464,12 @@ extension StructuredFieldValueParser {
             //                / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~"
             //                / DIGIT / ALPHA
             //
-            // The following insane case statement covers this. Tokens suck.
+            // The following unfortunate case statement covers this. Tokens; not even once.
             case asciiExclamationMark, asciiOctothorpe, asciiDollar, asciiPercent,
-                 asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
-                 asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
-                 asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
-                 asciiColon, asciiSlash:
+                asciiAmpersand, asciiSquote, asciiAsterisk, asciiPlus, asciiDash,
+                asciiPeriod, asciiCaret, asciiUnderscore, asciiBacktick, asciiPipe,
+                asciiTilde, asciiDigits, asciiCapitals, asciiLowercases,
+                asciiColon, asciiSlash:
                 // Good, consume
                 self.underlyingData.formIndex(after: &index)
             default:
@@ -551,7 +554,8 @@ extension RandomAccessCollection where Element == UInt8, SubSequence == Self {
 extension String {
     // This is the slow path, so we never inline this.
     @inline(never)
-    fileprivate static func decodingEscapes<Bytes: RandomAccessCollection>(_ bytes: Bytes, escapes: Int) -> String where Bytes.Element == UInt8 {
+    fileprivate static func decodingEscapes<Bytes: RandomAccessCollection>(_ bytes: Bytes, escapes: Int) -> String
+    where Bytes.Element == UInt8 {
         // We assume the string is previously validated, so the escapes are easily removed. See the doc comment for
         // `StrippingStringEscapesCollection` for more details on what we're doing here.
         let unescapedBytes = StrippingStringEscapesCollection(bytes, escapes: escapes)
@@ -574,7 +578,8 @@ extension String {
 /// Until this issue is fixed (https://bugs.swift.org/browse/SR-13111) we take a different approach: we use
 /// `String.init(unsafeUninitializedCapacity:initializingWith)`. This is an unsafe function, so to reduce the unsafety as much
 /// as possible we define this safe wrapping Collection and then use `copyBytes` to implement the initialization.
-private struct StrippingStringEscapesCollection<BaseCollection: RandomAccessCollection> where BaseCollection.Element == UInt8 {
+private struct StrippingStringEscapesCollection<BaseCollection: RandomAccessCollection>
+where BaseCollection.Element == UInt8 {
     private var base: BaseCollection
     private var escapes: UInt
 

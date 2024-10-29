@@ -163,8 +163,11 @@ extension RFC9651BareItem {
         case .undecodedByteSequence(let bytes):
             return "byte sequence \(bytes)"
         case .decimal(let decimal):
-            let d = Decimal(sign: decimal.mantissa > 0 ? .plus : .minus,
-                            exponent: Int(decimal.exponent), significand: Decimal(decimal.mantissa))
+            let d = Decimal(
+                sign: decimal.mantissa > 0 ? .plus : .minus,
+                exponent: Int(decimal.exponent),
+                significand: Decimal(decimal.mantissa)
+            )
             return "decimal \(d)"
         case .date(let date):
             return "date \(date)"
