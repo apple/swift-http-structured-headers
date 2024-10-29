@@ -62,6 +62,18 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         try self._decodeFixedWidthInteger(type)
     }
 
+    #if compiler(>=6.0)
+    @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+    func decode(_ type: UInt128.Type) throws -> UInt128 {
+        try self._decodeFixedWidthInteger(type)
+    }
+
+    @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+    func decode(_ type: Int128.Type) throws -> Int128 {
+        try self._decodeFixedWidthInteger(type)
+    }
+    #endif
+
     func decode(_ type: UInt.Type) throws -> UInt {
         try self._decodeFixedWidthInteger(type)
     }
