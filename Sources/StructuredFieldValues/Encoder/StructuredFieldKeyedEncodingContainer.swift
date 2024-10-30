@@ -93,8 +93,11 @@ extension StructuredFieldKeyedEncodingContainer: KeyedEncodingContainerProtocol 
         try self.encoder.encode(value, forKey: key.stringValue)
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type, forKey key: Key) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
-        return self.encoder.container(keyedBy: keyType)
+    mutating func nestedContainer<NestedKey>(
+        keyedBy keyType: NestedKey.Type,
+        forKey key: Key
+    ) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
+        self.encoder.container(keyedBy: keyType)
     }
 
     mutating func nestedUnkeyedContainer(forKey key: Key) -> UnkeyedEncodingContainer {

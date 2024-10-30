@@ -97,8 +97,9 @@ extension StructuredFieldUnkeyedEncodingContainer: UnkeyedEncodingContainer {
         try self.encoder.append(value)
     }
 
-    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey> where NestedKey: CodingKey {
-        return self.encoder.container(keyedBy: keyType)
+    mutating func nestedContainer<NestedKey>(keyedBy keyType: NestedKey.Type) -> KeyedEncodingContainer<NestedKey>
+    where NestedKey: CodingKey {
+        self.encoder.container(keyedBy: keyType)
     }
 
     mutating func nestedUnkeyedContainer() -> UnkeyedEncodingContainer {

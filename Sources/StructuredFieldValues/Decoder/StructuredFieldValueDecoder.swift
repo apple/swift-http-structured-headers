@@ -46,7 +46,10 @@ extension StructuredFieldValueDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    public func decode<StructuredField: StructuredFieldValue, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
+    public func decode<StructuredField: StructuredFieldValue, BaseData: RandomAccessCollection>(
+        _ type: StructuredField.Type = StructuredField.self,
+        from data: BaseData
+    ) throws -> StructuredField where BaseData.Element == UInt8 {
         switch StructuredField.structuredFieldType {
         case .item:
             return try self.decodeItemField(from: data)
@@ -64,7 +67,10 @@ extension StructuredFieldValueDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    private func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
+    private func decodeDictionaryField<StructuredField: Decodable, BaseData: RandomAccessCollection>(
+        _ type: StructuredField.Type = StructuredField.self,
+        from data: BaseData
+    ) throws -> StructuredField where BaseData.Element == UInt8 {
         let parser = StructuredFieldValueParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseDictionaryField()
@@ -78,7 +84,10 @@ extension StructuredFieldValueDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    private func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
+    private func decodeListField<StructuredField: Decodable, BaseData: RandomAccessCollection>(
+        _ type: StructuredField.Type = StructuredField.self,
+        from data: BaseData
+    ) throws -> StructuredField where BaseData.Element == UInt8 {
         let parser = StructuredFieldValueParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseListField()
@@ -92,7 +101,10 @@ extension StructuredFieldValueDecoder {
     ///     - data: The bytes of the structured header field.
     /// - throws: If the header field could not be parsed, or could not be decoded.
     /// - returns: An object of type `StructuredField`.
-    private func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(_ type: StructuredField.Type = StructuredField.self, from data: BaseData) throws -> StructuredField where BaseData.Element == UInt8 {
+    private func decodeItemField<StructuredField: Decodable, BaseData: RandomAccessCollection>(
+        _ type: StructuredField.Type = StructuredField.self,
+        from data: BaseData
+    ) throws -> StructuredField where BaseData.Element == UInt8 {
         let parser = StructuredFieldValueParser(data)
         let decoder = _StructuredFieldDecoder(parser, keyDecodingStrategy: self.keyDecodingStrategy)
         try decoder.parseItemField()
@@ -120,7 +132,10 @@ class _StructuredFieldDecoder<BaseData: RandomAccessCollection> where BaseData.E
 
     var keyDecodingStrategy: StructuredFieldValueDecoder.KeyDecodingStrategy?
 
-    init(_ parser: StructuredFieldValueParser<BaseData>, keyDecodingStrategy: StructuredFieldValueDecoder.KeyDecodingStrategy?) {
+    init(
+        _ parser: StructuredFieldValueParser<BaseData>,
+        keyDecodingStrategy: StructuredFieldValueDecoder.KeyDecodingStrategy?
+    ) {
         self.parser = parser
         self._codingStack = []
         self.keyDecodingStrategy = keyDecodingStrategy

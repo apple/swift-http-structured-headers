@@ -25,7 +25,7 @@ extension Data {
         self = Data()
 
         for start in stride(from: data.startIndex, to: data.endIndex, by: 8) {
-            let bytes = data[start ..< (start + 8)]
+            let bytes = data[start..<(start + 8)]
             precondition(bytes.count == 8)
             var seenEquals = 0
 
@@ -60,7 +60,7 @@ extension Data {
                 fatalError("Impossible equals count: \(seenEquals)")
             }
 
-            for byteNumber in (ignoredBytes ..< 5).reversed() {
+            for byteNumber in (ignoredBytes..<5).reversed() {
                 let byte = UInt8(truncatingIfNeeded: rawValue >> (byteNumber * 8))
                 self.append(byte)
             }

@@ -103,11 +103,16 @@ class _StructuredFieldEncoder {
 
     internal var keyEncodingStrategy: StructuredFieldValueEncoder.KeyEncodingStrategy?
 
-    init(_ serializer: StructuredFieldValueSerializer, keyEncodingStrategy: StructuredFieldValueEncoder.KeyEncodingStrategy?) {
+    init(
+        _ serializer: StructuredFieldValueSerializer,
+        keyEncodingStrategy: StructuredFieldValueEncoder.KeyEncodingStrategy?
+    ) {
         self.serializer = serializer
         self._codingPath = []
         self.keyEncodingStrategy = keyEncodingStrategy
-        self.currentStackEntry = CodingStackEntry(key: .init(stringValue: ""), storage: .itemHeader) // This default doesn't matter right now.
+
+        // This default doesn't matter right now.
+        self.currentStackEntry = CodingStackEntry(key: .init(stringValue: ""), storage: .itemHeader)
     }
 
     fileprivate func encodeDictionaryField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
@@ -121,7 +126,7 @@ class _StructuredFieldEncoder {
             // No encoding happened.
             return []
         case .listHeader, .list, .itemHeader, .item, .bareInnerList, .innerList,
-             .parameters, .itemOrInnerList:
+            .parameters, .itemOrInnerList:
             throw StructuredHeaderError.invalidTypeForItem
         }
     }
@@ -137,7 +142,7 @@ class _StructuredFieldEncoder {
             // No encoding happened
             return []
         case .dictionaryHeader, .dictionary, .itemHeader, .item, .bareInnerList, .innerList,
-             .parameters, .itemOrInnerList:
+            .parameters, .itemOrInnerList:
             throw StructuredHeaderError.invalidTypeForItem
         }
     }
@@ -166,7 +171,7 @@ class _StructuredFieldEncoder {
             // No encoding happened
             return []
         case .dictionaryHeader, .dictionary, .listHeader, .list, .bareInnerList, .innerList,
-             .parameters, .itemOrInnerList:
+            .parameters, .itemOrInnerList:
             throw StructuredHeaderError.invalidTypeForItem
         }
     }
@@ -197,7 +202,7 @@ extension _StructuredFieldEncoder: Encoder {
     }
 
     func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
-        return KeyedEncodingContainer(StructuredFieldKeyedEncodingContainer(encoder: self))
+        KeyedEncodingContainer(StructuredFieldKeyedEncodingContainer(encoder: self))
     }
 
     func unkeyedContainer() -> UnkeyedEncodingContainer {
@@ -255,6 +260,13 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self._encodeFixedWidthInteger(value)
     }
 
+    #if compiler(>=6.0)
+    @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+    func encode(_ value: Int128) throws {
+        try self._encodeFixedWidthInteger(value)
+    }
+    #endif
+
     func encode(_ value: UInt) throws {
         try self._encodeFixedWidthInteger(value)
     }
@@ -275,13 +287,20 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self._encodeFixedWidthInteger(value)
     }
 
+    #if compiler(>=6.0)
+    @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
+    func encode(_ value: UInt128) throws {
+        try self._encodeFixedWidthInteger(value)
+    }
+    #endif
+
     func encode(_ data: Data) throws {
         let encoded = data.base64EncodedString()
         try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(encoded))
     }
 
     func encode(_ data: Decimal) throws {
-        let significand = (data.significand.magnitude as NSNumber).intValue // Yes, really.
+        let significand = (data.significand.magnitude as NSNumber).intValue  // Yes, really.
         guard let exponent = Int8(exactly: data.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
@@ -438,7 +457,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: Decimal) throws {
-        let significand = (value.significand.magnitude as NSNumber).intValue // Yes, really.
+        let significand = (value.significand.magnitude as NSNumber).intValue  // Yes, really.
         guard let exponent = Int8(exactly: value.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
@@ -601,11 +620,14 @@ extension _StructuredFieldEncoder {
 
     func encode(_ value: Data, forKey key: String) throws {
         let key = self.sanitizeKey(key)
-        try self.currentStackEntry.storage.insertBareItem(.undecodedByteSequence(value.base64EncodedString()), atKey: key)
+        try self.currentStackEntry.storage.insertBareItem(
+            .undecodedByteSequence(value.base64EncodedString()),
+            atKey: key
+        )
     }
 
     func encode(_ value: Decimal, forKey key: String) throws {
-        let significand = (value.significand.magnitude as NSNumber).intValue // Yes, really.
+        let significand = (value.significand.magnitude as NSNumber).intValue  // Yes, really.
         guard let exponent = Int8(exactly: value.exponent) else {
             throw StructuredHeaderError.invalidIntegerOrDecimal
         }
@@ -715,7 +737,7 @@ extension _StructuredFieldEncoder {
                 }
 
             case .list, .itemHeader, .bareInnerList,
-                 .parameters:
+                .parameters:
                 throw StructuredHeaderError.invalidTypeForItem
             }
         }
@@ -914,10 +936,12 @@ extension _StructuredFieldEncoder {
 
             case .itemOrInnerList(let params):
                 // This is an inner list.
-                self = .innerList(InnerList(bareInnerList: [Item(bareItem: bareItem, parameters: [:])], parameters: params))
+                self = .innerList(
+                    InnerList(bareInnerList: [Item(bareItem: bareItem, parameters: [:])], parameters: params)
+                )
 
             case .dictionaryHeader, .dictionary, .itemHeader, .item,
-                 .parameters:
+                .parameters:
                 throw StructuredHeaderError.invalidTypeForItem
             }
         }

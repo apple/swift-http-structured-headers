@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-private let validIntegerRange = Int64(-999_999_999_999_999) ... Int64(999_999_999_999_999)
+private let validIntegerRange = Int64(-999_999_999_999_999)...Int64(999_999_999_999_999)
 
 /// A `StructuredFieldValueSerializer` is the basic parsing object for structured header field values.
 public struct StructuredFieldValueSerializer: Sendable {
@@ -45,7 +45,7 @@ extension StructuredFieldValueSerializer {
     /// Writes a structured list header field value.
     ///
     /// - parameters:
-    ///     - root: The list object.
+    ///     - list: The list object.
     /// - throws: If the list could not be serialized.
     /// - returns: The bytes of the serialized header field value.
     public mutating func writeListFieldValue(_ list: [ItemOrInnerList]) throws -> [UInt8] {
@@ -63,7 +63,7 @@ extension StructuredFieldValueSerializer {
     /// Writes a structured item header field value.
     ///
     /// - parameters:
-    ///     - root: The item.
+    ///     - item: The item.
     /// - throws: If the item could not be serialized.
     /// - returns: The bytes of the serialized header field value.
     public mutating func writeItemFieldValue(_ item: Item) throws -> [UInt8] {
@@ -179,7 +179,7 @@ extension StructuredFieldValueSerializer {
             self.data.append(contentsOf: String(decimal).utf8)
         case .string(let string):
             let bytes = string.utf8
-            guard bytes.allSatisfy({ !(0x00 ... 0x1F).contains($0) && $0 != 0x7F && $0 < 0x80 }) else {
+            guard bytes.allSatisfy({ !(0x00...0x1F).contains($0) && $0 != 0x7F && $0 < 0x80 }) else {
                 throw StructuredHeaderError.invalidString
             }
             self.data.append(asciiDquote)
@@ -233,7 +233,7 @@ extension String {
         let validKey = utf8View.dropFirst().allSatisfy {
             switch $0 {
             case asciiLowercases, asciiDigits, asciiUnderscore,
-                 asciiDash, asciiPeriod, asciiAsterisk:
+                asciiDash, asciiPeriod, asciiAsterisk:
                 return true
             default:
                 return false

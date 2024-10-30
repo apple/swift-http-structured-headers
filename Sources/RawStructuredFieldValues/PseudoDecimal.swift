@@ -114,9 +114,9 @@ public struct PseudoDecimal: Hashable, Sendable {
         // on the exponent.
         switch exponent {
         case 0 where mantissa.magnitude <= 999_999_999_999,
-             -1 where mantissa.magnitude <= 9_999_999_999_999,
-             -2 where mantissa.magnitude <= 99_999_999_999_999,
-             -3 where mantissa.magnitude <= 999_999_999_999_999:
+            -1 where mantissa.magnitude <= 9_999_999_999_999,
+            -2 where mantissa.magnitude <= 99_999_999_999_999,
+            -3 where mantissa.magnitude <= 999_999_999_999_999:
             // All acceptable
             ()
         default:
@@ -128,7 +128,9 @@ public struct PseudoDecimal: Hashable, Sendable {
         do {
             try Self.validate(mantissa: mantissa, exponent: exponent)
         } catch {
-            preconditionFailure("Invalid value for structured header decimal: mantissa \(mantissa) exponent \(exponent)")
+            preconditionFailure(
+                "Invalid value for structured header decimal: mantissa \(mantissa) exponent \(exponent)"
+            )
         }
     }
 

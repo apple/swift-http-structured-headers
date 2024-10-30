@@ -52,12 +52,17 @@ final class StructuredFieldSerializerTests: XCTestCase {
                 XCTFail("\(fixture.name): Fixture did not throw when serializing.")
             } else if let canonical = fixture.canonical {
                 let expectedCanonicalForm = canonical.joined(separator: ", ")
-                XCTAssertEqual(Array(expectedCanonicalForm.utf8), result,
-                               "\(fixture.name): Bad serialization, expected \(expectedCanonicalForm), got \(String(decoding: result, as: UTF8.self))")
+                XCTAssertEqual(
+                    Array(expectedCanonicalForm.utf8),
+                    result,
+                    "\(fixture.name): Bad serialization, expected \(expectedCanonicalForm), got \(String(decoding: result, as: UTF8.self))"
+                )
             }
         } catch {
-            XCTAssert(fixture.mustFail == true || fixture.canFail == true,
-                      "\(fixture.name): Unexpected failure, threw error \(error)")
+            XCTAssert(
+                fixture.mustFail == true || fixture.canFail == true,
+                "\(fixture.name): Unexpected failure, threw error \(error)"
+            )
         }
     }
 
@@ -103,7 +108,11 @@ final class StructuredFieldSerializerTests: XCTestCase {
                 serialized = try serializer.writeItemFieldValue(item)
             }
 
-            XCTAssertEqual(canonicalJoinedHeaders, serialized, "\(fixture.name): Header serialization mismatch: expected \(String(decoding: canonicalJoinedHeaders, as: UTF8.self)), got \(String(decoding: serialized, as: UTF8.self))")
+            XCTAssertEqual(
+                canonicalJoinedHeaders,
+                serialized,
+                "\(fixture.name): Header serialization mismatch: expected \(String(decoding: canonicalJoinedHeaders, as: UTF8.self)), got \(String(decoding: serialized, as: UTF8.self))"
+            )
         } catch {
             XCTFail("\(fixture.name): Fixture threw unexpected error \(error)")
         }
@@ -142,7 +151,9 @@ extension StructuredFieldSerializerTests.TestResult {
         case .array(let jsonArray):
             // Top level JSON arrays may be either list headers or item headers. To know, we have
             // to investigate a bit. An item will have only two entries, and neither will be an array.
-            if jsonArray.count == 2, let first = jsonArray.first, let last = jsonArray.last, !first.isArray, !last.isArray {
+            if jsonArray.count == 2, let first = jsonArray.first, let last = jsonArray.last, !first.isArray,
+                !last.isArray
+            {
                 // This is an item!
                 self = .item(try Item(schema))
             } else {
@@ -172,7 +183,9 @@ extension ItemOrInnerList {
 
 extension Item {
     init(_ schema: JSONSchema) throws {
-        guard case .array(let arrayElements) = schema, arrayElements.count == 2, let first = arrayElements.first, let last = arrayElements.last else {
+        guard case .array(let arrayElements) = schema, arrayElements.count == 2, let first = arrayElements.first,
+            let last = arrayElements.last
+        else {
             fatalError("Invalid item: \(schema)")
         }
 
@@ -214,7 +227,9 @@ extension RFC9651BareItem {
 
 extension InnerList {
     init(_ schema: JSONSchema) throws {
-        guard case .array(let arrayElements) = schema, arrayElements.count == 2, let first = arrayElements.first, let last = arrayElements.last else {
+        guard case .array(let arrayElements) = schema, arrayElements.count == 2, let first = arrayElements.first,
+            let last = arrayElements.last
+        else {
             fatalError("Invalid item: \(schema)")
         }
 
