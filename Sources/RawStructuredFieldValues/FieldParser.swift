@@ -224,6 +224,8 @@ extension StructuredFieldValueParser {
             return try self._parseAToken()
         case asciiAt:
             return try self._parseADate()
+        case asciiPercent:
+            return try self._parseADisplayString()
         default:
             throw StructuredHeaderError.invalidItem
         }
@@ -491,6 +493,68 @@ extension StructuredFieldValueParser {
         return try self._parseAnIntegerOrDecimal(isDate: true)
     }
 
+    private mutating func _parseADisplayString() throws -> RFC9651BareItem {
+        assert(self.underlyingData.first == asciiPercent)
+        self.underlyingData.consumeFirst()
+
+        guard self.underlyingData.first == asciiDquote else {
+            throw StructuredHeaderError.invalidDisplayString
+        }
+
+        self.underlyingData.consumeFirst()
+
+        var byteArray = [UInt8]()
+
+        while let char = self.underlyingData.first {
+            self.underlyingData.consumeFirst()
+
+            switch char {
+            case 0x00...0x1F, 0x7F...:
+                throw StructuredHeaderError.invalidDisplayString
+            case asciiPercent:
+                if self.underlyingData.count < 2 {
+                    throw StructuredHeaderError.invalidDisplayString
+                }
+
+                let startIndex = self.underlyingData.startIndex
+                let secondIndex = self.underlyingData.index(after: startIndex)
+                let octetHex = self.underlyingData[...secondIndex]
+
+                self.underlyingData = self.underlyingData.dropFirst(2)
+
+                guard
+                    octetHex.allSatisfy({ asciiDigits.contains($0) || asciiLowercases.contains($0) }),
+                    let octet = UInt8.decodeHex(octetHex)
+                else {
+                    throw StructuredHeaderError.invalidDisplayString
+                }
+
+                byteArray.append(octet)
+            case asciiDquote:
+                let unicodeSequence = try byteArray.withUnsafeBytes {
+                    try $0.withMemoryRebound(to: CChar.self) {
+                        guard let baseAddress = $0.baseAddress else {
+                            throw StructuredHeaderError.invalidDisplayString
+                        }
+
+                        return String(validatingUTF8: baseAddress)
+                    }
+                }
+
+                guard let unicodeSequence else {
+                    throw StructuredHeaderError.invalidDisplayString
+                }
+
+                return .displayString(unicodeSequence)
+            default:
+                byteArray.append(char)
+            }
+        }
+
+        // Fail parsing — reached the end of the string without finding a closing DQUOTE.
+        throw StructuredHeaderError.invalidDisplayString
+    }
+
     private mutating func _parseParameters() throws -> OrderedMap<Key, RFC9651BareItem> {
         var parameters = OrderedMap<Key, RFC9651BareItem>()
 
@@ -641,5 +705,38 @@ extension StrippingStringEscapesCollection.Index: Equatable {}
 extension StrippingStringEscapesCollection.Index: Comparable {
     fileprivate static func < (lhs: Self, rhs: Self) -> Bool {
         lhs._baseIndex < rhs._baseIndex
+    }
+}
+
+extension UInt8 {
+    /// Converts a hex value given in UTF8 to base 10.
+    fileprivate static func decodeHex<Bytes: RandomAccessCollection>(_ bytes: Bytes) -> Self?
+    where Bytes.Element == Self {
+        var result = Self(0)
+        var power = Self(bytes.count)
+
+        for byte in bytes {
+            power -= 1
+
+            guard let integer = Self.htoi(byte) else { return nil }
+            result += integer << (power * 4)
+        }
+
+        return result
+    }
+
+    /// Converts a hex character given in UTF8 to its integer value.
+    private static func htoi(_ value: Self) -> Self? {
+        let charA = Self(UnicodeScalar("a").value)
+        let char0 = Self(UnicodeScalar("0").value)
+
+        switch value {
+        case char0...char0 + 9:
+            return value - char0
+        case charA...charA + 5:
+            return value - charA + 10
+        default:
+            return nil
+        }
     }
 }

@@ -171,6 +171,8 @@ extension RFC9651BareItem {
             return "decimal \(d)"
         case .date(let date):
             return "date \(date)"
+        case .displayString(let displayString):
+            return "display string \(displayString)"
         }
     }
 }

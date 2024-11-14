@@ -213,6 +213,26 @@ extension StructuredFieldValueSerializer {
             }
 
             self.data.append(contentsOf: String(date, radix: 10).utf8)
+        case .displayString(let displayString):
+            let bytes = displayString.utf8
+
+            self.data.append(asciiPercent)
+            self.data.append(asciiDquote)
+
+            for byte in bytes {
+                if byte == asciiPercent
+                    || byte == asciiDquote
+                    || (0x00...0x1F).contains(byte)
+                    || (0x7F...).contains(byte)
+                {
+                    self.data.append(asciiPercent)
+                    self.data.append(contentsOf: String(byte, radix: 16, uppercase: false).utf8)
+                } else {
+                    self.data.append(byte)
+                }
+            }
+
+            self.data.append(asciiDquote)
         }
     }
 }

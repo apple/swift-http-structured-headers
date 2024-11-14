@@ -214,6 +214,9 @@ extension RFC9651BareItem {
             case (.some(.string("date")), .some(.integer(let value))):
                 self = .date(value)
 
+            case (.some(.string("displaystring")), .some(.string(let value))):
+                self = .displayString(value)
+
             default:
                 preconditionFailure("Unexpected type object \(typeObject)")
             }
