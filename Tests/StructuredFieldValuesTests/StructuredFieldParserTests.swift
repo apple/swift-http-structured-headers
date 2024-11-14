@@ -95,8 +95,14 @@ final class StructuredFieldParserTests: XCTestCase {
                 return
             }
 
-            XCTAssertEqual(typeName, "displaystring", "\(fixtureName): Expected type displaystring, got type \(typeName)")
-            XCTAssertEqual(typeValue, baseDisplayString, "\(fixtureName): Got \(baseDisplayString), expected \(typeValue)")
+            XCTAssertEqual(
+                typeName,
+                "displaystring",
+                "\(fixtureName): Expected type displaystring, got type \(typeName)")
+            XCTAssertEqual(
+                typeValue,
+                baseDisplayString,
+                "\(fixtureName): Got \(baseDisplayString), expected \(typeValue)")
         default:
             XCTFail("\(fixtureName): Got \(bareItem), expected \(schema)")
         }
