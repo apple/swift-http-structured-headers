@@ -516,36 +516,31 @@ extension StructuredFieldValueParser {
                     throw StructuredHeaderError.invalidDisplayString
                 }
 
-                let startIndex = self.underlyingData.startIndex
-                let secondIndex = self.underlyingData.index(after: startIndex)
-                let octetHex = self.underlyingData[...secondIndex]
+                let octetHex = EncodedHex(ArraySlice(self.underlyingData.prefix(2)))
 
                 self.underlyingData = self.underlyingData.dropFirst(2)
 
-                guard
-                    octetHex.allSatisfy({ asciiDigits.contains($0) || asciiLowercases.contains($0) }),
-                    let octet = UInt8.decodeHex(octetHex)
-                else {
+                guard let octet = octetHex.decode() else {
                     throw StructuredHeaderError.invalidDisplayString
                 }
 
                 byteArray.append(octet)
             case asciiDquote:
-                let unicodeSequence = try byteArray.withUnsafeBytes {
-                    try $0.withMemoryRebound(to: CChar.self) {
-                        guard let baseAddress = $0.baseAddress else {
-                            throw StructuredHeaderError.invalidDisplayString
-                        }
+                #if compiler(>=6.0)
+                if #available(macOS 15.0, iOS 18.0, tvOS 18.0, watchOS 11.0, *) {
+                    let unicodeSequence = String(validating: byteArray, as: UTF8.self)
 
-                        return String(validatingUTF8: baseAddress)
+                    guard let unicodeSequence else {
+                        throw StructuredHeaderError.invalidDisplayString
                     }
-                }
 
-                guard let unicodeSequence else {
-                    throw StructuredHeaderError.invalidDisplayString
+                    return .displayString(unicodeSequence)
+                } else {
+                    return try _decodeDisplayString(byteArray: &byteArray)
                 }
-
-                return .displayString(unicodeSequence)
+                #else
+                return try _decodeDisplayString(byteArray: &byteArray)
+                #endif
             default:
                 byteArray.append(char)
             }
@@ -553,6 +548,30 @@ extension StructuredFieldValueParser {
 
         // Fail parsing — reached the end of the string without finding a closing DQUOTE.
         throw StructuredHeaderError.invalidDisplayString
+    }
+
+    /// This method is called in environments where `String(validating:as:)` is unavailable. It uses
+    /// `String(validatingUTF8:)` which requires `byteArray` to be null terminated. `String(validating:as:)`
+    /// does not require that requirement. Therefore, it does not perform null checks, which makes it more optimal.
+    private func _decodeDisplayString(byteArray: inout [UInt8]) throws -> RFC9651BareItem {
+        // String(validatingUTF8:) requires byteArray to be null-terminated.
+        byteArray.append(0)
+
+        let unicodeSequence = try byteArray.withUnsafeBytes {
+            try $0.withMemoryRebound(to: CChar.self) {
+                guard let baseAddress = $0.baseAddress else {
+                    throw StructuredHeaderError.invalidDisplayString
+                }
+
+                return String(validatingUTF8: baseAddress)
+            }
+        }
+
+        guard let unicodeSequence else {
+            throw StructuredHeaderError.invalidDisplayString
+        }
+
+        return .displayString(unicodeSequence)
     }
 
     private mutating func _parseParameters() throws -> OrderedMap<Key, RFC9651BareItem> {
@@ -708,33 +727,36 @@ extension StrippingStringEscapesCollection.Index: Comparable {
     }
 }
 
-extension UInt8 {
-    /// Converts a hex value given in UTF8 to base 10.
-    fileprivate static func decodeHex<Bytes: RandomAccessCollection>(_ bytes: Bytes) -> Self?
-    where Bytes.Element == Self {
-        var result = Self(0)
-        var power = Self(bytes.count)
+/// `EncodedHex` represents a (possibly invalid) hex value in UTF8.
+struct EncodedHex {
+    private(set) var firstChar: UInt8
+    private(set) var secondChar: UInt8
 
-        for byte in bytes {
-            power -= 1
+    init(_ slice: ArraySlice<UInt8>) {
+        precondition(slice.count == 2)
+        self.firstChar = slice[slice.startIndex]
+        self.secondChar = slice[slice.index(after: slice.startIndex)]
+    }
 
-            guard let integer = Self.htoi(byte) else { return nil }
-            result += integer << (power * 4)
-        }
+    /// Validates and converts `EncodedHex` to a base 10 UInt8.
+    ///
+    /// If `EncodedHex` does not represent a valid hex value, the result of this method is nil.
+    fileprivate func decode() -> UInt8? {
+        guard
+            let firstCharAsInteger = self.htoi(self.firstChar),
+            let secondCharAsInteger = self.htoi(self.secondChar)
+        else { return nil }
 
-        return result
+        return (firstCharAsInteger << 4) + secondCharAsInteger
     }
 
     /// Converts a hex character given in UTF8 to its integer value.
-    private static func htoi(_ value: Self) -> Self? {
-        let charA = Self(UnicodeScalar("a").value)
-        let char0 = Self(UnicodeScalar("0").value)
-
-        switch value {
-        case char0...char0 + 9:
-            return value - char0
-        case charA...charA + 5:
-            return value - charA + 10
+    private func htoi(_ asciiChar: UInt8) -> UInt8? {
+        switch asciiChar {
+        case asciiZero...asciiNine:
+            return asciiChar - asciiZero
+        case asciiLowerA...asciiLowerF:
+            return asciiChar - asciiLowerA + 10
         default:
             return nil
         }
