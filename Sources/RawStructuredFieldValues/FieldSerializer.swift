@@ -280,6 +280,6 @@ extension UInt8 {
 
     /// Converts an integer to its hex character in UTF8.
     private static func itoh(_ int: Self) -> Self {
-        return (int > 9) ? (asciiLowerA + int - 10) : (asciiZero + int)
+        (int > 9) ? (asciiLowerA + int - 10) : (asciiZero + int)
     }
 }
