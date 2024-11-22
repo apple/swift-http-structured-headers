@@ -516,7 +516,7 @@ extension StructuredFieldValueParser {
                     throw StructuredHeaderError.invalidDisplayString
                 }
 
-                let octetHex = EncodedHex(ArraySlice(self.underlyingData.prefix(2)))
+                let octetHex = EncodedHex(self.underlyingData.prefix(2))
 
                 self.underlyingData = self.underlyingData.dropFirst(2)
 
@@ -557,13 +557,10 @@ extension StructuredFieldValueParser {
         // String(validatingUTF8:) requires byteArray to be null-terminated.
         byteArray.append(0)
 
-        let unicodeSequence = try byteArray.withUnsafeBytes {
-            try $0.withMemoryRebound(to: CChar.self) {
-                guard let baseAddress = $0.baseAddress else {
-                    throw StructuredHeaderError.invalidDisplayString
-                }
-
-                return String(validatingUTF8: baseAddress)
+        let unicodeSequence = byteArray.withUnsafeBytes {
+            $0.withMemoryRebound(to: CChar.self) {
+                // This force-unwrap is safe, as the buffer must successfully bind to CChar.
+                String(validatingUTF8: $0.baseAddress!)
             }
         }
 
@@ -732,10 +729,10 @@ struct EncodedHex {
     private(set) var firstChar: UInt8
     private(set) var secondChar: UInt8
 
-    init(_ slice: ArraySlice<UInt8>) {
-        precondition(slice.count == 2)
-        self.firstChar = slice[slice.startIndex]
-        self.secondChar = slice[slice.index(after: slice.startIndex)]
+    init<Bytes: RandomAccessCollection>(_ bytes: Bytes) where Bytes.Element == UInt8 {
+        precondition(bytes.count == 2)
+        self.firstChar = bytes[bytes.startIndex]
+        self.secondChar = bytes[bytes.index(after: bytes.startIndex)]
     }
 
     /// Validates and converts `EncodedHex` to a base 10 UInt8.
