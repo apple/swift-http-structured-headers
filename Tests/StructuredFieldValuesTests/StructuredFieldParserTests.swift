@@ -87,6 +87,24 @@ final class StructuredFieldParserTests: XCTestCase {
 
             XCTAssertEqual(typeName, "date", "\(fixtureName): Expected type date, got type \(typeName)")
             XCTAssertEqual(typeValue, baseDate, "\(fixtureName): Got \(baseDate), expected \(typeValue)")
+        case (.displayString(let baseDisplayString), .dictionary(let typeDictionary)):
+            guard typeDictionary.count == 2, case .string(let typeName) = typeDictionary["__type"],
+                case .string(let typeValue) = typeDictionary["value"]
+            else {
+                XCTFail("\(fixtureName): Unexpected type dict \(typeDictionary)")
+                return
+            }
+
+            XCTAssertEqual(
+                typeName,
+                "displaystring",
+                "\(fixtureName): Expected type displaystring, got type \(typeName)"
+            )
+            XCTAssertEqual(
+                typeValue,
+                baseDisplayString,
+                "\(fixtureName): Got \(baseDisplayString), expected \(typeValue)"
+            )
         default:
             XCTFail("\(fixtureName): Got \(bareItem), expected \(schema)")
         }

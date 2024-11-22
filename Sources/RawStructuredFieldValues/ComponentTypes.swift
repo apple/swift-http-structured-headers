@@ -110,6 +110,8 @@ extension BareItem {
 
         case .date:
             throw StructuredHeaderError.invalidItem
+        case .displayString:
+            throw StructuredHeaderError.invalidItem
         }
     }
 }
@@ -141,6 +143,9 @@ public enum RFC9651BareItem: Sendable {
 
     /// A date item.
     case date(Int)
+
+    /// A display string item.
+    case displayString(String)
 }
 
 extension RFC9651BareItem: ExpressibleByBooleanLiteral {

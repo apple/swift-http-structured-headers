@@ -213,6 +213,29 @@ extension StructuredFieldValueSerializer {
             }
 
             self.data.append(contentsOf: String(date, radix: 10).utf8)
+        case .displayString(let displayString):
+            let bytes = displayString.utf8
+
+            self.data.append(asciiPercent)
+            self.data.append(asciiDquote)
+
+            for byte in bytes {
+                if byte == asciiPercent
+                    || byte == asciiDquote
+                    || (0x00...0x1F).contains(byte)
+                    || (0x7F...).contains(byte)
+                {
+                    self.data.append(asciiPercent)
+
+                    let encodedByte = UInt8.encodeToHex(byte)
+                    self.data.append(encodedByte.firstChar)
+                    self.data.append(encodedByte.secondChar)
+                } else {
+                    self.data.append(byte)
+                }
+            }
+
+            self.data.append(asciiDquote)
         }
     }
 }
@@ -243,5 +266,20 @@ extension String {
         guard validKey else {
             throw StructuredHeaderError.invalidKey
         }
+    }
+}
+
+extension UInt8 {
+    /// Converts an integer in base 10 to hex of type `EncodedHex`.
+    fileprivate static func encodeToHex(_ int: Self) -> EncodedHex {
+        let firstChar = self.itoh(int >> 4)
+        let secondChar = self.itoh(int & 0x0F)
+
+        return EncodedHex([firstChar, secondChar])
+    }
+
+    /// Converts an integer to its hex character in UTF8.
+    private static func itoh(_ int: Self) -> Self {
+        (int > 9) ? (asciiLowerA + int - 10) : (asciiZero + int)
     }
 }
