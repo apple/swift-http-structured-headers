@@ -494,7 +494,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
     func testDecodingDateAsTopLevelData() throws {
         let headerField = "@4294967296"
         XCTAssertEqual(
-            ItemField(Date(timeIntervalSince1970: 4294967296)),
+            ItemField(Date(timeIntervalSince1970: 4_294_967_296)),
             try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
         )
     }
@@ -511,7 +511,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
         XCTAssertEqual(
             Item(
-                item: Date(timeIntervalSince1970: 4294967296),
+                item: Date(timeIntervalSince1970: 4_294_967_296),
                 parameters: [:]
             ),
             try StructuredFieldValueDecoder().decode(
@@ -521,7 +521,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            Item(item: Date(timeIntervalSince1970: 4294967296), parameters: ["q": 0.8]),
+            Item(item: Date(timeIntervalSince1970: 4_294_967_296), parameters: ["q": 0.8]),
             try StructuredFieldValueDecoder().decode(
                 Item.self,
                 from: Array(headerFieldParameters.utf8)
@@ -538,7 +538,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
         let headerField = "1;q=@4294967296"
         XCTAssertEqual(
-            Item(item: 1, parameters: ["q": Date(timeIntervalSince1970: 4294967296)]),
+            Item(item: 1, parameters: ["q": Date(timeIntervalSince1970: 4_294_967_296)]),
             try StructuredFieldValueDecoder().decode(Item.self, from: Array(headerField.utf8))
         )
     }
@@ -547,7 +547,10 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "@4294967296, @-1659578233"
         XCTAssertEqual(
             List(
-                [Date(timeIntervalSince1970: 4294967296), Date(timeIntervalSince1970: -1659578233)]
+                [
+                    Date(timeIntervalSince1970: 4_294_967_296),
+                    Date(timeIntervalSince1970: -1_659_578_233)
+                ]
             ),
             try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
         )
@@ -556,13 +559,15 @@ final class StructuredFieldDecoderTests: XCTestCase {
     func testDecodingDateInInnerListRaw() throws {
         let headerField = "(@4294967296 @-1659578233), (@4294967296 @-1659578233)"
         XCTAssertEqual(
-            List(Array(
-                repeating: [
-                    Date(timeIntervalSince1970: 4294967296),
-                    Date(timeIntervalSince1970: -1659578233)
-                ],
-                count: 2
-            )),
+            List(
+                Array(
+                    repeating: [
+                        Date(timeIntervalSince1970: 4_294_967_296),
+                        Date(timeIntervalSince1970: -1_659_578_233)
+                    ],
+                    count: 2
+                )
+            ),
             try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
         )
     }
@@ -578,8 +583,8 @@ final class StructuredFieldDecoderTests: XCTestCase {
                 Array(
                     repeating: ListField(
                         items: [
-                            Date(timeIntervalSince1970: 4294967296),
-                            Date(timeIntervalSince1970: -1659578233)
+                            Date(timeIntervalSince1970: 4_294_967_296),
+                            Date(timeIntervalSince1970: -1_659_578_233)
                         ],
                         parameters: ["foo": true]
                     ),
@@ -600,8 +605,8 @@ final class StructuredFieldDecoderTests: XCTestCase {
         let headerField = "bin=@4294967296, box=@-1659578233"
         XCTAssertEqual(
             DictionaryField(
-                bin: Date(timeIntervalSince1970: 4294967296),
-                box: Date(timeIntervalSince1970: -1659578233)
+                bin: Date(timeIntervalSince1970: 4_294_967_296),
+                box: Date(timeIntervalSince1970: -1_659_578_233)
             ),
             try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
         )

@@ -45,8 +45,14 @@ final class StructuredFieldEncoderTests: XCTestCase {
         XCTAssertEqual(Array(":AQIDBA==:".utf8), try encoder.encode(ItemField(Data([1, 2, 3, 4]))))
 
         // Date
-        XCTAssertEqual(Array("@4294967296".utf8), try encoder.encode(ItemField(Date(timeIntervalSince1970: 4294967296))))
-        XCTAssertEqual(Array("@-1659578233".utf8), try encoder.encode(ItemField(Date(timeIntervalSince1970: -1659578233))))
+        XCTAssertEqual(
+            Array("@4294967296".utf8),
+            try encoder.encode(ItemField(Date(timeIntervalSince1970: 4_294_967_296)))
+        )
+        XCTAssertEqual(
+            Array("@-1659578233".utf8),
+            try encoder.encode(ItemField(Date(timeIntervalSince1970: -1_659_578_233)))
+        )
     }
 
     func testEncodeKeyedItemHeader() throws {
@@ -104,17 +110,21 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Date
         XCTAssertEqual(
             Array("@4294967296;x".utf8),
-            try encoder.encode(KeyedItem(
-                item: Date(timeIntervalSince1970: 4294967296),
-                parameters: ["x": true]
-            ))
+            try encoder.encode(
+                KeyedItem(
+                    item: Date(timeIntervalSince1970: 4_294_967_296),
+                    parameters: ["x": true]
+                )
+            )
         )
         XCTAssertEqual(
             Array("@-1659578233".utf8),
-            try encoder.encode(KeyedItem(
-                item: Date(timeIntervalSince1970: -1659578233),
-                parameters: [:]
-            ))
+            try encoder.encode(
+                KeyedItem(
+                    item: Date(timeIntervalSince1970: -1_659_578_233),
+                    parameters: [:]
+                )
+            )
         )
     }
 
@@ -213,9 +223,14 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Date
         XCTAssertEqual(
             Array("@4294967296, @-1659578233".utf8),
-            try encoder.encode(List(
-                [Date(timeIntervalSince1970: 4294967296), Date(timeIntervalSince1970: -1659578233)]
-            ))
+            try encoder.encode(
+                List(
+                    [
+                        Date(timeIntervalSince1970: 4_294_967_296),
+                        Date(timeIntervalSince1970: -1_659_578_233)
+                    ]
+                )
+            )
         )
     }
 
