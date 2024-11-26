@@ -490,4 +490,120 @@ final class StructuredFieldDecoderTests: XCTestCase {
             try StructuredFieldValueDecoder().decode(DictionaryField.self, from: Array(headerField.utf8))
         )
     }
+
+    func testDecodingDateAsTopLevelData() throws {
+        let headerField = "@4294967296"
+        XCTAssertEqual(
+            ItemField(Date(timeIntervalSince1970: 4294967296)),
+            try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDateAsParameterisedData() throws {
+        struct Item: StructuredFieldValue, Equatable {
+            static let structuredFieldType: StructuredFieldType = .item
+            var item: Date
+            var parameters: [String: Float]
+        }
+
+        let headerFieldNoParameters = "@4294967296"
+        let headerFieldParameters = "@4294967296;q=0.8"
+
+        XCTAssertEqual(
+            Item(
+                item: Date(timeIntervalSince1970: 4294967296),
+                parameters: [:]
+            ),
+            try StructuredFieldValueDecoder().decode(
+                Item.self,
+                from: Array(headerFieldNoParameters.utf8)
+            )
+        )
+
+        XCTAssertEqual(
+            Item(item: Date(timeIntervalSince1970: 4294967296), parameters: ["q": 0.8]),
+            try StructuredFieldValueDecoder().decode(
+                Item.self,
+                from: Array(headerFieldParameters.utf8)
+            )
+        )
+    }
+
+    func testDecodingDateInParameterField() throws {
+        struct Item: StructuredFieldValue, Equatable {
+            static let structuredFieldType: StructuredFieldType = .item
+            var item: Int
+            var parameters: [String: Date]
+        }
+
+        let headerField = "1;q=@4294967296"
+        XCTAssertEqual(
+            Item(item: 1, parameters: ["q": Date(timeIntervalSince1970: 4294967296)]),
+            try StructuredFieldValueDecoder().decode(Item.self, from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDateInOuterListRaw() throws {
+        let headerField = "@4294967296, @-1659578233"
+        XCTAssertEqual(
+            List(
+                [Date(timeIntervalSince1970: 4294967296), Date(timeIntervalSince1970: -1659578233)]
+            ),
+            try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDateInInnerListRaw() throws {
+        let headerField = "(@4294967296 @-1659578233), (@4294967296 @-1659578233)"
+        XCTAssertEqual(
+            List(Array(
+                repeating: [
+                    Date(timeIntervalSince1970: 4294967296),
+                    Date(timeIntervalSince1970: -1659578233)
+                ],
+                count: 2
+            )),
+            try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDateInInnerListKeyed() throws {
+        struct ListField: Codable, Equatable {
+            var items: [Date]
+            var parameters: [String: Bool]
+        }
+        let headerField = "(@4294967296 @-1659578233);foo, (@4294967296 @-1659578233);foo"
+        XCTAssertEqual(
+            List(
+                Array(
+                    repeating: ListField(
+                        items: [
+                            Date(timeIntervalSince1970: 4294967296),
+                            Date(timeIntervalSince1970: -1659578233)
+                        ],
+                        parameters: ["foo": true]
+                    ),
+                    count: 2
+                )
+            ),
+            try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
+        )
+    }
+
+    func testDecodingDateInDictionaries() throws {
+        struct DictionaryField: StructuredFieldValue, Equatable {
+            static let structuredFieldType: StructuredFieldType = .dictionary
+            var bin: Date
+            var box: Date
+        }
+
+        let headerField = "bin=@4294967296, box=@-1659578233"
+        XCTAssertEqual(
+            DictionaryField(
+                bin: Date(timeIntervalSince1970: 4294967296),
+                box: Date(timeIntervalSince1970: -1659578233)
+            ),
+            try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
+        )
+    }
 }
