@@ -549,7 +549,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
             List(
                 [
                     Date(timeIntervalSince1970: 4_294_967_296),
-                    Date(timeIntervalSince1970: -1_659_578_233)
+                    Date(timeIntervalSince1970: -1_659_578_233),
                 ]
             ),
             try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8))
@@ -563,7 +563,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
                 Array(
                     repeating: [
                         Date(timeIntervalSince1970: 4_294_967_296),
-                        Date(timeIntervalSince1970: -1_659_578_233)
+                        Date(timeIntervalSince1970: -1_659_578_233),
                     ],
                     count: 2
                 )
@@ -584,7 +584,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
                     repeating: ListField(
                         items: [
                             Date(timeIntervalSince1970: 4_294_967_296),
-                            Date(timeIntervalSince1970: -1_659_578_233)
+                            Date(timeIntervalSince1970: -1_659_578_233),
                         ],
                         parameters: ["foo": true]
                     ),

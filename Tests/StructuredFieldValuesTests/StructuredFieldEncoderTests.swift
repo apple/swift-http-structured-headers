@@ -227,7 +227,7 @@ final class StructuredFieldEncoderTests: XCTestCase {
                 List(
                     [
                         Date(timeIntervalSince1970: 4_294_967_296),
-                        Date(timeIntervalSince1970: -1_659_578_233)
+                        Date(timeIntervalSince1970: -1_659_578_233),
                     ]
                 )
             )
