@@ -160,6 +160,8 @@ class _StructuredFieldEncoder {
             try self.encode(value)
         } else if let value = data as? Decimal {
             try self.encode(value)
+        } else if let value = data as? Date {
+            try self.encode(value)
         } else {
             try data.encode(to: self)
         }
@@ -309,6 +311,11 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd))
     }
 
+    func encode(_ data: Date) throws {
+        let date = Int(data.timeIntervalSince1970)
+        try self.currentStackEntry.storage.insertBareItem(.date(date))
+    }
+
     func encode<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let value as UInt8:
@@ -342,6 +349,8 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         case let value as Data:
             try self.encode(value)
         case let value as Decimal:
+            try self.encode(value)
+        case let value as Date:
             try self.encode(value)
         default:
             throw StructuredHeaderError.invalidTypeForItem
@@ -466,6 +475,11 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.appendBareItem(.decimal(pd))
     }
 
+    func append(_ value: Date) throws {
+        let date = Int(value.timeIntervalSince1970)
+        try self.currentStackEntry.storage.appendBareItem(.date(date))
+    }
+
     func append<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let value as UInt8:
@@ -499,6 +513,8 @@ extension _StructuredFieldEncoder {
         case let value as Data:
             try self.append(value)
         case let value as Decimal:
+            try self.append(value)
+        case let value as Date:
             try self.append(value)
         default:
             // Some other codable type.
@@ -636,6 +652,12 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd), atKey: key)
     }
 
+    func encode(_ value: Date, forKey key: String) throws {
+        let key = self.sanitizeKey(key)
+        let date = Int(value.timeIntervalSince1970)
+        try self.currentStackEntry.storage.insertBareItem(.date(date), atKey: key)
+    }
+
     func encode<T>(_ value: T, forKey key: String) throws where T: Encodable {
         let key = self.sanitizeKey(key)
 
@@ -671,6 +693,8 @@ extension _StructuredFieldEncoder {
         case let value as Data:
             try self.encode(value, forKey: key)
         case let value as Decimal:
+            try self.encode(value, forKey: key)
+        case let value as Date:
             try self.encode(value, forKey: key)
         default:
             // Ok, we don't know what this is. This can only happen for a dictionary, or

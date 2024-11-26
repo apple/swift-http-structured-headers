@@ -60,6 +60,9 @@ extension KeyedItemDecoder: KeyedDecodingContainerProtocol {
         } else if type is Decimal.Type {
             let container = try self.decoder.singleValueContainer()
             return try container.decode(Decimal.self) as! T
+        } else if type is Date.Type {
+            let container = try self.decoder.singleValueContainer()
+            return try container.decode(Date.self) as! T
         } else {
             return try type.init(from: self.decoder)
         }
