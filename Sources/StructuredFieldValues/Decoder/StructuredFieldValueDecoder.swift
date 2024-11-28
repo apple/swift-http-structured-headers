@@ -117,6 +117,9 @@ extension StructuredFieldValueDecoder {
         } else if type is Decimal.Type {
             let container = try decoder.singleValueContainer()
             return try container.decode(Decimal.self) as! StructuredField
+        } else if type is Date.Type {
+            let container = try decoder.singleValueContainer()
+            return try container.decode(Date.self) as! StructuredField
         } else {
             return try type.init(from: decoder)
         }
