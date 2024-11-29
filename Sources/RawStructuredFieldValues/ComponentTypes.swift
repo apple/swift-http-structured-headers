@@ -94,7 +94,7 @@ extension BareItem {
             self = .bool(b)
 
         case .integer(let i):
-            self = .integer(i)
+            self = .integer(Int(i))
 
         case .decimal(let d):
             self = .decimal(d)
@@ -126,7 +126,7 @@ public enum RFC9651BareItem: Sendable {
     case bool(Bool)
 
     /// An integer item.
-    case integer(Int)
+    case integer(Int64)
 
     /// A decimal item.
     case decimal(PseudoDecimal)
@@ -142,7 +142,7 @@ public enum RFC9651BareItem: Sendable {
     case token(String)
 
     /// A date item.
-    case date(Int)
+    case date(Int64)
 
     /// A display string item.
     case displayString(String)
@@ -155,7 +155,7 @@ extension RFC9651BareItem: ExpressibleByBooleanLiteral {
 }
 
 extension RFC9651BareItem: ExpressibleByIntegerLiteral {
-    public init(integerLiteral value: Int) {
+    public init(integerLiteral value: Int64) {
         self = .integer(value)
     }
 }
@@ -184,7 +184,7 @@ extension RFC9651BareItem {
             self = .bool(b)
 
         case .integer(let i):
-            self = .integer(i)
+            self = .integer(Int64(i))
 
         case .decimal(let d):
             self = .decimal(d)
