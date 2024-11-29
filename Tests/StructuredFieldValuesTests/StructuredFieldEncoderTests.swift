@@ -53,6 +53,12 @@ final class StructuredFieldEncoderTests: XCTestCase {
             Array("@-1659578233".utf8),
             try encoder.encode(ItemField(Date(timeIntervalSince1970: -1_659_578_233)))
         )
+
+        // Display String
+        XCTAssertEqual(
+            Array("%\"f%c3%bc%c3%bc\"".utf8),
+            try encoder.encode(ItemField(DisplayString("füü")))
+        )
     }
 
     func testEncodeKeyedItemHeader() throws {
@@ -125,6 +131,16 @@ final class StructuredFieldEncoderTests: XCTestCase {
                     parameters: [:]
                 )
             )
+        )
+
+        // Display String
+        XCTAssertEqual(
+            Array("%\"f%c3%bc%c3%bc\";x".utf8),
+            try encoder.encode(KeyedItem(item: DisplayString("füü"), parameters: ["x": true]))
+        )
+        XCTAssertEqual(
+            Array("%\"foo %22bar%22 \\ baz\"".utf8),
+            try encoder.encode(KeyedItem(item: DisplayString("foo \"bar\" \\ baz"), parameters: [:]))
         )
     }
 
@@ -231,6 +247,12 @@ final class StructuredFieldEncoderTests: XCTestCase {
                     ]
                 )
             )
+        )
+
+        // Display String
+        XCTAssertEqual(
+            Array("%\"f%c3%bc%c3%bc\", %\"foo %22bar%22 \\ baz\"".utf8),
+            try encoder.encode(List([DisplayString("füü"), DisplayString("foo \"bar\" \\ baz")]))
         )
     }
 
