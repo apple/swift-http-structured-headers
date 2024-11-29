@@ -141,6 +141,14 @@ extension BareItemDecoder: SingleValueDecodingContainer {
         return Date(timeIntervalSince1970: Double(date))
     }
 
+    func decode(_: DisplayString.Type) throws -> DisplayString {
+        guard case .displayString(let string) = self.item else {
+            throw StructuredHeaderError.invalidTypeForItem
+        }
+
+        return DisplayString(string)
+    }
+
     func decodeNil() -> Bool {
         // Items are never nil.
         false
@@ -182,6 +190,8 @@ extension BareItemDecoder: SingleValueDecodingContainer {
             return try self.decode(Decimal.self) as! T
         case is Date.Type:
             return try self.decode(Date.self) as! T
+        case is DisplayString.Type:
+            return try self.decode(DisplayString.self) as! T
         default:
             throw StructuredHeaderError.invalidTypeForItem
         }
