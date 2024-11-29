@@ -89,7 +89,7 @@ struct ListyDictionaryField: StructuredFieldValue, Equatable {
 final class StructuredFieldDecoderTests: XCTestCase {
     func testSimpleCodableDecode() throws {
         let headerField =
-        "primary=bar;q=1.0, secondary=baz;q=0.5;fallback=last, acceptablejurisdictions=(AU;q=1.0 GB;q=0.9 FR);fallback=\"primary\""
+            "primary=bar;q=1.0, secondary=baz;q=0.5;fallback=last, acceptablejurisdictions=(AU;q=1.0 GB;q=0.9 FR);fallback=\"primary\""
         let parsed = try StructuredFieldValueDecoder().decode(ListyDictionaryField.self, from: Array(headerField.utf8))
         let expected = ListyDictionaryField(
             primary: .init(item: "bar", parameters: .init(q: 1, fallback: nil)),
@@ -115,7 +115,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
             var acceptablejurisdictions: [String]
         }
         let headerField =
-        "primary=bar;q=1.0, secondary=baz;q=0.5;fallback=last, acceptablejurisdictions=(AU;q=1.0 GB;q=0.9 FR);fallback=\"primary\""
+            "primary=bar;q=1.0, secondary=baz;q=0.5;fallback=last, acceptablejurisdictions=(AU;q=1.0 GB;q=0.9 FR);fallback=\"primary\""
         let parsed = try StructuredFieldValueDecoder().decode(
             ListyDictionaryNoParams.self,
             from: Array(headerField.utf8)
