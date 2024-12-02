@@ -57,7 +57,7 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Display String
         XCTAssertEqual(
             Array("%\"f%c3%bc%c3%bc\"".utf8),
-            try encoder.encode(ItemField(DisplayString("füü")))
+            try encoder.encode(ItemField(DisplayString(rawValue: "füü")))
         )
     }
 
@@ -136,11 +136,15 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Display String
         XCTAssertEqual(
             Array("%\"f%c3%bc%c3%bc\";x".utf8),
-            try encoder.encode(KeyedItem(item: DisplayString("füü"), parameters: ["x": true]))
+            try encoder.encode(
+                KeyedItem(item: DisplayString(rawValue: "füü"), parameters: ["x": true])
+            )
         )
         XCTAssertEqual(
             Array("%\"foo %22bar%22 \\ baz\"".utf8),
-            try encoder.encode(KeyedItem(item: DisplayString("foo \"bar\" \\ baz"), parameters: [:]))
+            try encoder.encode(
+                KeyedItem(item: DisplayString(rawValue: "foo \"bar\" \\ baz"), parameters: [:])
+            )
         )
     }
 
@@ -252,7 +256,11 @@ final class StructuredFieldEncoderTests: XCTestCase {
         // Display String
         XCTAssertEqual(
             Array("%\"f%c3%bc%c3%bc\", %\"foo %22bar%22 \\ baz\"".utf8),
-            try encoder.encode(List([DisplayString("füü"), DisplayString("foo \"bar\" \\ baz")]))
+            try encoder.encode(
+                List(
+                    [DisplayString(rawValue: "füü"), DisplayString(rawValue: "foo \"bar\" \\ baz")]
+                )
+            )
         )
     }
 

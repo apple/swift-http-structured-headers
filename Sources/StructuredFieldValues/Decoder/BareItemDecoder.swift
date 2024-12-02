@@ -146,7 +146,7 @@ extension BareItemDecoder: SingleValueDecodingContainer {
             throw StructuredHeaderError.invalidTypeForItem
         }
 
-        return DisplayString(string)
+        return DisplayString(rawValue: string)
     }
 
     func decodeNil() -> Bool {

@@ -318,7 +318,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ data: DisplayString) throws {
-        try self.currentStackEntry.storage.insertBareItem(.displayString(data.description))
+        try self.currentStackEntry.storage.insertBareItem(.displayString(data.rawValue))
     }
 
     func encode<T>(_ value: T) throws where T: Encodable {
@@ -488,7 +488,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: DisplayString) throws {
-        try self.currentStackEntry.storage.appendBareItem(.displayString(value.description))
+        try self.currentStackEntry.storage.appendBareItem(.displayString(value.rawValue))
     }
 
     func append<T>(_ value: T) throws where T: Encodable {
@@ -673,7 +673,7 @@ extension _StructuredFieldEncoder {
 
     func encode(_ value: DisplayString, forKey key: String) throws {
         let key = self.sanitizeKey(key)
-        let displayString = value.description
+        let displayString = value.rawValue
         try self.currentStackEntry.storage.insertBareItem(.displayString(displayString), atKey: key)
     }
 

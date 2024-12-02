@@ -13,15 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 /// A type that represents the Display String Structured Type.
-public struct DisplayString: Codable, Equatable {
-    /// The value of this Display String.
-    public private(set) var description: String
+public struct DisplayString: RawRepresentable, Codable, Equatable, Hashable {
+    public typealias RawValue = String
+    public var rawValue: String
 
-    /// Initializes a new Display String.
-    ///
-    /// - parameters:
-    ///   - description: The value of this Display String.
-    public init(_ description: String) {
-        self.description = description
+    public init(rawValue: String) {
+        self.rawValue = rawValue
     }
 }

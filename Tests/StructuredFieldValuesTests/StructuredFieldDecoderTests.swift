@@ -614,7 +614,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
     func testDecodingDisplayStringAsTopLevelData() throws {
         XCTAssertEqual(
-            ItemField(DisplayString("füü")),
+            ItemField(DisplayString(rawValue: "füü")),
             try StructuredFieldValueDecoder().decode(from: Array("%\"f%c3%bc%c3%bc\"".utf8))
         )
     }
@@ -628,7 +628,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
         XCTAssertEqual(
             Item(
-                item: DisplayString("füü"),
+                item: DisplayString(rawValue: "füü"),
                 parameters: [:]
             ),
             try StructuredFieldValueDecoder().decode(
@@ -638,7 +638,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            Item(item: DisplayString("füü"), parameters: ["q": 0.8]),
+            Item(item: DisplayString(rawValue: "füü"), parameters: ["q": 0.8]),
             try StructuredFieldValueDecoder().decode(
                 Item.self,
                 from: Array("%\"f%c3%bc%c3%bc\";q=0.8".utf8)
@@ -654,7 +654,7 @@ final class StructuredFieldDecoderTests: XCTestCase {
         }
 
         XCTAssertEqual(
-            Item(item: 1, parameters: ["q": DisplayString("füü")]),
+            Item(item: 1, parameters: ["q": DisplayString(rawValue: "füü")]),
             try StructuredFieldValueDecoder().decode(
                 Item.self,
                 from: Array("1;q=%\"f%c3%bc%c3%bc\"".utf8)
@@ -666,8 +666,8 @@ final class StructuredFieldDecoderTests: XCTestCase {
         XCTAssertEqual(
             List(
                 [
-                    DisplayString("füü"),
-                    DisplayString("foo \"bar\" \\ baz"),
+                    DisplayString(rawValue: "füü"),
+                    DisplayString(rawValue: "foo \"bar\" \\ baz"),
                 ]
             ),
             try StructuredFieldValueDecoder().decode(
@@ -681,8 +681,8 @@ final class StructuredFieldDecoderTests: XCTestCase {
             List(
                 Array(
                     repeating: [
-                        DisplayString("füü"),
-                        DisplayString("foo \"bar\" \\ baz"),
+                        DisplayString(rawValue: "füü"),
+                        DisplayString(rawValue: "foo \"bar\" \\ baz"),
                     ],
                     count: 2
                 )
@@ -708,8 +708,8 @@ final class StructuredFieldDecoderTests: XCTestCase {
                 Array(
                     repeating: ListField(
                         items: [
-                            DisplayString("füü"),
-                            DisplayString("foo \"bar\" \\ baz"),
+                            DisplayString(rawValue: "füü"),
+                            DisplayString(rawValue: "foo \"bar\" \\ baz"),
                         ],
                         parameters: ["foo": true]
                     ),
@@ -736,8 +736,8 @@ final class StructuredFieldDecoderTests: XCTestCase {
 
         XCTAssertEqual(
             DictionaryField(
-                bin: DisplayString("füü"),
-                box: DisplayString("foo \"bar\" \\ baz")
+                bin: DisplayString(rawValue: "füü"),
+                box: DisplayString(rawValue: "foo \"bar\" \\ baz")
             ),
             try StructuredFieldValueDecoder().decode(
                 from: Array("bin=%\"f%c3%bc%c3%bc\", box=%\"foo %22bar%22 \\ baz\"".utf8)
