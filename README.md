@@ -6,11 +6,11 @@ Provides parsing and serialization facilities for structured header field values
 
 ## About Structured Header Field Values
 
-HTTP Structured Header Field Values are a HTTP extension recorded in [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941.html). They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
+HTTP Structured Header Field Values are a HTTP extension recorded in [RFC 9651](https://www.ietf.org/rfc/rfc9651.html). They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
 
 ## Swift HTTP Structured Header Field Values
 
-This package provides a parser and serializer that implement RFC 8941. They are entirely complete, able to handle all valid HTTP structured header field values. This package also provides `Encoder` and `Decoder` objects for working with Codable in Swift. This allows rapid prototyping and experimentation with HTTP structured header field values, as well as interaction with the wider Swift Codable community.
+This package provides a parser and serializer that implement RFC 9651. They are entirely complete, able to handle all valid HTTP structured header field values. This package also provides `Encoder` and `Decoder` objects for working with Codable in Swift. This allows rapid prototyping and experimentation with HTTP structured header field values, as well as interaction with the wider Swift Codable community.
 
 This package provides two top-level modules: `StructuredFieldValues` and `RawStructuredFieldValues`.
 
@@ -18,7 +18,7 @@ The base module, `RawStructuredFieldValues`, provides a low-level implementation
 
 This API is low-level, exposing the raw parse tree as the format for the serializer and parser. This allows high-performance and high-flexibility parsing and serialization, at the cost of being verbose and complex. Users are required to understand the structured header format and to operate the slightly awkward types, but maximal fidelity is retained and the performance overhead is low.
 
-The upper-level module, `StructuredFieldValues`, brings along the `Encoder` and `Decoder` and also adds a dependency on Foundation. This Foundation dependency is necessary to correctly handle the base64 formatting, as well as to provide a good natural container for binary data: `Data`. This interface is substantially friendlier and easier to work with, using Swift's `Codable` support to provide a great user experience.
+The upper-level module, `StructuredFieldValues`, brings along the `Encoder` and `Decoder` and also adds a dependency on Foundation. This Foundation dependency is necessary to correctly handle the base64 formatting, as well as to provide a good natural container for binary data: `Data`, and for dates: `Date`. This interface is substantially friendlier and easier to work with, using Swift's `Codable` support to provide a great user experience.
 
 In most cases users should prefer to use `StructuredFieldValues` unless they know they need the performance advantages of `RawStructuredFieldValues`. The experience will be much better.
 
@@ -56,12 +56,12 @@ let encoder = StructuredFieldValueEncoder()
 let serialized = try encoder.encode(AcceptCH(items: ["Sec-CH-Example", "Sec-CH-Example-2"]))
 ```
 
-However, structured header field values can be substantially more complex. Structured header fields can make use of 4 containers and 6 base item types. The containers are:
+However, structured header field values can be substantially more complex. Structured header fields can make use of 4 containers and 8 base item types. The containers are:
 
 1. Dictionaries. These are top-level elements and associate token keys with values. The values may be items, or may be inner lists, and each value may also have parameters associated with them. `StructuredFieldValues` can model dictionaries as either Swift objects (where the property names are dictionary keys).
 2. Lists. These are top-level elements, providing a sequence of items or inner lists. Each item or inner list may have parameters associated with them. `StructuredFieldValues` models these as Swift objects with one key, `items`, that must be a collection of entries.
 3. Inner Lists. These are lists that may be sub-entries of a dictionary or a list. The list entries are items, which may have parameters associated with them: additionally, an inner list may have parameters associated with itself as well. `StructuredFieldValues` models these as either Swift `Array`s _or_, if it's important to extract parameters, as a two-field Swift `struct` where one field is called `items` and contains an `Array`, and other field is called `parameters` and contains a dictionary.
-4. Parameters. Parameters associated token keys with items without parameters. These are used to store metadata about objects within a field. `StructuredFieldValues` models these as either Swift objects (where the property names are the parameter keys) or as Swift dictionaries.
+4. Parameters. Parameters associate token keys with items without parameters. These are used to store metadata about objects within a field. `StructuredFieldValues` models these as either Swift objects (where the property names are the parameter keys) or as Swift dictionaries.
 
 The base types are:
 
@@ -71,6 +71,8 @@ The base types are:
 4. Tokens. `StructuredFieldValues` models these as Swift's `String` type, where the range of characters is restricted.
 5. Strings. `StructuredFieldValues` models these as Swift's `String` type.
 6. Binary data. `StructuredFieldValues` models this as Foundation's `Data` type.
+7. Dates. `StructuredFieldValues` models these as Foundation's `Date` type.
+8. Display strings. `StructuredFieldValues` models these as the `DisplayString` type which it provides.
 
 For any Structured Header Field Value Item, the item may either be represented directly by the appropriate type, or by a Swift struct with two properties: `item` and `parameters`. This latter mode is how parameters on a given item may be captured.
 
