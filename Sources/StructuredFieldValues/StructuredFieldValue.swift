@@ -22,7 +22,7 @@ public protocol StructuredFieldValue: Codable {
 }
 
 /// The kinds of header fields used in HTTP Structured Headers.
-public enum StructuredFieldType {
+public enum StructuredFieldType: Sendable {
     /// An item field consists of a single item, optionally with parameters.
     case item
 
