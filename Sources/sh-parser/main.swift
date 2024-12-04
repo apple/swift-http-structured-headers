@@ -15,7 +15,7 @@
 import Foundation
 import RawStructuredFieldValues
 
-struct Flags {
+struct Flags: Sendable {
     var headerType: HeaderType
 
     init() {
