@@ -15,13 +15,13 @@
 import Foundation
 import RawStructuredFieldValues
 
-struct Flags: Sendable {
+struct Flags {
     var headerType: HeaderType
 
     init() {
         // Default to item
         self.headerType = .item
-        let arguments = CommandLine.arguments
+        let arguments = ProcessInfo.processInfo.arguments
 
         for argument in arguments.dropFirst() {
             switch argument {
