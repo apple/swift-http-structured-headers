@@ -21,8 +21,9 @@ struct Flags {
     init() {
         // Default to item
         self.headerType = .item
+        let arguments = ProcessInfo.processInfo.arguments
 
-        for argument in CommandLine.arguments.dropFirst() {
+        for argument in arguments.dropFirst() {
             switch argument {
             case "--dictionary":
                 self.headerType = .dictionary
