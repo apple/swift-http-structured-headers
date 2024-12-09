@@ -150,19 +150,20 @@ class _StructuredFieldEncoder {
     fileprivate func encodeItemField<StructuredField: Encodable>(_ data: StructuredField) throws -> [UInt8] {
         self.push(key: .init(stringValue: ""), newStorage: .itemHeader)
 
-        // There's an awkward special hook here: if the outer type is `Data` or `Decimal`,
-        // we skip the regular encoding path. This is because otherwise `Data` will
-        // ask for an unkeyed container and `Decimal` for a keyed one,
-        // and it all falls apart.
+        // There's an awkward special hook here: if the outer type is `Data`, `Decimal`, `Date` or
+        // `DisplayString`, we skip the regular encoding path.
         //
         // Everything else goes through the normal flow.
-        if let value = data as? Data {
-            try self.encode(value)
-        } else if let value = data as? Decimal {
-            try self.encode(value)
-        } else if let value = data as? Date {
-            try self.encode(value)
-        } else {
+        switch data {
+        case is Data:
+            try self.encode(data)
+        case is Decimal:
+            try self.encode(data)
+        case is Date:
+            try self.encode(data)
+        case is DisplayString:
+            try self.encode(data)
+        default:
             try data.encode(to: self)
         }
 
@@ -316,6 +317,10 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         try self.currentStackEntry.storage.insertBareItem(.date(date))
     }
 
+    func encode(_ data: DisplayString) throws {
+        try self.currentStackEntry.storage.insertBareItem(.displayString(data.rawValue))
+    }
+
     func encode<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let value as UInt8:
@@ -351,6 +356,8 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
         case let value as Decimal:
             try self.encode(value)
         case let value as Date:
+            try self.encode(value)
+        case let value as DisplayString:
             try self.encode(value)
         default:
             throw StructuredHeaderError.invalidTypeForItem
@@ -480,6 +487,10 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.appendBareItem(.date(date))
     }
 
+    func append(_ value: DisplayString) throws {
+        try self.currentStackEntry.storage.appendBareItem(.displayString(value.rawValue))
+    }
+
     func append<T>(_ value: T) throws where T: Encodable {
         switch value {
         case let value as UInt8:
@@ -515,6 +526,8 @@ extension _StructuredFieldEncoder {
         case let value as Decimal:
             try self.append(value)
         case let value as Date:
+            try self.append(value)
+        case let value as DisplayString:
             try self.append(value)
         default:
             // Some other codable type.
@@ -658,6 +671,12 @@ extension _StructuredFieldEncoder {
         try self.currentStackEntry.storage.insertBareItem(.date(date), atKey: key)
     }
 
+    func encode(_ value: DisplayString, forKey key: String) throws {
+        let key = self.sanitizeKey(key)
+        let displayString = value.rawValue
+        try self.currentStackEntry.storage.insertBareItem(.displayString(displayString), atKey: key)
+    }
+
     func encode<T>(_ value: T, forKey key: String) throws where T: Encodable {
         let key = self.sanitizeKey(key)
 
@@ -695,6 +714,8 @@ extension _StructuredFieldEncoder {
         case let value as Decimal:
             try self.encode(value, forKey: key)
         case let value as Date:
+            try self.encode(value, forKey: key)
+        case let value as DisplayString:
             try self.encode(value, forKey: key)
         default:
             // Ok, we don't know what this is. This can only happen for a dictionary, or
