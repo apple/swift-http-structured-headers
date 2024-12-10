@@ -313,7 +313,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ data: Date) throws {
-        let date = Int(data.timeIntervalSince1970)
+        let date = Int64(data.timeIntervalSince1970)
         try self.currentStackEntry.storage.insertBareItem(.date(date))
     }
 
@@ -371,7 +371,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     private func _encodeFixedWidthInteger<T: FixedWidthInteger>(_ value: T) throws {
-        guard let base = Int(exactly: value) else {
+        guard let base = Int64(exactly: value) else {
             throw StructuredHeaderError.integerOutOfRange
         }
         try self.currentStackEntry.storage.insertBareItem(.integer(base))
@@ -483,7 +483,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: Date) throws {
-        let date = Int(value.timeIntervalSince1970)
+        let date = Int64(value.timeIntervalSince1970)
         try self.currentStackEntry.storage.appendBareItem(.date(date))
     }
 
@@ -562,7 +562,7 @@ extension _StructuredFieldEncoder {
     }
 
     private func _appendFixedWidthInteger<T: FixedWidthInteger>(_ value: T) throws {
-        guard let base = Int(exactly: value) else {
+        guard let base = Int64(exactly: value) else {
             throw StructuredHeaderError.integerOutOfRange
         }
         try self.currentStackEntry.storage.appendBareItem(.integer(base))
@@ -667,7 +667,7 @@ extension _StructuredFieldEncoder {
 
     func encode(_ value: Date, forKey key: String) throws {
         let key = self.sanitizeKey(key)
-        let date = Int(value.timeIntervalSince1970)
+        let date = Int64(value.timeIntervalSince1970)
         try self.currentStackEntry.storage.insertBareItem(.date(date), atKey: key)
     }
 
@@ -789,7 +789,7 @@ extension _StructuredFieldEncoder {
     }
 
     private func _encodeFixedWidthInteger<T: FixedWidthInteger>(_ value: T, forKey key: String) throws {
-        guard let base = Int(exactly: value) else {
+        guard let base = Int64(exactly: value) else {
             throw StructuredHeaderError.integerOutOfRange
         }
         try self.currentStackEntry.storage.insertBareItem(.integer(base), atKey: key)
