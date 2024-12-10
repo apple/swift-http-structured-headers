@@ -8,11 +8,11 @@ Provides parsing and serialization facilities for structured header field values
 
 ### About Structured Header Field Values
 
-HTTP Structured Header Field Values are a HTTP extension recorded in [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941.html). They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
+HTTP Structured Header Field Values are a HTTP extension recorded in [RFC 9651](https://www.ietf.org/rfc/rfc9651.html). They provide a set of data types and algorithms for handling HTTP header field values in a consistent way, allowing a single parser and serializer to handle a wide range of header field values.
 
 ### Swift HTTP Structured Header Field Values
 
-This package provides a parser and serializer that implement RFC 8941. They are entirely complete, able to handle all valid HTTP structured header field values.
+This package provides a parser and serializer that implement RFC 9651. They are entirely complete, able to handle all valid HTTP structured header field values.
 
 This package provides two top-level modules: `StructuredFieldValues` and `RawStructuredFieldValues`.
 
@@ -20,7 +20,7 @@ This module, `RawStructuredFieldValues`, provides a low-level implementation of 
 
 This API is low-level, exposing the raw parse tree as the format for the serializer and parser. This allows high-performance and high-flexibility parsing and serialization, at the cost of being verbose and complex. Users are required to understand the structured header format and to operate the slightly awkward types, but maximal fidelity is retained and the performance overhead is low.
 
-The upper-level module, `StructuredFieldValues`, brings along the `Encoder` and `Decoder` and also adds a dependency on Foundation. This Foundation dependency is necessary to correctly handle the base64 formatting, as well as to provide a good natural container for binary data: `Data`. This interface is substantially friendlier and easier to work with, using Swift's `Codable` support to provide a great user experience.
+The upper-level module, `StructuredFieldValues`, brings along the `Encoder` and `Decoder` and also adds a dependency on Foundation. This Foundation dependency is necessary to correctly handle the base64 formatting, as well as to provide a good natural container for binary data: `Data`, and for dates: `Date`. This interface is substantially friendlier and easier to work with, using Swift's `Codable` support to provide a great user experience.
 
 In most cases users should prefer to use `StructuredFieldValues` unless they know they need the performance advantages of `RawStructuredFieldValues`. The experience will be much better.
 
