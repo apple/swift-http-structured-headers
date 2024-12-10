@@ -51,3 +51,11 @@ for target in package.targets {
     settings.append(.enableExperimentalFeature("StrictConcurrency=complete"))
     target.swiftSettings = settings
 }
+
+for target in package.targets {
+    if target.type != .plugin {
+        var settings = target.swiftSettings ?? []
+        settings.append(.enableUpcomingFeature("MemberImportVisibility"))
+        target.swiftSettings = settings
+    }
+}
