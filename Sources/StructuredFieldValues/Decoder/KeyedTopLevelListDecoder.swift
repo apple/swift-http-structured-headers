@@ -54,16 +54,20 @@ extension KeyedTopLevelListDecoder: KeyedDecodingContainerProtocol {
             self.decoder.pop()
         }
 
-        if type is Data.Type {
+        switch type {
+        case is Data.Type:
             let container = try self.decoder.singleValueContainer()
             return try container.decode(Data.self) as! T
-        } else if type is Decimal.Type {
+        case is Decimal.Type:
             let container = try self.decoder.singleValueContainer()
             return try container.decode(Decimal.self) as! T
-        } else if type is Date.Type {
+        case is Date.Type:
             let container = try self.decoder.singleValueContainer()
             return try container.decode(Date.self) as! T
-        } else {
+        case is DisplayString.Type:
+            let container = try self.decoder.singleValueContainer()
+            return try container.decode(DisplayString.self) as! T
+        default:
             return try type.init(from: self.decoder)
         }
     }

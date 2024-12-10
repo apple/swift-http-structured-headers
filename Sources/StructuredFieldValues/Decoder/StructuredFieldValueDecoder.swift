@@ -111,16 +111,20 @@ extension StructuredFieldValueDecoder {
 
         // An escape hatch here for top-level data: if we don't do this, it'll ask for
         // an unkeyed container and get very confused.
-        if type is Data.Type {
+        switch type {
+        case is Data.Type:
             let container = try decoder.singleValueContainer()
             return try container.decode(Data.self) as! StructuredField
-        } else if type is Decimal.Type {
+        case is Decimal.Type:
             let container = try decoder.singleValueContainer()
             return try container.decode(Decimal.self) as! StructuredField
-        } else if type is Date.Type {
+        case is Date.Type:
             let container = try decoder.singleValueContainer()
             return try container.decode(Date.self) as! StructuredField
-        } else {
+        case is DisplayString.Type:
+            let container = try decoder.singleValueContainer()
+            return try container.decode(DisplayString.self) as! StructuredField
+        default:
             return try type.init(from: decoder)
         }
     }
