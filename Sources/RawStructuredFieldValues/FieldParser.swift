@@ -232,7 +232,7 @@ extension StructuredFieldValueParser {
     }
 
     private mutating func _parseAnIntegerOrDecimal(isDate: Bool) throws -> RFC9651BareItem {
-        var sign = 1
+        var sign = Int64(1)
         var type = IntegerOrDecimal.integer
 
         if let first = self.underlyingData.first, first == asciiDash {
@@ -304,7 +304,7 @@ extension StructuredFieldValueParser {
         case .integer:
             // This intermediate string is sad, we should rewrite this manually to avoid it.
             // This force-unwrap is safe, as we have validated that all characters are ascii digits.
-            let baseInt = Int(String(decoding: integerBytes, as: UTF8.self), radix: 10)!
+            let baseInt = Int64(String(decoding: integerBytes, as: UTF8.self), radix: 10)!
             let resultingInt = baseInt * sign
 
             if isDate {
