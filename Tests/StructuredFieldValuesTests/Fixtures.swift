@@ -119,7 +119,7 @@ struct StructuredHeaderTestFixture: Decodable {
 enum JSONSchema: Decodable {
     case dictionary([String: JSONSchema])
     case array([JSONSchema])
-    case integer(Int)
+    case integer(Int64)
     case double(Double)
     case string(String)
     case bool(Bool)
@@ -130,7 +130,7 @@ enum JSONSchema: Decodable {
             self = .string(value)
         } else if let bool = try? container.decode(Bool.self) {
             self = .bool(bool)
-        } else if let value = try? container.decode(Int.self) {
+        } else if let value = try? container.decode(Int64.self) {
             self = .integer(value)
         } else if let value = try? container.decode(Double.self) {
             self = .double(value)
