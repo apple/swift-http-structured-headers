@@ -15,6 +15,8 @@
 import Darwin
 #elseif canImport(Glibc)
 import Glibc
+#elseif canImport(Android)
+import Android
 #else
 #error("Unsupported OS")
 #endif
