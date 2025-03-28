@@ -639,7 +639,7 @@ extension String {
         // We assume the string is previously validated, so the escapes are easily removed. See the doc comment for
         // `StrippingStringEscapesCollection` for more details on what we're doing here.
         let unescapedBytes = StrippingStringEscapesCollection(bytes, escapes: escapes)
-        if #available(macOS 10.16, macCatalyst 10.16, iOS 14.0, watchOS 7.0, tvOS 14.0, *) {
+        if #available(macOS 10.16, macCatalyst 14.0, iOS 14.0, watchOS 7.0, tvOS 14.0, *) {
             return String(unsafeUninitializedCapacity: unescapedBytes.count) { innerPtr in
                 let (_, endIndex) = innerPtr.initialize(from: unescapedBytes)
                 return endIndex
