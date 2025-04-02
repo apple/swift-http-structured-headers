@@ -15,6 +15,8 @@
 import Darwin
 #elseif canImport(Glibc)
 import Glibc
+#elseif canImport(Musl)
+import Musl
 #elseif canImport(Android)
 import Android
 #else
