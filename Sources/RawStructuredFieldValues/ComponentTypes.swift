@@ -276,7 +276,7 @@ extension BareInnerList: ExpressibleByArrayLiteral {
 
 // TODO: RangeReplaceableCollection I guess
 extension BareInnerList: RandomAccessCollection, MutableCollection {
-    public struct Index {
+    public struct Index: Sendable {
         fileprivate var baseIndex: Array<Item>.Index
 
         init(_ baseIndex: Array<Item>.Index) {

@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 /// A type that represents the Display String Structured Type.
-public struct DisplayString: RawRepresentable, Codable, Equatable, Hashable {
+public struct DisplayString: RawRepresentable, Codable, Equatable, Hashable, Sendable {
     public typealias RawValue = String
     public var rawValue: String
 
