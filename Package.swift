@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftNIO open source project
@@ -13,6 +13,20 @@
 //
 //===----------------------------------------------------------------------===//
 import PackageDescription
+
+let strictConcurrencyDevelopment = false
+
+let strictConcurrencySettings: [SwiftSetting] = {
+    var initialSettings: [SwiftSetting] = []
+
+    if strictConcurrencyDevelopment {
+        // -warnings-as-errors here is a workaround so that IDE-based development can
+        // get tripped up on -require-explicit-sendable.
+        initialSettings.append(.unsafeFlags(["-require-explicit-sendable", "-warnings-as-errors"]))
+    }
+
+    return initialSettings
+}()
 
 let package = Package(
     name: "swift-http-structured-headers",
@@ -29,28 +43,26 @@ let package = Package(
     targets: [
         .target(
             name: "RawStructuredFieldValues",
-            dependencies: []
+            dependencies: [],
+            swiftSettings: strictConcurrencySettings
         ),
         .target(
             name: "StructuredFieldValues",
-            dependencies: ["RawStructuredFieldValues"]
+            dependencies: ["RawStructuredFieldValues"],
+            swiftSettings: strictConcurrencySettings
         ),
         .executableTarget(
             name: "sh-parser",
-            dependencies: ["RawStructuredFieldValues"]
+            dependencies: ["RawStructuredFieldValues"],
+            swiftSettings: strictConcurrencySettings
         ),
         .testTarget(
             name: "StructuredFieldValuesTests",
-            dependencies: ["RawStructuredFieldValues", "StructuredFieldValues"]
+            dependencies: ["RawStructuredFieldValues", "StructuredFieldValues"],
+            swiftSettings: strictConcurrencySettings
         ),
     ]
 )
-
-for target in package.targets {
-    var settings = target.swiftSettings ?? []
-    settings.append(.enableExperimentalFeature("StrictConcurrency=complete"))
-    target.swiftSettings = settings
-}
 
 // ---    STANDARD CROSS-REPO SETTINGS DO NOT EDIT   --- //
 for target in package.targets {
