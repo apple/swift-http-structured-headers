@@ -560,7 +560,7 @@ extension StructuredFieldValueParser {
         let unicodeSequence = byteArray.withUnsafeBytes {
             $0.withMemoryRebound(to: CChar.self) {
                 // This force-unwrap is safe, as the buffer must successfully bind to CChar.
-                String(validatingUTF8: $0.baseAddress!)
+                String(validatingCString: $0.baseAddress!)
             }
         }
 
