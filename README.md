@@ -111,4 +111,4 @@ In general, users should consider this API only when they are confident they nee
 
 ## Security
 
-swift-http-structured-headers has a security policy outlined in [SECURITY.md](SECURITY.md).
+swift-http-structured-headers has a security policy outlined in the [security policy](https://github.com/apple/swift-http-structured-headers/security/policy).
