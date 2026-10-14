@@ -310,6 +310,17 @@ final class StructuredFieldEncoderTests: XCTestCase {
         XCTAssertEqual(Array("(1 2 3), (4 5 6)".utf8), try encoder.encode(List(header)))
     }
 
+    func testEmptyInnerListsBare() throws {
+        struct DictionaryField: StructuredFieldValue {
+            static let structuredFieldType: StructuredFieldType = .dictionary
+            var x: [Int]
+        }
+
+        let encoder = StructuredFieldValueEncoder()
+        XCTAssertEqual(Array("(), (1 2 3), ()".utf8), try encoder.encode(List([[], [1, 2, 3], []])))
+        XCTAssertEqual(Array("x=()".utf8), try encoder.encode(DictionaryField(x: [])))
+    }
+
     func testListFieldInnerListsParameters() throws {
         struct Integers: Equatable, Codable {
             var items: [Int]
