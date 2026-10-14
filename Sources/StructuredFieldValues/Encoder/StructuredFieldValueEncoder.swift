@@ -209,7 +209,11 @@ extension _StructuredFieldEncoder: Encoder {
     }
 
     func unkeyedContainer() -> UnkeyedEncodingContainer {
-        StructuredFieldUnkeyedEncodingContainer(encoder: self)
+        if case .itemOrInnerList(let params) = self.currentStackEntry.storage {
+            // This is an inner list, even if nothing is ever appended to it.
+            self.currentStackEntry.storage = .innerList(InnerList(bareInnerList: [], parameters: params))
+        }
+        return StructuredFieldUnkeyedEncodingContainer(encoder: self)
     }
 
     func singleValueContainer() -> SingleValueEncodingContainer {
