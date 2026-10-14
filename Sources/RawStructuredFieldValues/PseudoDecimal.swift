@@ -226,6 +226,7 @@ extension String {
 // Swift Numerics would let us do this for all the floating point types.
 extension Double {
     public init(_ pseudoDecimal: PseudoDecimal) {
-        self = Double(pseudoDecimal.mantissa) * pow(10, Double(pseudoDecimal.exponent))
+        // Divide by an exact power of ten: multiplying by an inexact negative power of ten rounds twice.
+        self = Double(pseudoDecimal.mantissa) / pow(10, -Double(pseudoDecimal.exponent))
     }
 }

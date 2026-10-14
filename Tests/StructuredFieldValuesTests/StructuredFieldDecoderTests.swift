@@ -182,6 +182,14 @@ final class StructuredFieldDecoderTests: XCTestCase {
         XCTAssertEqual(ItemField(Double(5.0)), try StructuredFieldValueDecoder().decode(from: Array(headerField.utf8)))
     }
 
+    func testDecodingDecimalAsDoubleIsCorrectlyRounded() throws {
+        XCTAssertEqual(ItemField(Double(0.3)), try StructuredFieldValueDecoder().decode(from: Array("0.3".utf8)))
+        XCTAssertEqual(
+            ItemField(Double(-19.993)),
+            try StructuredFieldValueDecoder().decode(from: Array("-19.993".utf8))
+        )
+    }
+
     func testAskingForTheWrongType() throws {
         let headerField = "gzip"
         let intField = "5"
