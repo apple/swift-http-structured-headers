@@ -61,6 +61,16 @@ final class StructuredFieldEncoderTests: XCTestCase {
         )
     }
 
+    func testEncodeDecimalWithPositiveExponent() throws {
+        // Foundation stores trailing zeros as a positive exponent, so 100 is 1e2.
+        let encoder = StructuredFieldValueEncoder()
+        XCTAssertEqual(Array("100.0".utf8), try encoder.encode(ItemField(Decimal(100))))
+        XCTAssertEqual(Array("900000000000.0".utf8), try encoder.encode(ItemField(Decimal(string: "9e11")!)))
+        XCTAssertEqual(Array("-100.0, 100.0".utf8), try encoder.encode(List([Decimal(-100), Decimal(100)])))
+        XCTAssertThrowsError(try encoder.encode(ItemField(Decimal(string: "1e12")!)))
+        XCTAssertThrowsError(try encoder.encode(List([Decimal(string: "1e12")!])))
+    }
+
     func testEncodeKeyedItemHeader() throws {
         struct KeyedItem<ItemType: Codable & Equatable>: Equatable, StructuredFieldValue {
             static var structuredFieldType: StructuredFieldType {
