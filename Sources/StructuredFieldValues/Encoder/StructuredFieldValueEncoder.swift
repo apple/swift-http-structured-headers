@@ -299,12 +299,7 @@ extension _StructuredFieldEncoder: SingleValueEncodingContainer {
     }
 
     func encode(_ data: Decimal) throws {
-        let significand = (data.significand.magnitude as NSNumber).intValue  // Yes, really.
-        guard let exponent = Int8(exactly: data.exponent) else {
-            throw StructuredHeaderError.invalidIntegerOrDecimal
-        }
-
-        let pd = PseudoDecimal(mantissa: significand * (data.isSignMinus ? -1 : 1), exponent: Int(exponent))
+        let pd = try PseudoDecimal(data)
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd))
     }
 
@@ -469,12 +464,7 @@ extension _StructuredFieldEncoder {
     }
 
     func append(_ value: Decimal) throws {
-        let significand = (value.significand.magnitude as NSNumber).intValue  // Yes, really.
-        guard let exponent = Int8(exactly: value.exponent) else {
-            throw StructuredHeaderError.invalidIntegerOrDecimal
-        }
-
-        let pd = PseudoDecimal(mantissa: significand * (value.isSignMinus ? -1 : 1), exponent: Int(exponent))
+        let pd = try PseudoDecimal(value)
         try self.currentStackEntry.storage.appendBareItem(.decimal(pd))
     }
 
@@ -652,12 +642,7 @@ extension _StructuredFieldEncoder {
     }
 
     func encode(_ value: Decimal, forKey key: String) throws {
-        let significand = (value.significand.magnitude as NSNumber).intValue  // Yes, really.
-        guard let exponent = Int8(exactly: value.exponent) else {
-            throw StructuredHeaderError.invalidIntegerOrDecimal
-        }
-
-        let pd = PseudoDecimal(mantissa: significand * (value.isSignMinus ? -1 : 1), exponent: Int(exponent))
+        let pd = try PseudoDecimal(value)
         try self.currentStackEntry.storage.insertBareItem(.decimal(pd), atKey: key)
     }
 
@@ -992,5 +977,30 @@ extension _StructuredFieldEncoder {
 extension Item {
     fileprivate init(_ partialItem: _StructuredFieldEncoder.NodeType.PartialItem) {
         self.init(bareItem: partialItem.bareItem!, parameters: partialItem.parameters)
+    }
+}
+
+extension PseudoDecimal {
+    fileprivate init(_ decimal: Decimal) throws {
+        var significand = (decimal.significand.magnitude as NSNumber).intValue  // Yes, really.
+        var decimalExponent = decimal.exponent
+
+        // Foundation stores trailing zeros as a positive exponent (100 is 1e2), so fold them into the significand.
+        while decimalExponent > 0 {
+            let (scaled, overflow) = significand.multipliedReportingOverflow(by: 10)
+            guard !overflow else {
+                throw StructuredHeaderError.invalidIntegerOrDecimal
+            }
+            significand = scaled
+            decimalExponent -= 1
+        }
+
+        guard let exponent = Int8(exactly: decimalExponent) else {
+            throw StructuredHeaderError.invalidIntegerOrDecimal
+        }
+
+        let mantissa = significand * (decimal.isSignMinus ? -1 : 1)
+        try Self.validate(mantissa: Int64(mantissa), exponent: exponent)
+        self.init(mantissa: mantissa, exponent: Int(exponent))
     }
 }

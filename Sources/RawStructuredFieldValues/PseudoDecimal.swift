@@ -115,7 +115,7 @@ public struct PseudoDecimal: Hashable, Sendable {
         }
     }
 
-    private static func validate(mantissa: Int64, exponent: Int8) throws {
+    package static func validate(mantissa: Int64, exponent: Int8) throws {
         // We compare against our upper and lower bounds. The maximum allowable magnitude of the mantissa is contingent
         // on the exponent.
         switch exponent {
